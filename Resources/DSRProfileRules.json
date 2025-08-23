@@ -1,0 +1,6 @@
+{
+  "DSR Name*": { "type": "UUID", "length": 5, "prefix": "AUTODSR_" },
+  "Father/Spouse Name": { "type": "UUID", "length": 2, "prefix": "Father_" },
+  "Contact Number*": { "type": "PHONE", "length": 11 },
+  "Employee No": { "type": "UUID", "length": 6, "prefix": "EMP" }
+}
