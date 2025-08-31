@@ -50,14 +50,13 @@ public class ExcelGen {
                         case "UUID":
                             int length = (int) ruleConfig.getOrDefault("length", 8);
                             String prefix = (String) ruleConfig.getOrDefault("prefix", "AUTO");
-                            String uuidPart = UUID.randomUUID().toString().replaceAll("-", "").substring(0, length);
+                           String uuidPart = UUID.randomUUID().toString().replaceAll("-", "").substring(0, length);
                             cell.setCellValue(prefix + uuidPart.toUpperCase());
-                            System.out.println(prefix + uuidPart.toUpperCase());
                             break;
                         case "PHONE":
                             int totalLength = (int) ruleConfig.getOrDefault("length", 11); // full phone length
                             int suffixLength = totalLength - 2; // subtract '03' prefix
-                            String ts = String.valueOf(System.currentTimeMillis());
+                            String ts = String.valueOf(System.nanoTime());
                             String lastDigits = ts.substring(ts.length() - suffixLength);
                             cell.setCellValue("03" + lastDigits);
                             break;
