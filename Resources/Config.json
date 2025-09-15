@@ -1,0 +1,30 @@
+{
+  "screens": [
+    {
+      "screenName": "DSR Profile Bulk Upload",
+      "screenId": "DSR_PROFILE_DATA",
+      "mode": "UPLOAD_WITH_CHANGES",
+      "params": {},
+      "rules": {
+        "DSR Name*": { "type": "UUID", "length": 5, "prefix": "AUTODSR_" },
+        "Father/Spouse Name": { "type": "UUID", "length": 4, "prefix": "Father_" },
+        "Contact Number*": { "type": "PHONE", "length": 11 },
+        "Employee No": { "type": "UUID", "length": 6, "prefix": "EMP" }
+      }
+    },
+   {
+      "screenName": "Product Enrichment Excel",
+      "mode": "UPLOAD_ONLY",
+      "params": { "category": "DEODORANTS & FRAGRANCES"},
+      "rules": {}
+    },
+    {
+      "screenName": "Sales Report Upload",
+      "mode": "DOWNLOAD_EDIT_UPLOAD",
+      "params": {},
+      "rules": {
+        "Report ID": { "type": "UUID", "length": 6, "prefix": "REP" }
+      }
+    }
+  ]
+}
