@@ -106,6 +106,7 @@ public class Main {
         for (JsonNode screen : root.get("screens")) {
             String screenName = screen.get("screenName").asText();
             String screenId = screen.get("screenId").asText();
+            System.out.println(screenId + " - " + screenName);
             String mode = screen.get("mode").asText();
             JsonNode rules = screen.get("rules");
             JsonNode params = screen.get("params");
@@ -120,22 +121,23 @@ public class Main {
             driver.findElement(By.id(screenId)).click();
 
             String basePath = "D:\\Automation\\ExcelGenerator\\Resources\\";
-            String templatePath = basePath + screenName.replaceAll(" ", "") + "_template.xlsx";
-            String outputPath = basePath + screenName.replaceAll(" ", "") + "_updated.xlsx";
-
+            String templatePath = "D:\\Automation\\ExcelGenerator\\Resources\\dsrProfileData.xlsx";
+           // String templatePath = basePath + screenName.replaceAll(" ", "") + "_template.xlsx";
+            String outputPath = "D:\\Automation\\ExcelGenerator\\Resources\\dsrProfileDataTemp.xlsx";
+          //  String outputPath = basePath + screenName.replaceAll(" ", "") + "_updated.xlsx";
             switch (mode) {
                 case "UPLOAD_ONLY":
                     uploadFile(driver, templatePath);
                     break;
 
                 case "UPLOAD_WITH_CHANGES":
-                    String updatedFile = ExcelGen.generateExcel(templatePath, outputPath, rules.toString());
+                    String updatedFile = ExcelGen.generateExcel(templatePath, outputPath, rules);
                     uploadFile(driver, updatedFile);
                     break;
 
                 case "DOWNLOAD_EDIT_UPLOAD":
                     String downloaded = downloadExcel(driver, screenName);
-                    String updated2 = ExcelGen.generateExcel(downloaded, outputPath, rules.toString());
+                    String updated2 = ExcelGen.generateExcel(downloaded, outputPath, rules);
                     uploadFile(driver, updated2);
                     break;
 
@@ -143,12 +145,13 @@ public class Main {
                     System.out.println("❌ Unknown mode: " + mode);
             }
 
-            // --- Validate Upload Success ---
+           // String successMsg = driver.findElement(By.id("notify_text_success")).getText();
             try {
                 String successMsg = driver.findElement(By.id("notify_text_success")).getText();
                 System.out.println("✅ Success: " + successMsg);
             } catch (Exception e) {
-                System.out.println("⚠ Could not find success message for " + screenName);
+            //    Sring errorMsg = driver.findElement(By.id("notify_text_success")).getText();
+                System.out.println(" Upload Failed! " + screenName );
             }
         }
 

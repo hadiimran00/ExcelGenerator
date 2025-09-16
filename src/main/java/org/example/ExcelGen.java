@@ -1,7 +1,9 @@
 package org.example;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.poi.ss.usermodel.*;
+import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
@@ -9,11 +11,14 @@ import java.util.*;
 
 public class ExcelGen {
 
-    public static String generateExcel(String templatePath, String outputPath, String rulesJsonPath) {
+    public static String generateExcel(String templatePath, String outputPath, JsonNode rules) {
         try {
-            // Read JSON rules
+
             ObjectMapper mapper = new ObjectMapper();
-            Map<String, Map<String, Object>> columnRules = mapper.readValue(new File(rulesJsonPath), Map.class);
+
+            // Convert JsonNode → Map
+            Map<String, Map<String, Object>> columnRules =
+                    mapper.convertValue(rules, new TypeReference<Map<String, Map<String, Object>>>() {});
 
             // Open Excel template
             FileInputStream fis = new FileInputStream(templatePath);
@@ -67,9 +72,8 @@ public class ExcelGen {
                             cell.setCellValue("ABC-" + (1000 + random.nextInt(9000)));
                             break;
                         case "COORDINATES":
-                            double lat = 24 + random.nextDouble();
-                            double lon = 67 + random.nextDouble();
-                            cell.setCellValue(lat + "," + lon);
+                            double cord = 24 + random.nextDouble();
+                            cell.setCellValue(cord);
                             break;
                         default:
                             cell.setCellValue(type); // literal value if needed

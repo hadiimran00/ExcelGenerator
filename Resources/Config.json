@@ -15,7 +15,7 @@
    {
       "screenName": "Product Enrichment Excel",
       "mode": "UPLOAD_ONLY",
-      "params": { "category": "DEODORANTS & FRAGRANCES"},
+      "params": { "category": "DEODORANTS & FRAGRANCES","abc": "xyz123"},
       "rules": {}
     },
     {
