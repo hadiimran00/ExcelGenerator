@@ -11,14 +11,15 @@ import java.util.*;
 
 public class ExcelGen {
 
-    public static String generateExcel(String templatePath, String outputPath, JsonNode rules) {
+    public static String generateExcel(String templatePath,  Map<String, Map<String, Object>> columnRules) {
         try {
+            System.out.println(columnRules);
+           // ObjectMapper mapper = new ObjectMapper();
 
-            ObjectMapper mapper = new ObjectMapper();
-
-            // Convert JsonNode → Map
-            Map<String, Map<String, Object>> columnRules =
-                    mapper.convertValue(rules, new TypeReference<Map<String, Map<String, Object>>>() {});
+//            // Convert JsonNode → Map
+//            Map<String, Map<String, Object>> columnRules =
+//                    mapper.convertValue(rules, new TypeReference<>() {
+//                    });
 
             // Open Excel template
             FileInputStream fis = new FileInputStream(templatePath);
@@ -54,7 +55,7 @@ public class ExcelGen {
                     switch (type) {
                         case "UUID":
                             int length = (int) ruleConfig.getOrDefault("length", 8);
-                            String prefix = (String) ruleConfig.getOrDefault("prefix", "AUTO");
+                            String prefix = (String) ruleConfig.getOrDefault("prefix", "");
                            String uuidPart = UUID.randomUUID().toString().replaceAll("-", "").substring(0, length);
                             cell.setCellValue(prefix + uuidPart.toUpperCase());
                             break;
@@ -71,6 +72,15 @@ public class ExcelGen {
                         case "PLATE":
                             cell.setCellValue("ABC-" + (1000 + random.nextInt(9000)));
                             break;
+                        case "NUM":
+                            int num = (int) ruleConfig.getOrDefault("length", 5);
+                            String millisStr = String.valueOf(System.currentTimeMillis());
+                            String trimmed = millisStr.substring(millisStr.length() - num);
+                            double number = Double.parseDouble(trimmed); // ✅ Convert to actual number
+                            cell.setCellValue(number); // ✅ Sets as numeric cell
+                            break;
+
+
                         case "COORDINATES":
                             double cord = 24 + random.nextDouble();
                             cell.setCellValue(cord);
@@ -82,16 +92,16 @@ public class ExcelGen {
             }
 
             // Write updated Excel
-            FileOutputStream fos = new FileOutputStream(outputPath);
+            FileOutputStream fos = new FileOutputStream(templatePath);
             workbook.write(fos);
             fos.close();
             workbook.close();
             fis.close();
-            if (!outputPath.endsWith(".xlsx")) {
-                outputPath = outputPath + ".xlsx";
+            if (!templatePath.endsWith(".xlsx")) {
+                templatePath = templatePath + ".xlsx";
             }
 
-            return outputPath;
+            return templatePath;
 
         } catch (Exception e) {
             e.printStackTrace();
