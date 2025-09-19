@@ -11,7 +11,7 @@ import java.util.Map;
 
 import java.time.Duration;
 import java.util.stream.Collectors;
-import java.util.LinkedHashMap; // Import added for LinkedHashMap
+import java.util.LinkedHashMap;
 
 public class Main {
 
@@ -78,6 +78,10 @@ public class Main {
                     downloadExcel(driver, screenName, stringParams);
                     uploadFile(driver, updatedFile);
                     break;
+                case "DOWNLOAD_ONLY":
+                    downloadExcel(driver, screenName, stringParams);
+                    break;
+
 
                 default:
                     System.out.println("❌ Unknown mode: " + mode);
@@ -119,10 +123,16 @@ public class Main {
                 element.sendKeys(value);
                 Thread.sleep(500);
 
-                WebElement item = wait.until(ExpectedConditions.elementToBeClickable(
-                        By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + value + "')])[1]")
-                ));
-                item.click();
+                if (!value.matches("\\d{4}-\\d{2}-\\d{2}")) {  //if value is date ignore dropdown
+                    try {
+                        WebElement item = wait.until(ExpectedConditions.elementToBeClickable(
+                                By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + value + "')])[1]")
+                        ));
+                        item.click();
+                    } catch (TimeoutException e) {
+                        System.out.println("⚠️ No dropdown item found for: " + value + " (skipped)");
+                    }
+                }
 
             } catch (Exception e) {
                 // Catching a broader exception might be safer for various wait/element issues
@@ -132,7 +142,7 @@ public class Main {
 
         System.out.println("⬇ Downloading Excel for: " + screenName);
         driver.findElement(By.xpath("//button[contains(text(),'Download Excel')]")).click();
-        Thread.sleep(1000); // Increased sleep time slightly to ensure download starts
+        Thread.sleep(500); // Increased sleep time slightly to ensure download starts
 
         try {
             String successMsg = driver.findElement(By.id("notify_text_success")).getText();

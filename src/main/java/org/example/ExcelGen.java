@@ -1,9 +1,5 @@
 package org.example;
-
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
 import org.apache.poi.ss.usermodel.*;
-import com.fasterxml.jackson.core.type.TypeReference;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
 import java.io.*;
@@ -79,8 +75,10 @@ public class ExcelGen {
                             double number = Double.parseDouble(trimmed); // ✅ Convert to actual number
                             cell.setCellValue(number); // ✅ Sets as numeric cell
                             break;
-
-
+                        case "DATE":
+                            String formattedDate = java.time.LocalDate.now().toString(); // "yyyy-MM-dd"
+                            cell.setCellValue(formattedDate); // stored as string
+                            break;
                         case "COORDINATES":
                             double cord = 24 + random.nextDouble();
                             cell.setCellValue(cord);

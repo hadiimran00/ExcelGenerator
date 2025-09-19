@@ -65,7 +65,14 @@ public class ExcelLoader {
             String screenName = row.getCell(0).getStringCellValue();
             String columnName = row.getCell(1).getStringCellValue();
             String type = row.getCell(2).getStringCellValue();
-            int length = (int) row.getCell(3).getNumericCellValue();
+            int length;
+            Cell lengthCell = row.getCell(3);
+            if (lengthCell != null && lengthCell.getCellType() == CellType.NUMERIC) {
+                length = (int) lengthCell.getNumericCellValue();
+            } else {
+                length = 0;
+            }
+
             String prefix = row.getCell(4) != null ? row.getCell(4).getStringCellValue() : "";
 
             screens.stream()
