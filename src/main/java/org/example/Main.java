@@ -165,7 +165,7 @@ public class Main {
                 WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id(paramId)));
 
                 System.out.println("-> Filling field ID: [" + paramId + "] with Value: [" + value + "]");
-
+                Thread.sleep(500);
                 element.clear();
                 element.sendKeys(value);
                 Thread.sleep(500); // Small pause for UI to react
