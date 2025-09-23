@@ -9,16 +9,25 @@ import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-
 import java.io.File;
+import java.io.FileInputStream;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Properties;
 import java.util.stream.Collectors;
+import org.openqa.selenium.WebDriver;
+
 
 public class Main {
+
+    public static int upTestPassed = 0;
+    public static int upTestFailed = 0;
+    public static int downTestPassed = 0;
+    public static int downTestFailed = 0;
+
 
     public static void main(String[] args) throws Exception {
         WebDriverManager.chromedriver().setup();
@@ -39,11 +48,24 @@ public class Main {
 
 
             System.out.println("\n=== Test Running for User: " + username + " ===");
-
             ChromeOptions options = new ChromeOptions();
-           // options.addArguments("--headless=new"); // Uncomment to run without opening a browser window
-            WebDriver driver = new ChromeDriver(options);
+            //Reading from applicatiom.properties
+            Properties properties = new Properties();
+            try (FileInputStream fis = new FileInputStream("Resources/application.properties")) {
+                properties.load(fis);
+            }
+            // Get the 'headless' property
+            boolean isHeadless = Boolean.parseBoolean(properties.getProperty("selenium.headless", "false"));
 
+            if(isHeadless) {
+
+                //For headless
+                options.addArguments("--headless=new"); // Uncomment to run without opening a browser window
+                options.addArguments("--window-size=1920x1080");  // Set a larger window size for headless mode
+                options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36");
+            }
+
+            WebDriver driver = new ChromeDriver(options);
             driver.manage().window().maximize();
             driver.get(url);
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
@@ -90,17 +112,19 @@ public class Main {
                                 ));
                     }
 
-                    // Robustly check and open the search menu if needed
+                    // check and open the search menu if needed
+                    WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+
                     try {
-                        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
-                        wait.until(ExpectedConditions.visibilityOfElementLocated(
-                                By.cssSelector("input[placeholder='Search Here']")));
+                        // Try to find the search input
+                        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[placeholder='Search Here']")));
                     } catch (TimeoutException e) {
-                        driver.findElement(By.id("menurollin")).click();
-                        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
-                        wait.until(ExpectedConditions.visibilityOfElementLocated(
-                                By.cssSelector("input[placeholder='Search Here']")));
+                        // If not found, click the menu and retry
+                        wait.until(ExpectedConditions.elementToBeClickable(By.id("menurollin"))).click();
+                        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[placeholder='Search Here']")));
                     }
+
+
 
                     System.out.println("\n==============================================================");
                     System.out.println("          🚀 Processing Screen: " + screenName + " 🚀          ");
@@ -141,11 +165,16 @@ public class Main {
                     System.out.println("⏩ Skipping screen: " + screenName + " (execute=" + execute + ")");
                 }
             }
+
             driver.quit();
         }
+        System.out.println("\n=== Test Finished ===");
+        System.out.println("Upload Tests Passed  ---> " + upTestPassed);
+        System.out.println("Upload Tests Failed  ---> " + upTestFailed );
+        System.out.println("Download Tests Passed --> " + downTestPassed);
+        System.out.println("Download Tests Failed --> " + downTestFailed );
     }
-    public int upTestPassed = 0;
-    public int upTestFailed = 0;
+
 
     private static void uploadFile(WebDriver driver, String filePath) throws InterruptedException {
 
@@ -162,14 +191,16 @@ public class Main {
         if (!successMsgList.isEmpty() && successMsgList.get(0).isDisplayed()) {
             WebElement successMsg = successMsgList.get(0);
             System.out.println("✅ Success: " + successMsg.getText());
+            upTestPassed++;
 
         } else {
+            upTestFailed++;
             // Check for error message
 
             List<WebElement> errorMsgList = driver.findElements(By.id("notify_text_error"));
             if (!errorMsgList.isEmpty() && errorMsgList.get(0).isDisplayed()) {
                 WebElement errorMsg = errorMsgList.get(0);
-                System.out.println("❌ Download Failed! " + errorMsg.getText());
+                System.out.println("❌ Upload Failed! " + errorMsg.getText());
             } else {
                 System.out.println("❌ Could not find notification message.");
             }
@@ -214,13 +245,13 @@ public class Main {
 
         WebElement downloadBtn = driver.findElement(By.xpath("//button[contains(text(),'Download Excel')]"));
 
-// Move to element to scroll into view only if needed
+        // Move to element to scroll into view only if needed
         Actions actions = new Actions(driver);
         actions.moveToElement(downloadBtn).perform();
 
         downloadBtn.click();
 
-// Wait a bit for messages to appear
+        // Wait a bit for messages to appear
         Thread.sleep(1000);
 
         List<WebElement> successMsgList = driver.findElements(By.id("notify_text_success"));
@@ -229,12 +260,13 @@ public class Main {
             String text = successMsg.getText();
             if (text.contains("File downloaded successfully")) {
                 System.out.println("✅ Success: " + text);
+                downTestPassed++;
 
             } else {
                 System.out.println("⚠️ Unexpected message: " + text);
             }
         } else {
-
+            downTestFailed++;
             List<WebElement> errorMsgList = driver.findElements(By.id("notify_text_error"));
             if (!errorMsgList.isEmpty() && errorMsgList.get(0).isDisplayed()) {
                 WebElement errorMsg = errorMsgList.get(0);
