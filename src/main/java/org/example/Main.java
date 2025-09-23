@@ -101,6 +101,7 @@ public class Main {
                     WebElement search = driver.findElement(By.cssSelector("input[placeholder='Search Here']"));
                     search.clear();
                     search.sendKeys(screenName);
+                    Thread.sleep(500);
 
                     driver.findElement(By.id(screenId)).click();
 
