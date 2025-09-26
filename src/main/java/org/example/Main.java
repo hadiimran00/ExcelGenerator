@@ -108,7 +108,7 @@ public class Main {
 
 
                 if (execute.isBlank() || execute.equalsIgnoreCase("y")) {
-                    System.out.println("\n ▶ Executing Screen: " + screenName);
+                    
 
                     @SuppressWarnings("unchecked")
                     Map<String, Object> params = (Map<String, Object>) screen.get("params");
