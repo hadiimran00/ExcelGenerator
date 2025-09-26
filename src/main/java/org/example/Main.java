@@ -3,20 +3,20 @@ package org.example;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import java.io.File;
-import java.io.FileInputStream;
+
+import java.io.*;
+import java.nio.file.Files;
 import java.nio.file.Paths;
+import java.text.SimpleDateFormat;
 import java.time.Duration;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.stream.Collectors;
 import org.openqa.selenium.WebDriver;
 
@@ -54,6 +54,16 @@ public class Main {
             try (FileInputStream fis = new FileInputStream("Resources/application.properties")) {
                 properties.load(fis);
             }
+            String relativeDownloadDir = properties.getProperty("downloadedExcels", "DownloadedExcels");
+            String downloadDir = Paths.get(System.getProperty("user.dir"), relativeDownloadDir)
+                    .toAbsolutePath()
+                    .toString();
+
+            HashMap<String, Object> chromePrefs = new HashMap<>();
+            chromePrefs.put("download.default_directory", downloadDir);
+            chromePrefs.put("profile.default_content_setting_values.automatic_downloads", 1);
+            options.setExperimentalOption("prefs", chromePrefs);
+
             // Get the 'headless' property
             boolean isHeadless = Boolean.parseBoolean(properties.getProperty("selenium.headless", "false"));
 
@@ -73,9 +83,9 @@ public class Main {
 
             WebDriver driver = new ChromeDriver(options);
             driver.manage().window().maximize();
+            driver.manage().window().setSize(new Dimension(1920, 1080));
             driver.get(url);
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
-
             // --- Login ---
             driver.findElement(By.id("a3")).sendKeys(username);
             driver.findElement(By.id("a4")).sendKeys(password);
@@ -174,11 +184,20 @@ public class Main {
 
             driver.quit();
         }
-        System.out.println("\n=== Test Finished ===");
-        System.out.println("Upload Tests Passed  ---> " + upTestPassed);
-        System.out.println("Upload Tests Failed  ---> " + upTestFailed );
-        System.out.println("Download Tests Passed --> " + downTestPassed);
-        System.out.println("Download Tests Failed --> " + downTestFailed );
+        try (PrintWriter writer = new PrintWriter("summary.txt")) {
+            writer.println("=== Test Finished ===");
+            writer.println("Upload Tests Passed  ---> " + upTestPassed);
+            writer.println("Upload Tests Failed  ---> " + upTestFailed);
+            writer.println("Download Tests Passed --> " + downTestPassed);
+            writer.println("Download Tests Failed --> " + downTestFailed);
+        }
+
+// Append a general run completion note
+        try (FileWriter writer = new FileWriter("summary.txt", true)) {
+            writer.write("Automation run completed successfully!\n");
+        }
+
+
     }
 
 
@@ -190,7 +209,7 @@ public class Main {
         Thread.sleep(500);
 
         // Wait for notification instead of sleeping
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+       // WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
 // Check for success message
         List<WebElement> successMsgList = driver.findElements(By.id("notify_text_success"));
@@ -214,7 +233,7 @@ public class Main {
 
     }
 
-    private static void downloadExcel(WebDriver driver, String screenName, Map<String, String> params) throws InterruptedException {
+    private static void downloadExcel(WebDriver driver, String screenName, Map<String, String> params) throws InterruptedException, IOException {
         for (Map.Entry<String, String> field : params.entrySet()) {
             String paramId = field.getKey();
             String value = field.getValue();
@@ -248,6 +267,8 @@ public class Main {
 
         System.out.println("⬇ Downloading Excel for: " + screenName);
         Thread.sleep(1000);
+        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+        FileUtils.copyFile(screenshot, new File("D:\\JAR\\Resources\\screenshot.png"));
 
         WebElement downloadBtn = driver.findElement(By.xpath("//button[contains(text(),'Download Excel')]"));
 
