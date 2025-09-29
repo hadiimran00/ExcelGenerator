@@ -17,6 +17,7 @@ import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.*;
+import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import org.openqa.selenium.WebDriver;
 
@@ -37,6 +38,11 @@ public class Main {
                 new File("Resources/users.json"),
                 new TypeReference<>() {}
         );
+        try (PrintWriter writer = new PrintWriter("summary.txt")) {
+            writer.print(""); // This will empty the file
+        }
+
+
 
         for (Map<String, String> user : users) {
             String username = user.get("username");
@@ -67,7 +73,7 @@ public class Main {
             // Get the 'headless' property
             boolean isHeadless = Boolean.parseBoolean(properties.getProperty("selenium.headless", "false"));
 
-            if(isHeadless) {
+            if (isHeadless) {
 
                 //For headless
                 options.addArguments("--headless=new"); // Uncomment to run without opening a browser window
@@ -87,10 +93,14 @@ public class Main {
             driver.get(url);
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
             // --- Login ---
-            driver.findElement(By.id("a3")).sendKeys(username);
-            driver.findElement(By.id("a4")).sendKeys(password);
-            driver.findElement(By.cssSelector("button[type='submit']")).click();
-
+            try {
+                driver.findElement(By.id("a3")).sendKeys(username);
+                driver.findElement(By.id("a4")).sendKeys(password);
+                driver.findElement(By.cssSelector("button[type='submit']")).click();
+            } catch (Exception e) {
+                takeScreenshot(driver);
+                throw new RuntimeException(e);
+            }
             List<Map<String, Object>> screens = ExcelLoader.loadScreens(configPath);
 
             for (Map<String, Object> screen : screens) {
@@ -103,12 +113,12 @@ public class Main {
                 String screenId = (String) screen.get("screenId");
                 String mode = (String) screen.get("mode");
                 String templatePath = (String) screen.get("templatePath");
-                String rootPath = System.getProperty("user.dir") +"\\"+resourcesFolder ;
+                String rootPath = System.getProperty("user.dir") + "\\" + resourcesFolder;
                 templatePath = Paths.get(rootPath, templatePath).toString();
 
 
                 if (execute.isBlank() || execute.equalsIgnoreCase("y")) {
-                    
+
 
                     @SuppressWarnings("unchecked")
                     Map<String, Object> params = (Map<String, Object>) screen.get("params");
@@ -132,14 +142,21 @@ public class Main {
                     WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
                     try {
-                        // Try to find the search input
-                        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[placeholder='Search Here']")));
-                    } catch (TimeoutException e) {
-                        // If not found, click the menu and retry
-                        wait.until(ExpectedConditions.elementToBeClickable(By.id("menurollin"))).click();
-                        wait.until(ExpectedConditions.visibilityOfElementLocated(By.cssSelector("input[placeholder='Search Here']")));
+                        // First attempt: directly wait for search input
+                        wait.until(ExpectedConditions.visibilityOfElementLocated(
+                                By.cssSelector("input[placeholder='Search Here']")));
+                    } catch (TimeoutException e1) {
+                        try {
+                            // Second attempt: click menu and retry
+                            wait.until(ExpectedConditions.elementToBeClickable(By.id("menurollin"))).click();
+                            wait.until(ExpectedConditions.visibilityOfElementLocated(
+                                    By.cssSelector("input[placeholder='Search Here']")));
+                        } catch (TimeoutException e2) {
+                            // If both fail → take screenshot
+                            takeScreenshot(driver);
+                            throw e2; // rethrow so test fails
+                        }
                     }
-
 
 
                     System.out.println("\n==============================================================");
@@ -176,25 +193,38 @@ public class Main {
                             System.out.println("❌ Unknown mode: " + mode);
                     }
 
-                    driver.findElement(By.id("menurollin")).click();
+                    //  driver.findElement(By.id("menurollin")).click();
+                    robustClick(driver, By.id("menurollin"));
                 } else {
                     System.out.println("⏩ Skipping screen: " + screenName + " (execute=" + execute + ")");
                 }
             }
 
             driver.quit();
-        }
-        try (PrintWriter writer = new PrintWriter("summary.txt")) {
-            writer.println("=== Test Finished ===");
-            writer.println("Upload Tests Passed  ---> " + upTestPassed);
-            writer.println("Upload Tests Failed  ---> " + upTestFailed);
-            writer.println("Download Tests Passed --> " + downTestPassed);
-            writer.println("Download Tests Failed --> " + downTestFailed);
+
+            // writing summary
+            try (PrintWriter writer = new PrintWriter(new FileWriter("summary.txt", true))) {
+                writer.println("=== Test Finished for User: " + username + " ===");
+                writer.println("Upload Tests Total  -----> " + (upTestPassed + upTestFailed));
+                writer.println("Upload Tests Passed ---> " + upTestPassed);
+                writer.println("Upload Tests Failed ---> " + upTestFailed);
+                writer.println("Download Tests Total -----> " + (downTestPassed + downTestFailed));
+                writer.println("Download Tests Passed --> " + downTestPassed);
+                writer.println("Download Tests Failed --> " + downTestFailed);
+                writer.println();
+            }
+            //for resetting old values
+            upTestPassed = 0;
+            upTestFailed = 0;
+            downTestPassed = 0;
+            downTestFailed = 0;
+
+
         }
 
 // Append a general run completion note
         try (FileWriter writer = new FileWriter("summary.txt", true)) {
-            writer.write("Automation run completed successfully!\n");
+            writer.write("\n Automation run completed successfully!\n");
         }
 
 
@@ -213,7 +243,7 @@ public class Main {
 
 // Check for success message
         List<WebElement> successMsgList = driver.findElements(By.id("notify_text_success"));
-        if (!successMsgList.isEmpty() && successMsgList.get(0).isDisplayed()) {
+        if (!successMsgList.isEmpty() && successMsgList.get(0).isDisplayed() && successMsgList.get(0).getText().contains("File upload successful")) {
             WebElement successMsg = successMsgList.get(0);
             System.out.println("✅ Success: " + successMsg.getText());
             upTestPassed++;
@@ -221,7 +251,7 @@ public class Main {
         } else {
             upTestFailed++;
             // Check for error message
-
+            takeScreenshot(driver);
             List<WebElement> errorMsgList = driver.findElements(By.id("notify_text_error"));
             if (!errorMsgList.isEmpty() && errorMsgList.get(0).isDisplayed()) {
                 WebElement errorMsg = errorMsgList.get(0);
@@ -255,8 +285,10 @@ public class Main {
                                 By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + value + "')])[1]")
                         ));
                         item.click();
+
                     } catch (TimeoutException e) {
-                        System.out.println("⚠️ No dropdown item found for: " + value + " (This may be okay for non-dropdown fields)");
+                        takeScreenshot(driver);
+                        System.out.println("⚠️ No dropdown item found for: " + value + " (This may be data issue. Please check your config file.)");
                     }
                 }
 
@@ -267,33 +299,41 @@ public class Main {
 
         System.out.println("⬇ Downloading Excel for: " + screenName);
         Thread.sleep(1000);
-        File screenshot = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
-        FileUtils.copyFile(screenshot, new File("D:\\JAR\\Resources\\screenshot.png"));
 
-        WebElement downloadBtn = driver.findElement(By.xpath("//button[contains(text(),'Download Excel')]"));
+      WebElement downloadBtn = null;
+        try {
+            downloadBtn = driver.findElement(By.xpath("//button[contains(text(),'Download Excel')]"));
+            downloadBtn.click();
+
+        } catch (Exception e) {
+            try {
+                robustClick(driver, By.id("downloadExcel"));
+            } catch (Exception ex) {
+                System.out.println(ex.getMessage());
+            }
+        }
+
 
         // Move to element to scroll into view only if needed
-        Actions actions = new Actions(driver);
-        actions.moveToElement(downloadBtn).perform();
-
-        downloadBtn.click();
+//        Actions actions = new Actions(driver);
+//        actions.moveToElement(downloadBtn).perform();
+//
+//        downloadBtn.click();
 
         // Wait a bit for messages to appear
         Thread.sleep(1000);
 
         List<WebElement> successMsgList = driver.findElements(By.id("notify_text_success"));
-        if (!successMsgList.isEmpty() && successMsgList.get(0).isDisplayed()) {
+        if (!successMsgList.isEmpty() && successMsgList.get(0).isDisplayed() && successMsgList.get(0).getText().contains("File downloaded successfully") ) {
             WebElement successMsg = successMsgList.get(0);
             String text = successMsg.getText();
-            if (text.contains("File downloaded successfully")) {
                 System.out.println("✅ Success: " + text);
                 downTestPassed++;
 
-            } else {
-                System.out.println("⚠️ Unexpected message: " + text);
-            }
+
         } else {
             downTestFailed++;
+            takeScreenshot(driver);
             List<WebElement> errorMsgList = driver.findElements(By.id("notify_text_error"));
             if (!errorMsgList.isEmpty() && errorMsgList.get(0).isDisplayed()) {
                 WebElement errorMsg = errorMsgList.get(0);
@@ -306,4 +346,52 @@ public class Main {
 
 
     }
+
+
+    /**
+     * Waits for an element to be clickable, scrolls it into view, and uses a JS click as a fallback.
+     * This is highly robust for headless and CI/CD environments.
+     */
+    private static void robustClick(WebDriver driver, By locator) {
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        try {
+            WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript("arguments[0].scrollIntoView({block: 'center'});", element);
+            element.click();
+        } catch (Exception e) {
+            //System.out.println("⚠️ Standard click failed, attempting JS click for locator: " + locator);
+            try {
+                WebElement element = driver.findElement(locator); // Re-find to avoid stale element
+                ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+            } catch (Exception jsException) {
+                takeScreenshot(driver);
+                System.out.println("❌ Both standard and JS click failed for locator: " + locator);
+                throw jsException; // Re-throw the exception to fail the test
+            }
+        }
+    }
+
+
+    /**
+     * Takes a screenshot on failure and saves it to a 'screenshots' directory.
+     */
+    private static void takeScreenshot(WebDriver driver) {
+        File screenshotsDir = new File("screenshots");
+        if (!screenshotsDir.exists()) {
+            screenshotsDir.mkdirs();
+        }
+        String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS").format(new Date());
+
+        String fileName = "ErrorScreenshot_" + timestamp + ".png";
+        try {
+            File screenshotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
+            FileUtils.copyFile(screenshotFile, new File(screenshotsDir, fileName));
+            System.out.println("📸 Screenshot captured: " + fileName);
+        } catch (Exception e) {
+            System.out.println("❌ Failed to take screenshot: " + e.getMessage());
+        }
+    }
+
+
 }
