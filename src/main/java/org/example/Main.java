@@ -204,13 +204,21 @@ public class Main {
 
             // writing summary
             try (PrintWriter writer = new PrintWriter(new FileWriter("summary.txt", true))) {
-                writer.println("=== Test Finished for User: " + username + " ===");
-                writer.println("Upload Tests Total  -----> " + (upTestPassed + upTestFailed));
-                writer.println("Upload Tests Passed ---> " + upTestPassed);
-                writer.println("Upload Tests Failed ---> " + upTestFailed);
-                writer.println("Download Tests Total -----> " + (downTestPassed + downTestFailed));
-                writer.println("Download Tests Passed --> " + downTestPassed);
-                writer.println("Download Tests Failed --> " + downTestFailed);
+                writer.println("============================================");
+                writer.println("            TEST FINISHED FOR USER: " + username);
+                writer.println("============================================");
+
+                writer.printf("%-25s : %d%n", " Upload Tests Total", upTestPassed + upTestFailed);
+                writer.printf("%-25s : %d%n", " Upload Tests Passed", upTestPassed);
+                writer.printf("%-25s : %d%n", " Upload Tests Failed", upTestFailed);
+
+                writer.println("--------------------------------------------");
+
+                writer.printf("%-25s : %d%n", " Download Tests Total", downTestPassed + downTestFailed);
+                writer.printf("%-25s : %d%n", " Download Tests Passed", downTestPassed);
+                writer.printf("%-25s : %d%n", " Download Tests Failed", downTestFailed);
+
+                writer.println("============================================");
                 writer.println();
             }
             //for resetting old values
