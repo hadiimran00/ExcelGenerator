@@ -1,4 +1,4 @@
-package org.example;
+package org.example.ui;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -7,17 +7,14 @@ import org.apache.commons.io.FileUtils;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
-import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.*;
-import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.*;
-import java.util.NoSuchElementException;
 import java.util.stream.Collectors;
 import org.openqa.selenium.WebDriver;
 
@@ -29,13 +26,15 @@ public class Main {
     public static int downTestPassed = 0;
     public static int downTestFailed = 0;
 
-
     public static void main(String[] args) throws Exception {
+
+        cleanFolders();
+
         WebDriverManager.chromedriver().setup();
 
         ObjectMapper mapper = new ObjectMapper();
         List<Map<String, String>> users = mapper.readValue(
-                new File("Resources/users.json"),
+                new File("users.json"),
                 new TypeReference<>() {}
         );
         try (PrintWriter writer = new PrintWriter("summary.txt")) {
@@ -51,13 +50,14 @@ public class Main {
             String config = user.get("configPath");
             String resourcesFolder = user.get("resourcesFolder");
             String configPath = resourcesFolder + "\\" + config;
+            String country=user.get("country");
 
 
             System.out.println("\n=== Test Running for User: " + username + " ===");
             ChromeOptions options = new ChromeOptions();
             //Reading from applicatiom.properties
             Properties properties = new Properties();
-            try (FileInputStream fis = new FileInputStream("Resources/application.properties")) {
+            try (FileInputStream fis = new FileInputStream("application.properties")) {
                 properties.load(fis);
             }
             String relativeDownloadDir = properties.getProperty("downloadedExcels", "DownloadedExcels");
@@ -174,21 +174,22 @@ public class Main {
                     driver.findElement(By.id(screenId)).click();
 
                     switch (mode) {
-                        case "UPLOAD_ONLY":
+                        case "DOWNLOAD_UPLOAD":
                             downloadExcel(driver, screenName, stringParams);
                             uploadFile(driver, templatePath);
                             break;
 
-                        case "UPLOAD_WITH_CHANGES":
+                        case "DOWNLOAD_UPDATE_UPLOAD":
                             String updatedFile = ExcelGen.generateExcel(templatePath, rules);
                             downloadExcel(driver, screenName, stringParams);
                             uploadFile(driver, updatedFile);
                             break;
-
                         case "DOWNLOAD_ONLY":
                             downloadExcel(driver, screenName, stringParams);
                             break;
-
+                        case "UPLOAD_ONLY":
+                            uploadFile(driver, templatePath);
+                            break;
                         default:
                             System.out.println("❌ Unknown mode: " + mode);
                     }
@@ -204,9 +205,9 @@ public class Main {
 
             // writing summary
             try (PrintWriter writer = new PrintWriter(new FileWriter("summary.txt", true))) {
-                writer.println("============================================");
-                writer.println("            TEST FINISHED FOR USER: " + username);
-                writer.println("============================================");
+                writer.println("==================================================");
+                writer.println("            TEST FINISHED FOR COUNTRY: " + country );
+                writer.println("==================================================");
 
                 writer.printf("%-25s : %d%n", " Upload Tests Total", upTestPassed + upTestFailed);
                 writer.printf("%-25s : %d%n", " Upload Tests Passed", upTestPassed);
@@ -221,6 +222,7 @@ public class Main {
                 writer.println("============================================");
                 writer.println();
             }
+
             //for resetting old values
             upTestPassed = 0;
             upTestFailed = 0;
@@ -240,11 +242,16 @@ public class Main {
 
 
     private static void uploadFile(WebDriver driver, String filePath) throws InterruptedException {
+try {
+    System.out.println("⬆ Uploading: " + filePath);
+    Thread.sleep(500);
+    WebElement fileInput = driver.findElement(By.cssSelector("input[type='file']"));
+    fileInput.sendKeys(filePath);
+    Thread.sleep(500);
+}catch (Exception e) {
+    takeScreenshot(driver);
+}
 
-        System.out.println("⬆ Uploading: " + filePath);
-        WebElement fileInput = driver.findElement(By.cssSelector("input[type='file']"));
-        fileInput.sendKeys(filePath);
-        Thread.sleep(500);
 
         // Wait for notification instead of sleeping
        // WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
@@ -401,5 +408,26 @@ public class Main {
         }
     }
 
+    private static void cleanFolders() {
+        // Download folder
+        String downloadDir = Paths.get(System.getProperty("user.dir"), "DownloadedExcels").toAbsolutePath().toString();
+        clearDirectory(downloadDir);
 
+        // Screenshot folder
+        String screenshotDir = Paths.get(System.getProperty("user.dir"), "Screenshots").toAbsolutePath().toString();
+        clearDirectory(screenshotDir);
+    }
+
+    private static void clearDirectory(String dirPath) {
+        File dir = new File(dirPath);
+        if (!dir.exists()) dir.mkdirs(); // create if not exists
+        File[] files = dir.listFiles();
+        if (files == null) return;
+        for (File f : files) {
+            try {
+                f.delete();
+            } catch (Exception ignored) {
+            }
+        }
+    }
 }
