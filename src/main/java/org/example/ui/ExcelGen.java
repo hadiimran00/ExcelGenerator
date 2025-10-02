@@ -1,6 +1,4 @@
-package org.example;
-
-import com.fasterxml.jackson.databind.ObjectMapper;
+package org.example.ui;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
 
@@ -9,11 +7,15 @@ import java.util.*;
 
 public class ExcelGen {
 
-    public static String generateExcel(String templatePath, String outputPath, String rulesJsonPath) {
+    public static String generateExcel(String templatePath,  Map<String, Map<String, Object>> columnRules) {
         try {
-            // Read JSON rules
-            ObjectMapper mapper = new ObjectMapper();
-            Map<String, Map<String, Object>> columnRules = mapper.readValue(new File(rulesJsonPath), Map.class);
+            System.out.println(columnRules);
+           // ObjectMapper mapper = new ObjectMapper();
+
+//            // Convert JsonNode → Map
+//            Map<String, Map<String, Object>> columnRules =
+//                    mapper.convertValue(rules, new TypeReference<>() {
+//                    });
 
             // Open Excel template
             FileInputStream fis = new FileInputStream(templatePath);
@@ -49,7 +51,7 @@ public class ExcelGen {
                     switch (type) {
                         case "UUID":
                             int length = (int) ruleConfig.getOrDefault("length", 8);
-                            String prefix = (String) ruleConfig.getOrDefault("prefix", "AUTO");
+                            String prefix = (String) ruleConfig.getOrDefault("prefix", "");
                            String uuidPart = UUID.randomUUID().toString().replaceAll("-", "").substring(0, length);
                             cell.setCellValue(prefix + uuidPart.toUpperCase());
                             break;
@@ -66,10 +68,20 @@ public class ExcelGen {
                         case "PLATE":
                             cell.setCellValue("ABC-" + (1000 + random.nextInt(9000)));
                             break;
+                        case "NUM":
+                            int num = (int) ruleConfig.getOrDefault("length", 5);
+                            String millisStr = String.valueOf(System.currentTimeMillis());
+                            String trimmed = millisStr.substring(millisStr.length() - num);
+                            double number = Double.parseDouble(trimmed); // ✅ Convert to actual number
+                            cell.setCellValue(number); // ✅ Sets as numeric cell
+                            break;
+                        case "DATE":
+                            String formattedDate = java.time.LocalDate.now().toString(); // "yyyy-MM-dd"
+                            cell.setCellValue(formattedDate); // stored as string
+                            break;
                         case "COORDINATES":
-                            double lat = 24 + random.nextDouble();
-                            double lon = 67 + random.nextDouble();
-                            cell.setCellValue(lat + "," + lon);
+                            double cord = 24 + random.nextDouble();
+                            cell.setCellValue(cord);
                             break;
                         default:
                             cell.setCellValue(type); // literal value if needed
@@ -78,16 +90,16 @@ public class ExcelGen {
             }
 
             // Write updated Excel
-            FileOutputStream fos = new FileOutputStream(outputPath);
+            FileOutputStream fos = new FileOutputStream(templatePath);
             workbook.write(fos);
             fos.close();
             workbook.close();
             fis.close();
-            if (!outputPath.endsWith(".xlsx")) {
-                outputPath = outputPath + ".xlsx";
+            if (!templatePath.endsWith(".xlsx")) {
+                templatePath = templatePath + ".xlsx";
             }
 
-            return outputPath;
+            return templatePath;
 
         } catch (Exception e) {
             e.printStackTrace();
