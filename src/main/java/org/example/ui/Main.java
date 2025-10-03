@@ -242,21 +242,22 @@ public class Main {
 
 
     private static void uploadFile(WebDriver driver, String filePath) throws InterruptedException {
-try {
-    System.out.println("⬆ Uploading: " + filePath);
-    Thread.sleep(500);
-    WebElement fileInput = driver.findElement(By.cssSelector("input[type='file']"));
-    fileInput.sendKeys(filePath);
-    Thread.sleep(500);
-}catch (Exception e) {
-    takeScreenshot(driver);
-}
+        try {
+            System.out.println("⬆ Uploading: " + filePath);
+            Thread.sleep(1000);
+            WebElement fileInput = driver.findElement(By.cssSelector("input[type='file']"));
+            fileInput.sendKeys(filePath);
+            Thread.sleep(500);
+        } catch (Exception e) {
+            takeScreenshot(driver);
+        }
 
 
         // Wait for notification instead of sleeping
        // WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
 // Check for success message
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
         List<WebElement> successMsgList = driver.findElements(By.id("notify_text_success"));
         if (!successMsgList.isEmpty() && successMsgList.get(0).isDisplayed() && successMsgList.get(0).getText().contains("File upload successful")) {
             WebElement successMsg = successMsgList.get(0);
@@ -268,15 +269,34 @@ try {
             // Check for error message
             takeScreenshot(driver);
             List<WebElement> errorMsgList = driver.findElements(By.id("notify_text_error"));
-            if (!errorMsgList.isEmpty() && errorMsgList.get(0).isDisplayed()) {
+            if (!errorMsgList.isEmpty() && errorMsgList.get(0).isDisplayed() && errorMsgList.get(0).getText().contains("Error while processing excel file, file downloaded.")) {
                 WebElement errorMsg = errorMsgList.get(0);
                 System.out.println("❌ Upload Failed! " + errorMsg.getText());
+
+                //checking for error file downlaoded
+                File downloadDir = new File(System.getProperty("user.dir"), "DownloadedExcels");
+                File[] files = downloadDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx"));
+                if (files != null && files.length > 0) {
+                    // Pick the latest downloaded file
+                    File latestFile = Arrays.stream(files)
+                             .max(Comparator.comparingLong(File::lastModified))
+                            .orElse(null);
+
+                    if (latestFile != null && latestFile.length() > 0) {
+                        System.out.println("📂 Found error file: " + latestFile.getName());
+                        logExcelErrors(latestFile);
+                    }
+                }
+            } else if (!errorMsgList.isEmpty() && errorMsgList.get(0).isDisplayed()) {
+                WebElement errorMsg = errorMsgList.get(0);
+                System.out.println("❌ Upload Failed! " + errorMsg.getText());
+
             } else {
                 System.out.println("❌ Could not find notification message.");
             }
-        }
 
-    }
+        }}
+
 
     private static void downloadExcel(WebDriver driver, String screenName, Map<String, String> params) throws InterruptedException, IOException {
         for (Map.Entry<String, String> field : params.entrySet()) {
@@ -288,7 +308,7 @@ try {
                 WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id(paramId)));
 
                 System.out.println("-> Filling field ID: [" + paramId + "] with Value: [" + value + "]");
-                Thread.sleep(500);
+                Thread.sleep(1000);
                 element.clear();
                 element.sendKeys(value);
                 Thread.sleep(500); // Small pause for UI to react
@@ -343,8 +363,21 @@ try {
             WebElement successMsg = successMsgList.get(0);
             String text = successMsg.getText();
                 System.out.println("✅ Success: " + text);
-                downTestPassed++;
+            File downloadDir = new File(System.getProperty("user.dir"), "DownloadedExcels");
+            File[] files = downloadDir.listFiles((dir, name) ->
+                    name.toLowerCase().endsWith(".xlsx") || name.toLowerCase().endsWith(".csv"));
 
+                // Pick the latest downloaded file
+                File latestFile = Arrays.stream(files)
+                        .max(Comparator.comparingLong(File::lastModified))
+                        .orElse(null);
+
+                if (latestFile != null && latestFile.length() > 0) {
+                    System.out.println("📂 Found file: " + latestFile.getName());
+                    downTestPassed++;
+                }else {
+                    System.out.println("❌ Downloaded File not found!");
+                }
 
         } else {
             downTestFailed++;
@@ -430,4 +463,43 @@ try {
             }
         }
     }
-}
+private static void logExcelErrors(File excelFile) {
+    try (FileInputStream fis = new FileInputStream(excelFile);
+         Workbook workbook = WorkbookFactory.create(fis)) {
+
+        Sheet sheet = workbook.getSheetAt(0); // assuming first sheet
+        int errorColIndex = -1;
+
+        // Find "Error Message" column index
+        Row headerRow = sheet.getRow(0);
+        for (Cell cell : headerRow) {
+            if ("Error Message".equalsIgnoreCase(cell.getStringCellValue().trim())) {
+                errorColIndex = cell.getColumnIndex();
+                break;
+            }
+        }
+
+        if (errorColIndex == -1) {
+            System.out.println("⚠️ No 'Error Message' column found in " + excelFile.getName());
+            return;
+        }
+
+        // Print all error messages
+        System.out.println("🔍 Excel Validation Errors:");
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (row != null) {
+                Cell errorCell = row.getCell(errorColIndex);
+                if (errorCell != null) {
+                    String errorMsg = errorCell.toString().trim();
+                    if (!errorMsg.isEmpty()) {
+                        System.out.println("   ❌ Row " + (i + 1) + ": " + errorMsg);
+                    }
+                }
+            }
+        }
+
+    } catch (Exception e) {
+        System.out.println("❌ Failed to read error Excel file: " + e.getMessage());
+    }
+}}
