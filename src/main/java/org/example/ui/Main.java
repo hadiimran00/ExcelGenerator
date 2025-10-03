@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
+import org.apache.poi.ss.usermodel.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
@@ -254,7 +255,7 @@ public class Main {
 
 
         // Wait for notification instead of sleeping
-       // WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        // WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
 
 // Check for success message
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
@@ -347,14 +348,6 @@ public class Main {
                 System.out.println(ex.getMessage());
             }
         }
-
-
-        // Move to element to scroll into view only if needed
-//        Actions actions = new Actions(driver);
-//        actions.moveToElement(downloadBtn).perform();
-//
-//        downloadBtn.click();
-
         // Wait a bit for messages to appear
         Thread.sleep(1000);
 
