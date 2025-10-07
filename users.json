@@ -1,0 +1,38 @@
+[
+  {
+    "username": "kpo_ph",
+    "password": "Cent@123",
+    "url": "https://dcodecnr2dev1.unilever.com/ngui",
+    "resourcesFolder": "ResourcesPH",
+    "configPath": "configPH.xlsx",
+    "country": "Philippines",
+    "execute": "yes"
+  },
+  {
+    "username": "kpo_SLV",
+    "password": "Cent@123",
+    "url": "https://dcodecnr2dev1.unilever.com/ngui",
+    "resourcesFolder": "ResourcesTH",
+    "configPath": "configTH.xlsx",
+    "country": "Thailand",
+    "execute": "no"
+  },
+  {
+    "username": "kpo_mp",
+    "password": "Cent@123",
+    "url": "https://dcodecnr1dev1.unilever.com/ngui",
+    "resourcesFolder": "ResourcesPK",
+    "configPath": "configPK.xlsx",
+    "country": "Pakistan",
+    "execute": "yes"
+  },
+  {
+    "username": "kpo_bangla",
+    "password": "Cent@123",
+    "url": "https://dcodecnr1dev1.unilever.com/ngui",
+    "resourcesFolder": "ResourcesPK",
+    "configPath": "configPK.xlsx",
+    "country": "Bangladesh",
+    "execute": "no"
+  }
+]
