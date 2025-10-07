@@ -54,9 +54,16 @@ public class Main {
             String resourcesFolder = user.get("resourcesFolder");
             String configPath = resourcesFolder + "\\" + config;
             String country = user.get("country");
+            String executeUser = user.get("execute");
+
+            if (executeUser.equalsIgnoreCase("no")) {
+                System.out.println(" ");
+                System.out.println("⏩ Skipping user: " + username + " (execute= NO)");
+                continue; // skip this user, move to next
+            }
 
 
-            System.out.println("\n=== Test Running for User: " + username + " ===");
+
             ChromeOptions options = new ChromeOptions();
             //Reading from applicatiom.properties
             Properties properties = new Properties();
@@ -75,7 +82,7 @@ public class Main {
 
             // Get the 'headless' property
             boolean isHeadless = Boolean.parseBoolean(properties.getProperty("selenium.headless", "false"));
-
+            WebDriver driver;
             if (isHeadless) {
 
                 //For headless
@@ -86,15 +93,15 @@ public class Main {
 
 // Set a larger window size for headless mode
                 options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36");
-                WebDriver driver = new ChromeDriver(options);
-                driver.manage().window().setSize(new Dimension(1920, 1080));
             }
 
-            WebDriver driver = new ChromeDriver(options);
-            driver.manage().window().maximize();
+            driver = new ChromeDriver(options);
+          //  driver.manage().window().maximize();
             driver.manage().window().setSize(new Dimension(1920, 1080));
             driver.get(url);
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+
+            System.out.println("\n=== Test Running for User: " + username + " ===");
             // --- Login ---
             try {
                 driver.findElement(By.id("a3")).sendKeys(username);

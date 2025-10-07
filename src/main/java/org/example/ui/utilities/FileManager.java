@@ -127,15 +127,18 @@ public class FileManager {
         // Wait a bit for messages to appear
         Thread.sleep(1000);
 
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
-        try {
-            wait.until(ExpectedConditions.or(
-                    ExpectedConditions.visibilityOfElementLocated(By.id("notify_text_success")),
-                    ExpectedConditions.visibilityOfElementLocated(By.id("notify_text_error"))
-            ));
-        } catch (TimeoutException ignored)
-        { System.out.println("❌ Notification not found!");
-        }
+//        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+//        try {
+//            wait.until(ExpectedConditions.or(
+//                    ExpectedConditions.visibilityOfElementLocated(By.id("notify_text_success")),
+//                    ExpectedConditions.visibilityOfElementLocated(By.id("notify_text_error"))
+//            ));
+//        } catch (TimeoutException ignored)
+//        {
+//                if (downloadBtn != null) { //for click again
+//                    downloadBtn.click();
+//                }
+//        }
 
         List<WebElement> successMsgList = driver.findElements(By.id("notify_text_success"));
         if (!successMsgList.isEmpty() && successMsgList.get(0).isDisplayed() && successMsgList.get(0).getText().contains("File downloaded successfully")) {

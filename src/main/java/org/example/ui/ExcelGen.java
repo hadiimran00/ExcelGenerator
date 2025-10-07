@@ -83,6 +83,27 @@ public class ExcelGen {
                             double cord = 24 + random.nextDouble();
                             cell.setCellValue(cord);
                             break;
+                        case "NIC":
+                            String nanoTimeStr = String.valueOf(System.nanoTime());
+
+                            // Use the last 13 digits for the required format (5 + 7 + 1 = 13)
+                            int requiredLength = 13;
+                            int start = Math.max(0, nanoTimeStr.length() - requiredLength);
+                            String last13Digits = nanoTimeStr.substring(start);
+
+                            // Ensure we have exactly 13 digits (pad with '0' if nanoTime was short, though unlikely)
+                            while (last13Digits.length() < requiredLength) {
+                                last13Digits = "0" + last13Digits;
+                            }
+
+                            // Apply the format XXXXX-XXXXXXX-X
+                            String part1 = last13Digits.substring(0, 5);    // First 5 digits
+                            String part2 = last13Digits.substring(5, 12);   // Next 7 digits
+                            String part3 = last13Digits.substring(12, 13);  // Last 1 digit
+
+                            cell.setCellValue(part1 + "-" + part2 + "-" + part3);
+                            break;
+
                         default:
                             cell.setCellValue(type); // literal value if needed
                     }
