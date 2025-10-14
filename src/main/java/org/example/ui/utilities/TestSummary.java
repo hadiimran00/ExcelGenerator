@@ -93,11 +93,11 @@ public class TestSummary {
             }
         }
 
-    // === Reset Counters ===
-    public static void resetTestCounter() {
-        upTestPassed = 0;
-        upTestFailed = 0;
-        downTestPassed = 0;
-        downTestFailed = 0;
+        public static void resetTestCounter() {
+            downloadSuccess = 0;
+            downloadFailure = 0;
+            uploadSuccess = 0;
+            uploadFailure = 0;
+            screenResults.clear();
+        }
     }
-}
