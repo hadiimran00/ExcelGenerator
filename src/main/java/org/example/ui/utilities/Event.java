@@ -1,5 +1,7 @@
 package org.example.ui.utilities;
 
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -10,6 +12,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 
 public class Event {
+    private static final Logger logger = LoggerUtil.getLogger(LoggerUtil.class);
     /**
      * Waits for an element to be clickable, scrolls it into view, and uses a JS click as a fallback.
      * This is highly robust for headless and CI/CD environments.
@@ -28,9 +31,10 @@ public class Event {
                 ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
             } catch (Exception jsException) {
                 ScreenshotService.takeScreenshot(driver);
-                System.out.println("❌ Both standard and JS click failed for locator: " + locator);
+                logger.error("❌ Both standard and JS click failed for locator: {}", locator);
                 throw jsException; // Re-throw the exception to fail the test
             }
         }
     }
 }
+

@@ -1,0 +1,41 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<Configuration status="WARN">
+    <!-- Define properties for log file paths -->
+    <Properties>
+        <Property name="log-path">logs</Property>
+    </Properties>
+
+    <!-- Define appenders -->
+    <Appenders>
+        <!-- Console Appender: Outputs logs to the console -->
+        <Console name="Console" target="SYSTEM_OUT">
+            <PatternLayout pattern="%d{yyyy-MM-dd HH:mm:ss} %-5level %logger{36} - %msg%n"/>
+        </Console>
+
+        <!-- RollingFile Appender: Writes logs to a file with daily rollover -->
+        <RollingFile name="RollingFile" fileName="${log-path}/app.log"
+                     filePattern="${log-path}/app-%d{yyyy-MM-dd}-%i.log.gz"
+                     append="false">
+            <PatternLayout pattern="%msg%n"/>
+            <Policies>
+                <TimeBasedTriggeringPolicy interval="1" modulate="true"/>
+                <SizeBasedTriggeringPolicy size="10MB"/>
+            </Policies>
+            <DefaultRolloverStrategy max="7">
+                <Delete basePath="${log-path}">
+                    <IfFileName regex="app-\d{4}-\d{2}-\d{2}-\d{1,2}\.log\.gz"/>
+                    <IfLastModified age="P7D"/>
+                </Delete>
+            </DefaultRolloverStrategy>
+        </RollingFile>
+    </Appenders>
+
+    <!-- Define loggers -->
+    <Loggers>
+        <!-- Root logger configuration -->
+        <Root level="info">
+            <AppenderRef ref="Console"/>
+            <AppenderRef ref="RollingFile"/>
+        </Root>
+    </Loggers>
+</Configuration>

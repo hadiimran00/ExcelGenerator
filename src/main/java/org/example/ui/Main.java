@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.Logger;
 import org.apache.poi.ss.usermodel.*;
 import org.example.ui.utilities.*;
 import org.openqa.selenium.*;
@@ -27,11 +28,13 @@ import static org.example.ui.utilities.TestSummary.*;
 
 
 public class Main {
+    private static final Logger logger = LoggerUtil.getLogger(LoggerUtil.class);
 
 
     public static void main(String[] args) throws Exception {
 
         DirectoryCleaner.cleanFolders();
+        clearSummaryFile();
 
         WebDriverManager.chromedriver().setup();
 
@@ -57,8 +60,9 @@ public class Main {
             String executeUser = user.get("execute");
 
             if (executeUser.equalsIgnoreCase("no")) {
-                System.out.println(" ");
-                System.out.println("⏩ Skipping user: " + username + " (execute= NO)");
+                logger.info(" ");
+                logger.info("⏩ Skipping user: {} (execute= NO)", username);
+
                 continue; // skip this user, move to next
             }
 
@@ -101,7 +105,10 @@ public class Main {
             driver.get(url);
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
 
-            System.out.println("\n=== Test Running for User: " + username + " ===");
+            logger.info("=======================================================================");
+            logger.info("🔍 Running Tests for User: {} | Country: {}", username, country);
+            logger.info("=======================================================================");
+
             // --- Login ---
             try {
                 driver.findElement(By.id("a3")).sendKeys(username);
@@ -158,7 +165,9 @@ public class Main {
                     } catch (TimeoutException e1) {
                         try {
                             // Second attempt: click menu and retry
-                            wait.until(ExpectedConditions.elementToBeClickable(By.id("menurollin"))).click();
+                            wait.until(ExpectedConditions.elementToBeClickable(By.id("menurollin")));
+                            Event.robustClick(driver, By.id("menurollin"));
+
                             wait.until(ExpectedConditions.visibilityOfElementLocated(
                                     By.cssSelector("input[placeholder='Search Here']")));
                         } catch (TimeoutException e2) {
@@ -169,11 +178,10 @@ public class Main {
                     }
 
 
-                    System.out.println("\n==============================================================");
-                    System.out.println("          🚀 Processing Screen: " + screenName + " 🚀          ");
-                    System.out.println("==============================================================\n");
-
-                    System.out.println("Mode: " + mode);
+                    logger.info("==============================================================");
+                    logger.info("          🚀 Processing Screen: {} 🚀          ", screenName);
+                    logger.info("==============================================================");
+                    logger.info("Mode: {}", mode);
 
                     // Navigate to the screen
                     WebElement search = driver.findElement(By.cssSelector("input[placeholder='Search Here']"));
@@ -186,28 +194,28 @@ public class Main {
                     switch (mode) {
                         case "DOWNLOAD_UPLOAD":
                             FileManager.downloadExcel(driver, screenName, stringParams);
-                            FileManager.uploadFile(driver, templatePath);
+                            FileManager.uploadFile(driver,screenName, templatePath);
                             break;
 
                         case "DOWNLOAD_UPDATE_UPLOAD":
                             String updatedFile = ExcelGen.generateExcel(templatePath, rules);
                             FileManager.downloadExcel(driver, screenName, stringParams);
-                            FileManager.uploadFile(driver, updatedFile);
+                            FileManager.uploadFile(driver, screenName,updatedFile);
                             break;
                         case "DOWNLOAD_ONLY":
                             FileManager.downloadExcel(driver, screenName, stringParams);
                             break;
                         case "UPLOAD_ONLY":
-                            FileManager.uploadFile(driver, templatePath);
+                            FileManager.uploadFile(driver,screenName, templatePath);
                             break;
                         default:
-                            System.out.println("❌ Unknown mode: " + mode);
+                            logger.info("❌ Unknown mode: {} " , mode);
                     }
 
                     //  driver.findElement(By.id("menurollin")).click();
                     Event.robustClick(driver, By.id("menurollin"));
                 } else {
-                    System.out.println("⏩ Skipping screen: " + screenName + " (execute=" + execute + ")");
+                    logger.info("⏩ Skipping screen: {} (execute={})", screenName, execute);
                 }
             }
 
@@ -218,7 +226,9 @@ public class Main {
             resetTestCounter();
             }
 
-            //for resetting old values
+        closeSummaryHtml();
+
+        logger.info("=== Test Run Completed! ===");
 
         }
     }

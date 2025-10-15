@@ -1,6 +1,7 @@
 package org.example.ui.utilities;
 
 import org.apache.commons.io.FileUtils;
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
@@ -10,6 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ScreenshotService {
+    private static final Logger logger = LoggerUtil.getLogger(LoggerUtil.class);
     public static void takeScreenshot(WebDriver driver) {
         File screenshotsDir = new File("screenshots");
         if (!screenshotsDir.exists()) {
@@ -21,9 +23,9 @@ public class ScreenshotService {
         try {
             File screenshotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
             FileUtils.copyFile(screenshotFile, new File(screenshotsDir, fileName));
-            System.out.println("📸 Screenshot captured: " + fileName);
+            logger.info("📸 Screenshot captured: {}" , fileName);
         } catch (Exception e) {
-            System.out.println("❌ Failed to take screenshot: " + e.getMessage());
+            logger.info("❌ Failed to take screenshot: {} " , e.getMessage());
         }
     }
 }

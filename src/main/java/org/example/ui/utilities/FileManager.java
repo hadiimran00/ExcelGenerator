@@ -1,5 +1,6 @@
 package org.example.ui.utilities;
 
+import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
@@ -22,34 +23,38 @@ import static org.example.ui.utilities.ScreenshotService.takeScreenshot;
 import static org.example.ui.utilities.TestSummary.*;
 
 public class FileManager {
-    public static void uploadFile(WebDriver driver, String filePath) throws InterruptedException {
+    private static final Logger logger = LoggerUtil.getLogger(LoggerUtil.class);
+
+    public static void uploadFile(WebDriver driver,String screenName, String filePath) throws InterruptedException {
         try {
-            System.out.println("⬆ Uploading: " + filePath);
+            logger.info("⬆ Uploading: {}", filePath);
             Thread.sleep(1000);
             WebElement fileInput = driver.findElement(By.cssSelector("input[type='file']"));
             fileInput.sendKeys(filePath);
-            Thread.sleep(500);
+            Thread.sleep(1500);
         } catch (Exception e) {
             takeScreenshot(driver);
         }
 
 // Check for success message
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+     //   WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
         List<WebElement> successMsgList = driver.findElements(By.id("notify_text_success"));
-        if (!successMsgList.isEmpty() && successMsgList.get(0).isDisplayed() && successMsgList.get(0).getText().contains("File upload successful")) {
+        if (!successMsgList.isEmpty() && successMsgList.get(0).getText().contains("File upload successful")) {
             WebElement successMsg = successMsgList.get(0);
-            System.out.println("✅ Success: " + successMsg.getText());
-            recordUploadSuccess();
+            logger.info("✅ Success: {}", successMsg.getText());
+            recordUploadSuccess(screenName);
 
         } else {
-            recordUploadFailure();
+
 
             // Check for error message
             takeScreenshot(driver);
             List<WebElement> errorMsgList = driver.findElements(By.id("notify_text_error"));
-            if (!errorMsgList.isEmpty() && errorMsgList.get(0).isDisplayed() && errorMsgList.get(0).getText().contains("Error while processing excel file, file downloaded.")) {
+            if (!errorMsgList.isEmpty() && errorMsgList.get(0).getText().contains("Error while processing excel file, file downloaded.")) {
                 WebElement errorMsg = errorMsgList.get(0);
-                System.out.println("❌ Upload Failed! " + errorMsg.getText());
+                logger.info("❌ Upload Failed! {} ",  errorMsg.getText());
+
+                recordUploadFailure(screenName,errorMsg.getText());
 
                 //checking for error file downlaoded
                 File downloadDir = new File(System.getProperty("user.dir"), "DownloadedExcels");
@@ -61,16 +66,19 @@ public class FileManager {
                             .orElse(null);
 
                     if (latestFile != null && latestFile.length() > 0) {
-                        System.out.println("📂 Found error file: " + latestFile.getName());
+                        logger.info("📂 Found error file: {} ", latestFile.getName());
                         logExcelErrors(latestFile);
                     }
                 }
             } else if (!errorMsgList.isEmpty() && errorMsgList.get(0).isDisplayed()) {
                 WebElement errorMsg = errorMsgList.get(0);
-                System.out.println("❌ Upload Failed! " + errorMsg.getText());
+                logger.info("❌ Upload Failed! {} ", errorMsg.getText());
+                recordUploadFailure(screenName,errorMsg.getText());
 
             } else {
-                System.out.println("❌ Could not find notification message.");
+                String message = "❌ Could not find notification message.";
+                logger.info(message);
+                recordUploadFailure(screenName, message);
             }
 
         }}
@@ -84,7 +92,7 @@ public class FileManager {
             try {
                 WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id(paramId)));
 
-                System.out.println("-> Filling field ID: [" + paramId + "] with Value: [" + value + "]");
+                logger.info("-> Filling field ID: [{}] with Value: [{}]", paramId, value);
                 Thread.sleep(1000);
                 element.clear();
                 element.sendKeys(value);
@@ -100,16 +108,18 @@ public class FileManager {
 
                     } catch (TimeoutException e) {
                         takeScreenshot(driver);
-                        System.out.println("⚠️ No dropdown item found for: " + value + " (This may be data issue. Please check your config file.)");
+                        logger.info("⚠️ No dropdown item found for: {} (This may be data issue. Please check your config file.)", value);
+
                     }
                 }
 
             } catch (Exception e) {
-                System.out.println("❌ Could not process element: " + paramId + " with value " + value + ". Error: " + e.getMessage());
+                logger.info("❌ Could not process element: {} with value {}. Error: {}", paramId, value, e.getMessage());
+
             }
         }
 
-        System.out.println("⬇ Downloading Excel for: " + screenName);
+        logger.info("⬇ Downloading Excel for: {} ", screenName);
         Thread.sleep(1000);
 
         WebElement downloadBtn = null;
@@ -121,7 +131,7 @@ public class FileManager {
             try {
                 Event.robustClick(driver, By.id("downloadExcel"));
             } catch (Exception ex) {
-                System.out.println(ex.getMessage());
+                logger.info(ex.getMessage());
             }
         }
         // Wait a bit for messages to appear
@@ -140,11 +150,18 @@ public class FileManager {
 //                }
 //        }
 
+//        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
+//
+//        wait.until(ExpectedConditions.or(
+//                ExpectedConditions.visibilityOfElementLocated(By.id("notify_text_success")),
+//                ExpectedConditions.visibilityOfElementLocated(By.id("notify_text_error"))
+//        ));
+
         List<WebElement> successMsgList = driver.findElements(By.id("notify_text_success"));
-        if (!successMsgList.isEmpty() && successMsgList.get(0).isDisplayed() && successMsgList.get(0).getText().contains("File downloaded successfully")) {
+        if (!successMsgList.isEmpty() && successMsgList.get(0).getText().contains("File downloaded successfully")) {
             WebElement successMsg = successMsgList.get(0);
             String text = successMsg.getText();
-            System.out.println("✅ Success: " + text);
+            logger.info("✅ Success: {}", text);
             File downloadDir = new File(System.getProperty("user.dir"), "DownloadedExcels");
             File[] files = downloadDir.listFiles((dir, name) ->
                     name.toLowerCase().endsWith(".xlsx") || name.toLowerCase().endsWith(".csv"));
@@ -155,24 +172,27 @@ public class FileManager {
                     .orElse(null);
 
             if (latestFile != null && latestFile.length() > 0) {
-                System.out.println("📂 Found file: " + latestFile.getName());
-                recordDownloadSuccess();
+                logger.info("📂 Found file: {}", latestFile.getName());
+                recordDownloadSuccess(screenName);
             } else {
-                System.out.println("❌ Downloaded File not found!");
+                logger.info("❌ Downloaded File not found!");
             }
 
-        } else {
-            recordDownloadFailure();
+            } else {
+            WebElement errorMsg = null;
             takeScreenshot(driver);
             List<WebElement> errorMsgList = driver.findElements(By.id("notify_text_error"));
             if (!errorMsgList.isEmpty() && errorMsgList.get(0).isDisplayed()) {
-                WebElement errorMsg = errorMsgList.get(0);
-                System.out.println("❌ Download Failed! " + errorMsg.getText());
+                errorMsg = errorMsgList.get(0);
+                logger.info("❌ Download Failed! {}", errorMsg.getText());
+                recordDownloadFailure(screenName, errorMsg.getText());
             } else {
-                System.out.println("❌ Could not find notification message.");
+                String message = "❌ Could not find notification message.";
+                logger.info(message);
+                recordDownloadFailure(screenName, message);
+
             }
         }
-
 
     }
 }

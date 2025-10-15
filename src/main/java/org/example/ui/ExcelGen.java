@@ -1,16 +1,22 @@
 package org.example.ui;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.example.ui.utilities.LoggerUtil;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.util.*;
 
 public class ExcelGen {
 
-    public static String generateExcel(String templatePath,  Map<String, Map<String, Object>> columnRules) {
+    private static final Logger logger = LoggerFactory.getLogger(LoggerUtil.class);
+
+    public static String generateExcel(String templatePath, Map<String, Map<String, Object>> columnRules) {
         try {
-            System.out.println(columnRules);
-           // ObjectMapper mapper = new ObjectMapper();
+            logger.info("Column Rules: {}", columnRules);
+
+            // ObjectMapper mapper = new ObjectMapper();
 
 //            // Convert JsonNode → Map
 //            Map<String, Map<String, Object>> columnRules =
@@ -70,11 +76,22 @@ public class ExcelGen {
                             break;
                         case "NUM":
                             int num = (int) ruleConfig.getOrDefault("length", 5);
-                            String millisStr = String.valueOf(System.currentTimeMillis());
-                            String trimmed = millisStr.substring(millisStr.length() - num);
-                            double number = Double.parseDouble(trimmed); // ✅ Convert to actual number
-                            cell.setCellValue(number); // ✅ Sets as numeric cell
+                            StringBuilder randomNum = new StringBuilder();
+                            Random rand = new Random();
+                            // first digit: 1–9 (avoid leading zero)
+                            randomNum.append(rand.nextInt(9) + 1);
+                            // remaining digits: 0–9
+                            for (int j = 1; j < num; j++) {
+                                randomNum.append(rand.nextInt(10));
+                            }
+                            // if length <= 15, safe to store as number, else store as text
+                            if (num <= 15) {
+                                cell.setCellValue(Double.parseDouble(randomNum.toString()));
+                            } else {
+                                cell.setCellValue(randomNum.toString()); // store as text for long numbers
+                            }
                             break;
+
                         case "DATE":
                             String formattedDate = java.time.LocalDate.now().toString(); // "yyyy-MM-dd"
                             cell.setCellValue(formattedDate); // stored as string
@@ -124,7 +141,7 @@ public class ExcelGen {
 
         } catch (Exception e) {
             e.printStackTrace();
-            System.out.println("Failed to generate Excel: " + e.getMessage());
+            logger.error("Failed to generate Excel: {}", e.getMessage(), e);
             return null;
         }
     }
