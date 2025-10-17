@@ -105,9 +105,9 @@ public class Main {
             driver.get(url);
             driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
 
-            logger.info("=======================================================================");
+            logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
             logger.info("🔍 Running Tests for User: {} | Country: {}", username, country);
-            logger.info("=======================================================================");
+            logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
 
             // --- Login ---
             try {
