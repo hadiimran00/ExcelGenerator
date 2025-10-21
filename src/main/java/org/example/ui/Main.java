@@ -208,6 +208,14 @@ public class Main {
                         case "UPLOAD_ONLY":
                             FileManager.uploadFile(driver,screenName, templatePath);
                             break;
+                        case "PEP":
+                            //special case for product exclusion policy(PEP)
+                            WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id("row_1_description")));
+                            element.click();
+
+                            FileManager.downloadExcel(driver, screenName, stringParams);
+                            FileManager.uploadFile(driver,screenName, templatePath);
+                            break;
                         default:
                             logger.info("❌ Unknown mode: {} " , mode);
                     }
