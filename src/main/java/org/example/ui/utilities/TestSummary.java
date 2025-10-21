@@ -15,7 +15,7 @@ public class TestSummary {
     static Properties properties = new Properties();
     static String sharedPath;
     static String DateTime = java.time.LocalDateTime.now()
-            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss"));
+            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a"));
 
     static {
         try {
