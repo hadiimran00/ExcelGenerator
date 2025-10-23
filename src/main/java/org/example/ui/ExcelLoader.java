@@ -13,27 +13,28 @@ public class ExcelLoader {
         FileInputStream fis = new FileInputStream(configPath);
         Workbook workbook = new XSSFWorkbook(fis);
 
-        // --- Screens Sheet (generic header-based reader) ---
+        // --- Screens Sheet ---
         Sheet screensSheet = workbook.getSheet("Screens");
         List<String> headers = getHeaders(screensSheet.getRow(0));
 
         for (int i = 1; i <= screensSheet.getLastRowNum(); i++) {
             Row row = screensSheet.getRow(i);
-            if (row == null) continue; // skip empty row object
+            if (row == null) continue;
 
-            // Check if first column (screenName) is blank → skip
-            Cell screenNameCell = row.getCell(0);
-            if (screenNameCell == null || screenNameCell.toString().trim().isEmpty()) {
-                continue;
-            }
+            Cell idCell = row.getCell(0); // testID column (assumed first)
+            if (idCell == null || idCell.toString().trim().isEmpty()) continue;
 
+            String testID = idCell.toString().trim();
             Map<String, Object> screen = new LinkedHashMap<>();
+
             for (int j = 0; j < headers.size(); j++) {
                 Cell cell = row.getCell(j);
                 String value = (cell == null) ? "" : cell.toString().trim();
                 screen.put(headers.get(j), value);
             }
 
+            // Ensure testID key always exists
+            screen.put("testID", testID);
             screens.add(screen);
         }
 
@@ -43,14 +44,15 @@ public class ExcelLoader {
             Row row = paramsSheet.getRow(i);
             if (row == null) continue;
 
-            String screenName = row.getCell(0).getStringCellValue();
-            String key = row.getCell(1).getStringCellValue();
-            String value = row.getCell(2).getStringCellValue();
+            String testID = row.getCell(0).getStringCellValue();
+            String key = row.getCell(2).getStringCellValue();
+            String value = row.getCell(3).getStringCellValue();
 
             screens.stream()
-                    .filter(s -> s.get("screenName").equals(screenName))
+                    .filter(s -> s.get("testID").equals(testID))
                     .forEach(s -> {
-                        Map<String, String> params = (Map<String, String>) s.getOrDefault("params", new LinkedHashMap<>());
+                        Map<String, String> params =
+                                (Map<String, String>) s.getOrDefault("params", new LinkedHashMap<>());
                         params.put(key, value);
                         s.put("params", params);
                     });
@@ -63,21 +65,21 @@ public class ExcelLoader {
             Row row = rulesSheet.getRow(i);
             if (row == null) continue;
 
-            String screenName = row.getCell(0).getStringCellValue();
-            String columnName = row.getCell(1).getStringCellValue();
-            String type = row.getCell(2).getStringCellValue();
+            String testID = row.getCell(0).getStringCellValue();
+            String columnName = row.getCell(2).getStringCellValue();
+            String type = row.getCell(3).getStringCellValue();
             int length;
-            Cell lengthCell = row.getCell(3);
+            Cell lengthCell = row.getCell(4);
             if (lengthCell != null && lengthCell.getCellType() == CellType.NUMERIC) {
                 length = (int) lengthCell.getNumericCellValue();
             } else {
                 length = 0;
             }
 
-            String prefix = row.getCell(4) != null ? row.getCell(4).getStringCellValue() : "";
+            String prefix = row.getCell(5) != null ? row.getCell(5).getStringCellValue() : "";
 
             screens.stream()
-                    .filter(s -> s.get("screenName").equals(screenName))
+                    .filter(s -> s.get("testID").equals(testID))
                     .forEach(s -> {
                         Map<String, Map<String, Object>> rules =
                                 (Map<String, Map<String, Object>>) s.getOrDefault("rules", new LinkedHashMap<>());
@@ -95,7 +97,6 @@ public class ExcelLoader {
         return screens;
     }
 
-    // --- Utility to read headers from first row ---
     private static List<String> getHeaders(Row headerRow) {
         List<String> headers = new ArrayList<>();
         if (headerRow == null) return headers;
