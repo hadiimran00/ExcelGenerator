@@ -15,7 +15,6 @@ public class Event {
     private static final Logger logger = LoggerUtil.getLogger(LoggerUtil.class);
     /**
      * Waits for an element to be clickable, scrolls it into view, and uses a JS click as a fallback.
-     * This is highly robust for headless and CI/CD environments.
      */
     public static void robustClick(WebDriver driver, By locator) {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
