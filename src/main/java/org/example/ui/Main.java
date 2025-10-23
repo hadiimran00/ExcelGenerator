@@ -210,8 +210,9 @@ public class Main {
                             break;
                         case "PEP":
                             //special case for product exclusion policy(PEP)
-                            WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id("row_1_description")));
-                            element.click();
+//                            WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id("row_1_description")));
+//                            element.click();
+                            Event.robustClick(driver, By.id("row_1_description"));
 
                             FileManager.downloadExcel(driver, screenName, stringParams);
                             FileManager.uploadFile(driver,screenName, templatePath);
