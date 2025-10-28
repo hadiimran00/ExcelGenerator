@@ -197,29 +197,38 @@ public class Main {
                             FileManager.uploadFile(driver,screenName, templatePath);
                             break;
 
-                        case "DOWNLOAD_UPDATE_UPLOAD":
-                            String updatedFile = ExcelGen.generateExcel(templatePath, rules);
-                            FileManager.downloadExcel(driver, screenName, stringParams);
-                            FileManager.uploadFile(driver, screenName,updatedFile);
-                            break;
-                        case "DOWNLOAD_ONLY":
-                            FileManager.downloadExcel(driver, screenName, stringParams);
-                            break;
-                        case "UPLOAD_ONLY":
-                            FileManager.uploadFile(driver,screenName, templatePath);
-                            break;
-                        case "PEP":
-                            //special case for product exclusion policy(PEP)
-//                            WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id("row_1_description")));
-//                            element.click();
-                            Event.robustClick(driver, By.id("row_1_description"));
+                            case "DOWNLOAD_UPDATE_UPLOAD":
+                                updatedFile = ExcelGen.generateExcel(templatePath, rules);
+                                FileManager.downloadExcel(driver, screenName, stringParams);
+                                FileManager.uploadFile(driver, screenName, updatedFile);
+                                break;
 
-                            FileManager.downloadExcel(driver, screenName, stringParams);
-                            FileManager.uploadFile(driver,screenName, templatePath);
-                            break;
-                        default:
-                            logger.info("❌ Unknown mode: {} " , mode);
-                    }
+                            case "DOWNLOAD_ONLY":
+                                FileManager.downloadExcel(driver, screenName, stringParams);
+                                break;
+
+                            case "UPLOAD_ONLY":
+                                FileManager.uploadFile(driver, screenName, templatePath);
+                                break;
+
+                            case "PEP":
+                                //special case for Product exclusion policy
+                                Event.robustClick(driver, By.id("row_1_description"));
+                                FileManager.downloadExcel(driver, screenName, stringParams);
+                                FileManager.uploadFile(driver, screenName, templatePath);
+                                break;
+
+                            case "LMT":
+                                //special case for LMT/order bulk upload
+                                updatedFile = ExcelGen.generateExcel(templatePath, rules);
+                                FileManager.downloadExcel(driver, screenName, stringParams);
+                                FileManager.uploadFile(driver, screenName, updatedFile);
+                                validateCashmemo.validateCashmemoForLMT(driver, wait);
+                                break;
+
+                            default:
+                                logger.info("❌ Unknown mode: {}", mode);
+                        }
 
                     //  driver.findElement(By.id("menurollin")).click();
                     Event.robustClick(driver, By.id("menurollin"));
