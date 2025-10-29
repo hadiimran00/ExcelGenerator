@@ -11,7 +11,7 @@ import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ScreenshotService {
-    private static final Logger logger = LoggerUtil.getLogger(LoggerUtil.class);
+    private static final Logger logger = LoggerUtil.getLogger(ScreenshotService.class);
     public static void takeScreenshot(WebDriver driver) {
         File screenshotsDir = new File("screenshots");
         if (!screenshotsDir.exists()) {
