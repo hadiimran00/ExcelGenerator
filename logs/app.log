@@ -1,0 +1,41 @@
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+🔍 Running Tests for User: kpo_ph | Country: Philippines
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+⏩ Skipping screen: DSR Profile Bulk Upload (execute=n)
+⏩ Skipping screen: Product Enrichment Approval (execute=n)
+⏩ Skipping screen: Price Structure Excel (execute=n)
+⏩ Skipping screen: Locus Download (execute=n)
+⏩ Skipping screen: outlet creation upload (execute=n)
+⏩ Skipping screen: outlet change track excel (execute=n)
+⏩ Skipping screen: Section Bulk Upload (execute=n)
+⏩ Skipping screen: Distributor excel upload (execute=n)
+⏩ Skipping screen: Validation Excel Upload (execute=n)
+⏩ Skipping screen: upload base pack excel (execute=n)
+⏩ Skipping screen: Outlet Segment Mapping (execute=N)
+==============================================================
+🚀 Processing Screen: Product Exclusion Policy
+==============================================================
+Mode: PEP
+⬇ Downloading Excel for: Product Exclusion Policy 
+✅ Success: File downloaded successfully
+📂 Found file: ProductExlusionFile.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPH\ProductExclusionFile.xlsx
+✅ Upload process triggered successfully for: Product Exclusion Policy
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Product Exclusion Policy
+==============================================================
+Mode: PEP
+⬇ Downloading Excel for: Product Exclusion Policy 
+✅ Success: File downloaded successfully
+📂 Found file: ProductExlusionFile (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPH\ProductExclusionFile1.xlsx
+✅ Upload process triggered successfully for: Product Exclusion Policy
+✅ Success: File upload successful
+ 
+⏩ Skipping user: kpo_SLV (execute= NO)
+ 
+⏩ Skipping user: kpo_mp (execute= NO)
+ 
+⏩ Skipping user: kpo_bangla (execute= NO)
+=== ✅ Test Run Completed Successfully! ===
