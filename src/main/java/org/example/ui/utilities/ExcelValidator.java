@@ -7,7 +7,7 @@ import java.io.File;
 import java.io.FileInputStream;
 
 public class ExcelValidator {
-    private static final Logger logger = LoggerUtil.getLogger(LoggerUtil.class);
+    private static final Logger logger = LoggerUtil.getLogger(ExcelValidator.class);
     public static void logExcelErrors(File excelFile) {
         try (FileInputStream fis = new FileInputStream(excelFile);
              Workbook workbook = WorkbookFactory.create(fis)) {

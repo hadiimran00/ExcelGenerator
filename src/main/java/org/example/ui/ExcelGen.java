@@ -1,7 +1,6 @@
 package org.example.ui;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
-import org.example.ui.utilities.LoggerUtil;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -10,7 +9,7 @@ import java.util.*;
 
 public class ExcelGen {
 
-    private static final Logger logger = LoggerFactory.getLogger(LoggerUtil.class);
+    private static final Logger logger = LoggerFactory.getLogger(ExcelGen.class);
 
     public static String generateExcel(String templatePath, Map<String, Map<String, Object>> columnRules) {
         try {

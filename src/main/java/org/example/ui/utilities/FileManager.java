@@ -1,21 +1,14 @@
 package org.example.ui.utilities;
 
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.By;
-import org.openqa.selenium.TimeoutException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.io.File;
 import java.io.IOException;
 import java.time.Duration;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
-import java.util.Map;
-
+import java.util.*;
 
 
 import static org.example.ui.utilities.ExcelValidator.logExcelErrors;
@@ -23,7 +16,7 @@ import static org.example.ui.utilities.ScreenshotService.takeScreenshot;
 import static org.example.ui.utilities.TestSummary.*;
 
 public class FileManager {
-    private static final Logger logger = LoggerUtil.getLogger(LoggerUtil.class);
+    private static final Logger logger = LoggerUtil.getLogger(FileManager.class);
 
     public static void uploadFile(WebDriver driver,String screenName, String filePath) throws InterruptedException {
         try {
@@ -33,6 +26,7 @@ public class FileManager {
             fileInput.sendKeys(filePath);
             Thread.sleep(1500);
         } catch (Exception e) {
+            logger.info("❌ Upload failed on screen: {}", screenName, e);
             takeScreenshot(driver);
         }
 

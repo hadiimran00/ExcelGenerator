@@ -12,7 +12,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 
 public class Event {
-    private static final Logger logger = LoggerUtil.getLogger(LoggerUtil.class);
+    private static final Logger logger = LoggerUtil.getLogger(Event.class);
     /**
      * Waits for an element to be clickable, scrolls it into view, and uses a JS click as a fallback.
      */

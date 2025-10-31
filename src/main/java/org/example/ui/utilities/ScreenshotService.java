@@ -6,26 +6,32 @@ import org.openqa.selenium.OutputType;
 import org.openqa.selenium.TakesScreenshot;
 import org.openqa.selenium.WebDriver;
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class ScreenshotService {
     private static final Logger logger = LoggerUtil.getLogger(ScreenshotService.class);
+
     public static void takeScreenshot(WebDriver driver) {
         File screenshotsDir = new File("screenshots");
         if (!screenshotsDir.exists()) {
             screenshotsDir.mkdirs();
         }
-        String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS").format(new Date());
 
+        String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS").format(new Date());
         String fileName = "ErrorScreenshot_" + timestamp + ".png";
+
         try {
+            // Take screenshot
             File screenshotFile = ((TakesScreenshot) driver).getScreenshotAs(OutputType.FILE);
             FileUtils.copyFile(screenshotFile, new File(screenshotsDir, fileName));
             logger.info("📸 Screenshot captured: {}" , fileName);
         } catch (Exception e) {
-            logger.info("❌ Failed to take screenshot: {} " , e.getMessage());
+            logger.error("❌ Failed to take screenshot: {}", e.getMessage());
         }
     }
 }
