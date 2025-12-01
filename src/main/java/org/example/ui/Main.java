@@ -90,6 +90,8 @@ public class Main {
                 driver.get(url);
                 driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
 
+
+
                 logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
                 logger.info("🔍 Running Tests for User: {} | Country: {}", username, country);
                 logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
@@ -211,7 +213,7 @@ public class Main {
                 resetTestCounter();
 
             } catch (Exception e) {
-                logger.error("💥 Unexpected error for user: {} | Message: {}", username, e.getMessage(), e);
+                logger.info("💥 Unexpected error for user: {} | Message: {}", username, e.getMessage(), e);
                 if (driver != null) takeScreenshot(driver);
             } finally {
                 if (driver != null) {
