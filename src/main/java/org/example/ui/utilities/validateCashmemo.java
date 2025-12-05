@@ -37,7 +37,7 @@ public class validateCashmemo {
                         By.id("DDL__EORI_ERROR_STATUSPARENT")));
                 dropdown.click();
                 dropdown.clear();
-                dropdown.sendKeys("In Process");
+                dropdown.sendKeys("In Progress");
 
                 WebElement option = wait.until(ExpectedConditions.elementToBeClickable(
                         By.xpath("(//div[@id='dropdown-content']//*[contains(text(), 'In Process')])[1]")));
