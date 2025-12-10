@@ -40,7 +40,7 @@ public class validateCashmemo {
                 dropdown.sendKeys("In Progress");
 
                 WebElement option = wait.until(ExpectedConditions.elementToBeClickable(
-                        By.xpath("(//div[@id='dropdown-content']//*[contains(text(), 'In Process')])[1]")));
+                        By.xpath("(//div[@id='dropdown-content']//*[contains(text(), 'In Progress')])[1]")));
                 option.click();
             };
 
