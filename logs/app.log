@@ -1,39 +1,31 @@
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-🔍 Running Tests for User: kpo_ph | Country: Philippines
-^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-⏩ Skipping screen: DSR Profile Bulk Upload (execute=n)
-⏩ Skipping screen: Product Enrichment Approval (execute=n)
-⏩ Skipping screen: Price Structure Excel (execute=n)
-⏩ Skipping screen: Locus Download (execute=n)
-⏩ Skipping screen: outlet creation upload (execute=n)
-⏩ Skipping screen: outlet change track excel (execute=n)
-⏩ Skipping screen: Section Bulk Upload (execute=n)
-⏩ Skipping screen: Distributor excel upload (execute=n)
-⏩ Skipping screen: Validation Excel Upload (execute=n)
-⏩ Skipping screen: upload base pack excel (execute=n)
-⏩ Skipping screen: Outlet Segment Mapping (execute=N)
-==============================================================
-🚀 Processing Screen: Product Exclusion Policy
-==============================================================
-Mode: PEP
-⬇ Downloading Excel for: Product Exclusion Policy 
-✅ Success: File downloaded successfully
-📂 Found file: ProductExlusionFile.xlsx
-⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPH\ProductExclusionFile.xlsx
-✅ Upload process triggered successfully for: Product Exclusion Policy
-✅ Success: File upload successful
-==============================================================
-🚀 Processing Screen: Product Exclusion Policy
-==============================================================
-Mode: PEP
-⬇ Downloading Excel for: Product Exclusion Policy 
-✅ Success: File downloaded successfully
-📂 Found file: ProductExlusionFile (1).xlsx
-⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPH\ProductExclusionFile1.xlsx
-✅ Upload process triggered successfully for: Product Exclusion Policy
-✅ Success: File upload successful
  
-⏩ Skipping user: kpo_SLV (execute= NO)
+⏩ Skipping user: kpo_ph (execute= NO)
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+🔍 Running Tests for User: kpo_SLV | Country: Thailand
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+⏩ Skipping screen: DSR Profile Bulk Upload (execute=N)
+⏩ Skipping screen: Product Enrichment Approval (execute=N)
+⏩ Skipping screen: Price Structure Excel (execute=N)
+==============================================================
+🚀 Processing Screen: bulk order upload
+==============================================================
+Mode: LMT
+⬇ Downloading Excel for: bulk order upload 
+✅ Success: File downloaded successfully
+📂 Found file: LmtOrderCreationExcel.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesTH\LmtOrderCreationExcel.xlsx
+✅ Success: File upload successful
+❌ Validation Failed: PO Number already existsnull
+📸 Screenshot captured: ErrorScreenshot_2025-12-16_13-49-17-135.png
+⏩ Skipping screen: Locus Download (execute=N)
+⏩ Skipping screen: outlet creation upload (execute=N)
+⏩ Skipping screen: outlet change track excel (execute=N)
+⏩ Skipping screen: Section Bulk Upload (execute=N)
+⏩ Skipping screen: Distributor excel upload (execute=N)
+⏩ Skipping screen: Validation Excel Upload (execute=N)
+⏩ Skipping screen: upload base pack excel (execute=N)
+⏩ Skipping screen: Outlet Segment Mapping (execute=N)
+⏩ Skipping screen: Temporary Price Reduction (execute=N)
  
 ⏩ Skipping user: kpo_mp (execute= NO)
  

@@ -16,7 +16,7 @@ public class validateCashmemo {
 
     public static void validateCashmemoForLMT(WebDriver driver, WebDriverWait wait) {
 
-        String Tmessage = null;
+        String Tmessage=null;
         try {
 
             // ----- FUNCTION TO SELECT STATUS -----
@@ -65,8 +65,9 @@ public class validateCashmemo {
             // ----- VALIDATION SECTION -----
 
 
+            WebElement message = null;
             try {
-                WebElement message = wait.until(
+                message = wait.until(
                         ExpectedConditions.visibilityOfElementLocated(
                                 By.xpath("//td[normalize-space(text())='Cashmemo created successfully']")
                         )
@@ -77,9 +78,10 @@ public class validateCashmemo {
 
                 WebElement messageEl = wait.until(
                         ExpectedConditions.visibilityOfElementLocated(
-                                By.xpath("(//td[@id='row_1_message'])[2]")
+                                By.xpath("(//td[@id='row_1_message' and normalize-space()!=''])[2]")
                         )
                 );
+
                 Tmessage = messageEl.getText();
 
 
@@ -87,9 +89,16 @@ public class validateCashmemo {
                         ExpectedConditions.visibilityOfElementLocated(By.id("row_1_cashmemo_no_")));
                 String cashmemoNo = cashmemoNoEl.getText();
 
-                logger.info("✅ {} with Order No: {}",Tmessage, cashmemoNo);
+                logger.info("✅ {} with Order No: {}", Tmessage, cashmemoNo);
 
             } catch (TimeoutException e) {
+                WebElement messageEl = wait.until(
+                        ExpectedConditions.visibilityOfElementLocated(
+                                By.xpath("(//td[@id='row_1_message' and normalize-space()!=''])[2]")
+                        )
+                );
+
+                Tmessage = messageEl.getText();
                 logger.info("❌ Validation Failed: {}", Tmessage);
                 ScreenshotService.takeScreenshot(driver);
             }

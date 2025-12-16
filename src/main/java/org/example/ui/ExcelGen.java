@@ -5,6 +5,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
+import java.time.LocalDate;
 import java.util.*;
 
 public class ExcelGen {
@@ -92,8 +93,10 @@ public class ExcelGen {
                             break;
 
                         case "DATE":
-                            String formattedDate = java.time.LocalDate.now().toString(); // "yyyy-MM-dd"
-                            cell.setCellValue(formattedDate); // stored as string
+                            int num2 = (int) ruleConfig.getOrDefault("length", 0);
+                            LocalDate date = LocalDate.now().plusDays(num2);
+                            String formattedDate = date.toString(); // yyyy-MM-dd
+                            cell.setCellValue(formattedDate);
                             break;
                         case "COORDINATES":
                             double cord = 24 + random.nextDouble();

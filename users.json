@@ -6,16 +6,16 @@
     "resourcesFolder": "ResourcesPH",
     "configPath": "configPH.xlsx",
     "country": "Philippines",
-    "execute": "yes"
+    "execute": "NO"
   },
   {
     "username": "kpo_SLV",
     "password": "Cent@123",
-    "url": "https://dcodecnr2dev1.unilever.com/ngui",
+    "url": "https://dcodecnr2dev3.unilever.com/ngui",
     "resourcesFolder": "ResourcesTH",
     "configPath": "configTH.xlsx",
     "country": "Thailand",
-    "execute": "NO"
+    "execute": "yes"
   },
   {
     "username": "kpo_mp",
