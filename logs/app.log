@@ -1,11 +1,150 @@
  
 ⏩ Skipping user: kpo_ph (execute= NO)
+ 
+⏩ Skipping user: kpo_SLV (execute= NO)
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-🔍 Running Tests for User: kpo_SLV | Country: Thailand
+🔍 Running Tests for User: kpo_mp | Country: Pakistan
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-⏩ Skipping screen: DSR Profile Bulk Upload (execute=N)
-⏩ Skipping screen: Product Enrichment Approval (execute=N)
-⏩ Skipping screen: Price Structure Excel (execute=N)
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+==============================================================
+🚀 Processing Screen: DSR Profile Bulk Upload
+==============================================================
+Mode: DOWNLOAD_UPDATE_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [pjpno] with Value: [MULLER & PHIPPS (KORANGI - KARACHI)]
+📸 Screenshot captured: ErrorScreenshot_2025-12-17_15-03-23-221.png
+⚠️ No dropdown item found for: MULLER & PHIPPS (KORANGI - KARACHI) (This may be data issue. Please check your config file.)
+⬇ Downloading Excel for: DSR Profile Bulk Upload 
+✅ Success: File downloaded successfully
+📂 Found file: dsrProfileData.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\dsrProfileData.xlsx
+✅ Success: File upload successful
+⏩ Skipping screen: product Enrichment Approval (execute=N)
+==============================================================
+🚀 Processing Screen: Price Master Excel
+==============================================================
+Mode: DOWNLOAD_UPDATE_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [pjpno] with Value: [LUX]
+-> Filling field ID: [Sections] with Value: [LUXSHOWERSECRETBLISS220ML]
+⬇ Downloading Excel for: Price Master Excel 
+✅ Success: File downloaded successfully
+📂 Found file: productPrice.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\productPrice.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: outlet creation upload
+==============================================================
+Mode: DOWNLOAD_UPDATE_UPLOAD
+⬇ Downloading Excel for: outlet creation upload 
+✅ Success: File downloaded successfully
+📂 Found file: ExcelTemplateForOutletCreation.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\ExcelTemplateForOutletCreation.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: outlet change track excel
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [getGeoHierarchyCode] with Value: [N02N02-Province]
+-> Filling field ID: [distributor] with Value: [50250327-MULLER & PHIPPS (KORANGI - KARACHI)]
+-> Filling field ID: [pjpno] with Value: [50250327-0206-KamalOB]
+-> Filling field ID: [Sections] with Value: [Section20600-Section-206]
+-> Filling field ID: [OutletChannel] with Value: [C11672-Mohalla General Store]
+⬇ Downloading Excel for: outlet change track excel 
+✅ Success: File downloaded successfully
+📂 Found file: OutletExcel.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\OutletExcel.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Section Bulk Upload
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [pjpno] with Value: [PHBC009 - BulkDM]
+-> Filling field ID: [Sections] with Value: [PHSEC001]
+⬇ Downloading Excel for: Section Bulk Upload 
+✅ Success: File downloaded successfully
+📂 Found file: section_bulk_file.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\section_bulk_file.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Distributor excel upload
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [distributor] with Value: [MULLER & PHIPPS (KORANGI - KARACHI)]
+⬇ Downloading Excel for: Distributor excel upload 
+✅ Success: File downloaded successfully
+📂 Found file: distributorProfileBulkUpdate.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\distributorProfileBulkUpdate.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Validation Excel Upload
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⬇ Downloading Excel for: Validation Excel Upload 
+✅ Success: File downloaded successfully
+📂 Found file: Excel_Validation.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\Excel_Validation.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: upload base pack excel
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⬇ Downloading Excel for: upload base pack excel 
+✅ Success: File downloaded successfully
+📂 Found file: basepack.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\basepack.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Vehicle Master Bulk Upload
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [geoCode] with Value: [001001-GT/MT]
+-> Filling field ID: [distCode] with Value: [MULLER & PHIPPS (KORANGI - KARACHI)]
+⬇ Downloading Excel for: Vehicle Master Bulk Upload 
+✅ Success: File downloaded successfully
+📂 Found file: VehicleMasterModification.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\VehicleMasterModification.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Product Exclusion Policy
+==============================================================
+Mode: PEP
+⬇ Downloading Excel for: Product Exclusion Policy 
+✅ Success: File downloaded successfully
+📂 Found file: ProductExclusionFile.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\ProductExclusionFile.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Product Exclusion Policy
+==============================================================
+Mode: PEP
+⬇ Downloading Excel for: Product Exclusion Policy 
+✅ Success: File downloaded successfully
+📂 Found file: ProductExclusionFile (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\ProductExclusionFile2.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Price Master Approval
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+⬇ Downloading Excel for: Price Master Approval 
+✅ Success: File downloaded successfully
+📂 Found file: productPrice (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\productPriceApproval.xlsx
+✅ Success: File upload successful
 ==============================================================
 🚀 Processing Screen: bulk order upload
 ==============================================================
@@ -13,21 +152,166 @@ Mode: LMT
 ⬇ Downloading Excel for: bulk order upload 
 ✅ Success: File downloaded successfully
 📂 Found file: LmtOrderCreationExcel.xlsx
-⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesTH\LmtOrderCreationExcel.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\LmtOrderCreationExcel.xlsx
 ✅ Success: File upload successful
-❌ Validation Failed: PO Number already existsnull
-📸 Screenshot captured: ErrorScreenshot_2025-12-16_13-49-17-135.png
-⏩ Skipping screen: Locus Download (execute=N)
-⏩ Skipping screen: outlet creation upload (execute=N)
-⏩ Skipping screen: outlet change track excel (execute=N)
-⏩ Skipping screen: Section Bulk Upload (execute=N)
-⏩ Skipping screen: Distributor excel upload (execute=N)
-⏩ Skipping screen: Validation Excel Upload (execute=N)
-⏩ Skipping screen: upload base pack excel (execute=N)
-⏩ Skipping screen: Outlet Segment Mapping (execute=N)
-⏩ Skipping screen: Temporary Price Reduction (execute=N)
- 
-⏩ Skipping user: kpo_mp (execute= NO)
- 
-⏩ Skipping user: kpo_bangla (execute= NO)
-=== ✅ Test Run Completed Successfully! ===
+✅ Cashmemo created successfully with Order No: MNK25000012287
+==============================================================
+🚀 Processing Screen: Locus Download
+==============================================================
+Mode: DOWNLOAD_ONLY
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [dateFrom] with Value: [2025-12-06]
+-> Filling field ID: [dateTo] with Value: [2025-12-12]
+-> Filling field ID: [pjpNumber] with Value: [MPOB0001]
+-> Filling field ID: [orderSource] with Value: [All]
+⬇ Downloading Excel for: Locus Download 
+✅ Success: File downloaded successfully
+📂 Found file: LocusExcel.csv
+==============================================================
+🚀 Processing Screen: Vehicle Master Bulk Upload
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [geoCode] with Value: [001001-GT/MT]
+-> Filling field ID: [distCode] with Value: [MULLER & PHIPPS (KORANGI - KARACHI)]
+⬇ Downloading Excel for: Vehicle Master Bulk Upload 
+✅ Success: File downloaded successfully
+📂 Found file: VehicleMasterModification (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\VehicleMasterModification2.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Distributor shuffling upload
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [distributor] with Value: [MULLER & PHIPPS (KORANGI - KARACHI)]
+-> Filling field ID: [pjpno] with Value: [LeopardOBP]
+-> Filling field ID: [Sections] with Value: [Liaqat Bazar]
+-> Filling field ID: [getGeoHierarchyCode] with Value: [Ali-Gohar]
+-> Filling field ID: [OutletChannel] with Value: [Mohalla General Store]
+⬇ Downloading Excel for: Distributor shuffling upload 
+✅ Success: File downloaded successfully
+📂 Found file: Distributor.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\DistributorShuffling1.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Distributor shuffling upload
+==============================================================
+Mode: UPLOAD_ONLY
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\DistributorShuffling2.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: User Bulk Upload
+==============================================================
+Mode: DOWNLOAD_UPDATE_UPLOAD
+⬇ Downloading Excel for: User Bulk Upload 
+✅ Success: File downloaded successfully
+📂 Found file: UserBulkUpload.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\UserBulkUpload.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Selling Category Bulk Upload
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⬇ Downloading Excel for: Selling Category Bulk Upload 
+✅ Success: File downloaded successfully
+📂 Found file: Selling_Category_Bulk_Upload.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\Selling_Category_Bulk_Upload.xlsx
+✅ Success: File upload successful
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+🔍 Running Tests for User: kpo_bangla | Country: Bangladesh
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+==============================================================
+🚀 Processing Screen: DSR Profile Bulk Upload
+==============================================================
+Mode: DOWNLOAD_UPDATE_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [pjpno] with Value: [M/S. ATLANTIC DISTRIBUTION]
+⬇ Downloading Excel for: DSR Profile Bulk Upload 
+✅ Success: File downloaded successfully
+📂 Found file: dsrProfileData (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\dsrProfileData.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Product Enrichment Excel Upload Approval
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [category] with Value: [SKIN CLEANSING]
+-> Filling field ID: [brand] with Value: [LUX]
+-> Filling field ID: [basePack] with Value: [LUX SKIN CLEANSING BAR FOREVER 25G]
+-> Filling field ID: [status] with Value: [Active]
+-> Filling field ID: [product] with Value: [LUX BAR FOREVER CP_W_CORE 216X25G]
+⬇ Downloading Excel for: Product Enrichment Excel Upload Approval 
+✅ Success: File downloaded successfully
+📂 Found file: ProductEnrichmentComponentApproval.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\ProductEnrichmentComponentApproval.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Price Master Excel
+==============================================================
+Mode: DOWNLOAD_UPDATE_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [pjpno] with Value: [LUX]
+-> Filling field ID: [Sections] with Value: [LUX SHOWER 220ML BANDED]
+⬇ Downloading Excel for: Price Master Excel 
+✅ Success: File downloaded successfully
+📂 Found file: productPrice (2).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\productPrice.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: outlet creation upload
+==============================================================
+Mode: DOWNLOAD_UPDATE_UPLOAD
+⬇ Downloading Excel for: outlet creation upload 
+✅ Success: File downloaded successfully
+📂 Found file: ExcelTemplateForOutletCreation (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\ExcelTemplateForOutletCreation.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: outlet change track excel
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [getGeoHierarchyCode] with Value: [002001-GT/MT]
+-> Filling field ID: [distributor] with Value: [15437620-M/S. ATLANTIC DISTRIBUTION]
+-> Filling field ID: [pjpno] with Value: [15437620-leopardPOB-leopardPOB]
+-> Filling field ID: [Sections] with Value: [00Access2024-RQBTESTING]
+-> Filling field ID: [OutletChannel] with Value: [Wholesale]
+⬇ Downloading Excel for: outlet change track excel 
+✅ Success: File downloaded successfully
+📂 Found file: OutletExcel (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\OutletExcel.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Section Bulk Upload
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [pjpno] with Value: [shahmeer OB PJP OTC2]
+-> Filling field ID: [Sections] with Value: [Pureit Careline]
+⬇ Downloading Excel for: Section Bulk Upload 
+✅ Success: File downloaded successfully
+📂 Found file: section_bulk_file (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\section_bulk_file.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Distributor excel upload
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⏳ Loader appeared, waiting to disappear...
+✅ Loader disappeared.
+-> Filling field ID: [distributor] with Value: [M/S. ATLANTIC DISTRIBUTION]
+⬇ Downloading Excel for: Distributor excel upload 
+✅ Success: File downloaded successfully
+📂 Found file: distributorProfileBulkUpdate (1).xlsx

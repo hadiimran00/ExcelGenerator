@@ -15,7 +15,7 @@
     "resourcesFolder": "ResourcesTH",
     "configPath": "configTH.xlsx",
     "country": "Thailand",
-    "execute": "yes"
+    "execute": "no"
   },
   {
     "username": "kpo_mp",
@@ -24,7 +24,7 @@
     "resourcesFolder": "ResourcesPK",
     "configPath": "configPK.xlsx",
     "country": "Pakistan",
-    "execute": "no"
+    "execute": "yes"
   },
   {
     "username": "kpo_bangla",
@@ -33,6 +33,6 @@
     "resourcesFolder": "ResourcesBD",
     "configPath": "configBD.xlsx",
     "country": "Bangladesh",
-    "execute": "no"
+    "execute": "yes"
   }
 ]

@@ -8,11 +8,13 @@ import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
 import static org.example.ui.utilities.ExcelValidator.logExcelErrors;
+import static org.example.ui.utilities.LoaderWait.waitForLoaderToDisappear;
 import static org.example.ui.utilities.ScreenshotService.takeScreenshot;
 import static org.example.ui.utilities.TestSummary.*;
 public class FileManager {
     private static final Logger logger = LoggerUtil.getLogger(FileManager.class);
     public static void uploadFile(WebDriver driver, String screenName, String filePath) throws InterruptedException {
+        waitForLoaderToDisappear(driver);
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
             wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//*[contains(@class, 'dx-toast-message')]")));
@@ -67,14 +69,17 @@ public class FileManager {
         }
     }
     public static void downloadExcel(WebDriver driver, String screenName, Map < String, String > params) throws InterruptedException, IOException {
+        waitForLoaderToDisappear(driver);
         for (Map.Entry<String, String> field : params.entrySet()) {
             String paramId = field.getKey();
             String value = field.getValue();
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
             try {
+                waitForLoaderToDisappear(driver);
                 WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id(paramId)));
                 logger.info("-> Filling field ID: [{}] with Value: [{}]", paramId, value);
                 Thread.sleep(2500);
+               // waitForLoaderToDisappear(driver);
                 element.clear();
                 element.sendKeys(value);
                 Thread.sleep(500); // Small pause for UI to react

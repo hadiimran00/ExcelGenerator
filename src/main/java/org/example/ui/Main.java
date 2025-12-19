@@ -17,6 +17,7 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.example.ui.utilities.LoaderWait.waitForLoaderToDisappear;
 import static org.example.ui.utilities.ScreenshotService.takeScreenshot;
 import static org.example.ui.utilities.TestSummary.*;
 
@@ -135,6 +136,7 @@ public class Main {
                         }
 
                         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+                        waitForLoaderToDisappear(driver);
                         try {
                             wait.until(ExpectedConditions.visibilityOfElementLocated(
                                     By.cssSelector("input[placeholder='Search Here']")));
