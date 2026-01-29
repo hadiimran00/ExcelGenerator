@@ -5,17 +5,11 @@
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 🔍 Running Tests for User: kpo_mp | Country: Pakistan
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 ==============================================================
 🚀 Processing Screen: DSR Profile Bulk Upload
 ==============================================================
 Mode: DOWNLOAD_UPDATE_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [pjpno] with Value: [MULLER & PHIPPS (KORANGI - KARACHI)]
-📸 Screenshot captured: ErrorScreenshot_2025-12-17_15-03-23-221.png
-⚠️ No dropdown item found for: MULLER & PHIPPS (KORANGI - KARACHI) (This may be data issue. Please check your config file.)
 ⬇ Downloading Excel for: DSR Profile Bulk Upload 
 ✅ Success: File downloaded successfully
 📂 Found file: dsrProfileData.xlsx
@@ -26,8 +20,6 @@ Mode: DOWNLOAD_UPDATE_UPLOAD
 🚀 Processing Screen: Price Master Excel
 ==============================================================
 Mode: DOWNLOAD_UPDATE_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [pjpno] with Value: [LUX]
 -> Filling field ID: [Sections] with Value: [LUXSHOWERSECRETBLISS220ML]
 ⬇ Downloading Excel for: Price Master Excel 
@@ -43,14 +35,18 @@ Mode: DOWNLOAD_UPDATE_UPLOAD
 ✅ Success: File downloaded successfully
 📂 Found file: ExcelTemplateForOutletCreation.xlsx
 ⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\ExcelTemplateForOutletCreation.xlsx
-✅ Success: File upload successful
+📸 Screenshot captured: ErrorScreenshot_2025-12-19_16-10-32-717.png
+❌ Upload Failed! Error while processing excel file, file downloaded. 
+📂 Found error file: Upload_file.xlsx 
+🔍 Excel Validation Errors:
+   ❌ Row 2: ;Post Dated Cheque should be in yyyy-MM-dd format and valid date
+   ❌ Row 3: ;Post Dated Cheque should be in yyyy-MM-dd format and valid date
+   ❌ Row 4: ;Post Dated Cheque should be in yyyy-MM-dd format and valid date
 ==============================================================
 🚀 Processing Screen: outlet change track excel
 ==============================================================
 Mode: DOWNLOAD_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
--> Filling field ID: [getGeoHierarchyCode] with Value: [N02N02-Province]
+-> Filling field ID: [getGeoHierarchyCode] with Value: [001001-GT/MT]
 -> Filling field ID: [distributor] with Value: [50250327-MULLER & PHIPPS (KORANGI - KARACHI)]
 -> Filling field ID: [pjpno] with Value: [50250327-0206-KamalOB]
 -> Filling field ID: [Sections] with Value: [Section20600-Section-206]
@@ -59,13 +55,16 @@ Mode: DOWNLOAD_UPLOAD
 ✅ Success: File downloaded successfully
 📂 Found file: OutletExcel.xlsx
 ⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\OutletExcel.xlsx
-✅ Success: File upload successful
+📸 Screenshot captured: ErrorScreenshot_2025-12-19_16-11-24-283.png
+❌ Upload Failed! Error while processing excel file, file downloaded. 
+📂 Found error file: Upload_file (1).xlsx 
+🔍 Excel Validation Errors:
+   ❌ Row 2: ;Post Dated Cheque should be in yyyy-MM-dd format and valid date
+   ❌ Row 3: ;Post Dated Cheque should be in yyyy-MM-dd format and valid date
 ==============================================================
 🚀 Processing Screen: Section Bulk Upload
 ==============================================================
 Mode: DOWNLOAD_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [pjpno] with Value: [PHBC009 - BulkDM]
 -> Filling field ID: [Sections] with Value: [PHSEC001]
 ⬇ Downloading Excel for: Section Bulk Upload 
@@ -77,14 +76,16 @@ Mode: DOWNLOAD_UPLOAD
 🚀 Processing Screen: Distributor excel upload
 ==============================================================
 Mode: DOWNLOAD_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [distributor] with Value: [MULLER & PHIPPS (KORANGI - KARACHI)]
 ⬇ Downloading Excel for: Distributor excel upload 
 ✅ Success: File downloaded successfully
 📂 Found file: distributorProfileBulkUpdate.xlsx
 ⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\distributorProfileBulkUpdate.xlsx
-✅ Success: File upload successful
+📸 Screenshot captured: ErrorScreenshot_2025-12-19_16-12-25-443.png
+❌ Upload Failed! Error while processing excel file, file downloaded. 
+📂 Found error file: Upload_file_error.xlsx 
+🔍 Excel Validation Errors:
+   ❌ Row 2: ;Threshold Time For Delivery Date should be in yyyy-MM-dd format and valid date
 ==============================================================
 🚀 Processing Screen: Validation Excel Upload
 ==============================================================
@@ -107,8 +108,6 @@ Mode: DOWNLOAD_UPLOAD
 🚀 Processing Screen: Vehicle Master Bulk Upload
 ==============================================================
 Mode: DOWNLOAD_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [geoCode] with Value: [001001-GT/MT]
 -> Filling field ID: [distCode] with Value: [MULLER & PHIPPS (KORANGI - KARACHI)]
 ⬇ Downloading Excel for: Vehicle Master Bulk Upload 
@@ -138,8 +137,6 @@ Mode: PEP
 🚀 Processing Screen: Price Master Approval
 ==============================================================
 Mode: DOWNLOAD_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 ⬇ Downloading Excel for: Price Master Approval 
 ✅ Success: File downloaded successfully
 📂 Found file: productPrice (1).xlsx
@@ -154,15 +151,13 @@ Mode: LMT
 📂 Found file: LmtOrderCreationExcel.xlsx
 ⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\LmtOrderCreationExcel.xlsx
 ✅ Success: File upload successful
-✅ Cashmemo created successfully with Order No: MNK25000012287
+✅ Cashmemo created successfully with Order No: MNK25000012371
 ==============================================================
 🚀 Processing Screen: Locus Download
 ==============================================================
 Mode: DOWNLOAD_ONLY
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
--> Filling field ID: [dateFrom] with Value: [2025-12-06]
--> Filling field ID: [dateTo] with Value: [2025-12-12]
+-> Filling field ID: [dateFrom] with Value: [2025-12-15]
+-> Filling field ID: [dateTo] with Value: [2025-12-21]
 -> Filling field ID: [pjpNumber] with Value: [MPOB0001]
 -> Filling field ID: [orderSource] with Value: [All]
 ⬇ Downloading Excel for: Locus Download 
@@ -172,8 +167,6 @@ Mode: DOWNLOAD_ONLY
 🚀 Processing Screen: Vehicle Master Bulk Upload
 ==============================================================
 Mode: DOWNLOAD_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [geoCode] with Value: [001001-GT/MT]
 -> Filling field ID: [distCode] with Value: [MULLER & PHIPPS (KORANGI - KARACHI)]
 ⬇ Downloading Excel for: Vehicle Master Bulk Upload 
@@ -185,8 +178,6 @@ Mode: DOWNLOAD_UPLOAD
 🚀 Processing Screen: Distributor shuffling upload
 ==============================================================
 Mode: DOWNLOAD_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [distributor] with Value: [MULLER & PHIPPS (KORANGI - KARACHI)]
 -> Filling field ID: [pjpno] with Value: [LeopardOBP]
 -> Filling field ID: [Sections] with Value: [Liaqat Bazar]
@@ -207,31 +198,47 @@ Mode: UPLOAD_ONLY
 🚀 Processing Screen: User Bulk Upload
 ==============================================================
 Mode: DOWNLOAD_UPDATE_UPLOAD
-⬇ Downloading Excel for: User Bulk Upload 
-✅ Success: File downloaded successfully
-📂 Found file: UserBulkUpload.xlsx
-⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\UserBulkUpload.xlsx
-✅ Success: File upload successful
-==============================================================
-🚀 Processing Screen: Selling Category Bulk Upload
-==============================================================
-Mode: DOWNLOAD_UPLOAD
-⬇ Downloading Excel for: Selling Category Bulk Upload 
-✅ Success: File downloaded successfully
-📂 Found file: Selling_Category_Bulk_Upload.xlsx
-⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesPK\Selling_Category_Bulk_Upload.xlsx
-✅ Success: File upload successful
+💥 Unexpected error for user: kpo_mp | Message: no such element: Unable to locate element: {"method":"css selector","selector":"#USER_BULK_UPLOAD"}
+  (Session info: chrome=142.0.7444.177)
+For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Build info: version: '4.29.0', revision: '5fc1ec94cb'
+System info: os.name: 'Windows 11', os.arch: 'amd64', os.version: '10.0', java.version: '23-valhalla'
+Driver info: org.openqa.selenium.chrome.ChromeDriver
+Command: [08e1420cb14bbe5d220b240a867b8d0f, findElement {using=id, value=USER_BULK_UPLOAD}]
+Capabilities {acceptInsecureCerts: false, browserName: chrome, browserVersion: 142.0.7444.177, chrome: {chromedriverVersion: 142.0.7444.175 (302067f14a4..., userDataDir: C:\Users\HADI~1.IMR\AppData...}, fedcm:accounts: true, goog:chromeOptions: {debuggerAddress: localhost:60778}, goog:processID: 11112, networkConnectionEnabled: false, pageLoadStrategy: normal, platformName: windows, proxy: Proxy(), se:cdp: ws://localhost:60778/devtoo..., se:cdpVersion: 142.0.7444.177, setWindowRect: true, strictFileInteractability: false, timeouts: {implicit: 0, pageLoad: 300000, script: 30000}, unhandledPromptBehavior: dismiss and notify, webauthn:extension:credBlob: true, webauthn:extension:largeBlob: true, webauthn:extension:minPinLength: true, webauthn:extension:prf: true, webauthn:virtualAuthenticators: true}
+Session ID: 08e1420cb14bbe5d220b240a867b8d0f
+org.openqa.selenium.NoSuchElementException: no such element: Unable to locate element: {"method":"css selector","selector":"#USER_BULK_UPLOAD"}
+  (Session info: chrome=142.0.7444.177)
+For documentation on this error, please visit: https://www.selenium.dev/documentation/webdriver/troubleshooting/errors#no-such-element-exception
+Build info: version: '4.29.0', revision: '5fc1ec94cb'
+System info: os.name: 'Windows 11', os.arch: 'amd64', os.version: '10.0', java.version: '23-valhalla'
+Driver info: org.openqa.selenium.chrome.ChromeDriver
+Command: [08e1420cb14bbe5d220b240a867b8d0f, findElement {using=id, value=USER_BULK_UPLOAD}]
+Capabilities {acceptInsecureCerts: false, browserName: chrome, browserVersion: 142.0.7444.177, chrome: {chromedriverVersion: 142.0.7444.175 (302067f14a4..., userDataDir: C:\Users\HADI~1.IMR\AppData...}, fedcm:accounts: true, goog:chromeOptions: {debuggerAddress: localhost:60778}, goog:processID: 11112, networkConnectionEnabled: false, pageLoadStrategy: normal, platformName: windows, proxy: Proxy(), se:cdp: ws://localhost:60778/devtoo..., se:cdpVersion: 142.0.7444.177, setWindowRect: true, strictFileInteractability: false, timeouts: {implicit: 0, pageLoad: 300000, script: 30000}, unhandledPromptBehavior: dismiss and notify, webauthn:extension:credBlob: true, webauthn:extension:largeBlob: true, webauthn:extension:minPinLength: true, webauthn:extension:prf: true, webauthn:virtualAuthenticators: true}
+Session ID: 08e1420cb14bbe5d220b240a867b8d0f
+	at java.base/jdk.internal.reflect.DirectConstructorHandleAccessor.newInstance(DirectConstructorHandleAccessor.java:62) ~[?:?]
+	at java.base/java.lang.reflect.Constructor.newInstanceWithCaller(Constructor.java:502) ~[?:?]
+	at java.base/java.lang.reflect.Constructor.newInstance(Constructor.java:486) ~[?:?]
+	at org.openqa.selenium.remote.ErrorCodec.decode(ErrorCodec.java:167) ~[selenium-remote-driver-4.29.0.jar:?]
+	at org.openqa.selenium.remote.codec.w3c.W3CHttpResponseCodec.decode(W3CHttpResponseCodec.java:138) ~[selenium-remote-driver-4.29.0.jar:?]
+	at org.openqa.selenium.remote.codec.w3c.W3CHttpResponseCodec.decode(W3CHttpResponseCodec.java:50) ~[selenium-remote-driver-4.29.0.jar:?]
+	at org.openqa.selenium.remote.HttpCommandExecutor.execute(HttpCommandExecutor.java:215) ~[selenium-remote-driver-4.29.0.jar:?]
+	at org.openqa.selenium.remote.service.DriverCommandExecutor.invokeExecute(DriverCommandExecutor.java:216) ~[selenium-remote-driver-4.29.0.jar:?]
+	at org.openqa.selenium.remote.service.DriverCommandExecutor.execute(DriverCommandExecutor.java:174) ~[selenium-remote-driver-4.29.0.jar:?]
+	at org.openqa.selenium.remote.RemoteWebDriver.execute(RemoteWebDriver.java:545) ~[selenium-remote-driver-4.29.0.jar:?]
+	at org.openqa.selenium.remote.ElementLocation$ElementFinder$2.findElement(ElementLocation.java:165) ~[selenium-remote-driver-4.29.0.jar:?]
+	at org.openqa.selenium.remote.ElementLocation.findElement(ElementLocation.java:59) ~[selenium-remote-driver-4.29.0.jar:?]
+	at org.openqa.selenium.remote.RemoteWebDriver.findElement(RemoteWebDriver.java:368) ~[selenium-remote-driver-4.29.0.jar:?]
+	at org.openqa.selenium.remote.RemoteWebDriver.findElement(RemoteWebDriver.java:362) ~[selenium-remote-driver-4.29.0.jar:?]
+	at org.example.ui.Main.main(Main.java:166) [classes/:?]
+📸 Screenshot captured: ErrorScreenshot_2025-12-19_16-17-07-505.png
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
 🔍 Running Tests for User: kpo_bangla | Country: Bangladesh
 ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 ==============================================================
 🚀 Processing Screen: DSR Profile Bulk Upload
 ==============================================================
 Mode: DOWNLOAD_UPDATE_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [pjpno] with Value: [M/S. ATLANTIC DISTRIBUTION]
 ⬇ Downloading Excel for: DSR Profile Bulk Upload 
 ✅ Success: File downloaded successfully
@@ -242,8 +249,6 @@ Mode: DOWNLOAD_UPDATE_UPLOAD
 🚀 Processing Screen: Product Enrichment Excel Upload Approval
 ==============================================================
 Mode: DOWNLOAD_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [category] with Value: [SKIN CLEANSING]
 -> Filling field ID: [brand] with Value: [LUX]
 -> Filling field ID: [basePack] with Value: [LUX SKIN CLEANSING BAR FOREVER 25G]
@@ -258,8 +263,6 @@ Mode: DOWNLOAD_UPLOAD
 🚀 Processing Screen: Price Master Excel
 ==============================================================
 Mode: DOWNLOAD_UPDATE_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [pjpno] with Value: [LUX]
 -> Filling field ID: [Sections] with Value: [LUX SHOWER 220ML BANDED]
 ⬇ Downloading Excel for: Price Master Excel 
@@ -275,13 +278,18 @@ Mode: DOWNLOAD_UPDATE_UPLOAD
 ✅ Success: File downloaded successfully
 📂 Found file: ExcelTemplateForOutletCreation (1).xlsx
 ⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\ExcelTemplateForOutletCreation.xlsx
-✅ Success: File upload successful
+📸 Screenshot captured: ErrorScreenshot_2025-12-19_16-19-39-615.png
+❌ Upload Failed! Error while processing excel file, file downloaded. 
+📂 Found error file: Upload_file (2).xlsx 
+🔍 Excel Validation Errors:
+   ❌ Row 2: ;Section Effective Date should be in yyyy-MM-dd format and valid date;Post Dated Cheque should be in yyyy-MM-dd format and valid date;Perfect Store Creation Date should be in yyyy-MM-dd format and valid date
+   ❌ Row 3: ;Section Effective Date should be in yyyy-MM-dd format and valid date;Post Dated Cheque should be in yyyy-MM-dd format and valid date;Perfect Store Creation Date should be in yyyy-MM-dd format and valid date
+   ❌ Row 4: ;Section Effective Date should be in yyyy-MM-dd format and valid date;Post Dated Cheque should be in yyyy-MM-dd format and valid date;Perfect Store Creation Date should be in yyyy-MM-dd format and valid date
+   ❌ Row 5: ;Section Effective Date should be in yyyy-MM-dd format and valid date;Post Dated Cheque should be in yyyy-MM-dd format and valid date;Perfect Store Creation Date should be in yyyy-MM-dd format and valid date
 ==============================================================
 🚀 Processing Screen: outlet change track excel
 ==============================================================
 Mode: DOWNLOAD_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [getGeoHierarchyCode] with Value: [002001-GT/MT]
 -> Filling field ID: [distributor] with Value: [15437620-M/S. ATLANTIC DISTRIBUTION]
 -> Filling field ID: [pjpno] with Value: [15437620-leopardPOB-leopardPOB]
@@ -291,13 +299,19 @@ Mode: DOWNLOAD_UPLOAD
 ✅ Success: File downloaded successfully
 📂 Found file: OutletExcel (1).xlsx
 ⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\OutletExcel.xlsx
-✅ Success: File upload successful
+📸 Screenshot captured: ErrorScreenshot_2025-12-19_16-20-37-761.png
+❌ Upload Failed! Error while processing excel file, file downloaded. 
+📂 Found error file: Upload_file (3).xlsx 
+🔍 Excel Validation Errors:
+   ❌ Row 2: ;Post Dated Cheque should be in yyyy-MM-dd format and valid date
+   ❌ Row 3: ;Post Dated Cheque should be in yyyy-MM-dd format and valid date
+   ❌ Row 4: ;Post Dated Cheque should be in yyyy-MM-dd format and valid date
+   ❌ Row 5: ;Post Dated Cheque should be in yyyy-MM-dd format and valid date
+   ❌ Row 6: ;Post Dated Cheque should be in yyyy-MM-dd format and valid date
 ==============================================================
 🚀 Processing Screen: Section Bulk Upload
 ==============================================================
 Mode: DOWNLOAD_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [pjpno] with Value: [shahmeer OB PJP OTC2]
 -> Filling field ID: [Sections] with Value: [Pureit Careline]
 ⬇ Downloading Excel for: Section Bulk Upload 
@@ -309,9 +323,109 @@ Mode: DOWNLOAD_UPLOAD
 🚀 Processing Screen: Distributor excel upload
 ==============================================================
 Mode: DOWNLOAD_UPLOAD
-⏳ Loader appeared, waiting to disappear...
-✅ Loader disappeared.
 -> Filling field ID: [distributor] with Value: [M/S. ATLANTIC DISTRIBUTION]
 ⬇ Downloading Excel for: Distributor excel upload 
 ✅ Success: File downloaded successfully
 📂 Found file: distributorProfileBulkUpdate (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\distributorProfileBulkUpdate.xlsx
+📸 Screenshot captured: ErrorScreenshot_2025-12-19_16-21-49-451.png
+❌ Upload Failed! Error while processing excel file, file downloaded. 
+📂 Found error file: Upload_file_error (1).xlsx 
+🔍 Excel Validation Errors:
+   ❌ Row 2: ;Threshold Time For Delivery Date should be in yyyy-MM-dd format and valid date
+==============================================================
+🚀 Processing Screen: Validation Excel Upload
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⬇ Downloading Excel for: Validation Excel Upload 
+✅ Success: File downloaded successfully
+📂 Found file: Excel_Validation (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\Excel_Validation.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: upload base pack excel
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⬇ Downloading Excel for: upload base pack excel 
+✅ Success: File downloaded successfully
+📂 Found file: basepack (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\basepack.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Bulk Order Upload
+==============================================================
+Mode: LMT
+⬇ Downloading Excel for: Bulk Order Upload 
+✅ Success: File downloaded successfully
+📂 Found file: LmtOrderCreationExcel (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\LmtOrderCreationExcel.xlsx
+✅ Success: File upload successful
+✅ Cashmemo created successfully with Order No: 25000006806
+==============================================================
+🚀 Processing Screen: Locus Download
+==============================================================
+Mode: DOWNLOAD_ONLY
+-> Filling field ID: [dateFrom] with Value: [2025-12-06]
+-> Filling field ID: [dateTo] with Value: [2025-12-12]
+-> Filling field ID: [pjpNumber] with Value: [0000000135]
+-> Filling field ID: [orderSource] with Value: [All]
+⬇ Downloading Excel for: Locus Download 
+✅ Success: File downloaded successfully
+📂 Found file: LocusExcel (1).csv
+==============================================================
+🚀 Processing Screen: Product Exclusion Policy
+==============================================================
+Mode: PEP
+⬇ Downloading Excel for: Product Exclusion Policy 
+✅ Success: File downloaded successfully
+📂 Found file: ProductExclusionFile (2).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\ProductExclusionFile.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Product Exclusion Policy
+==============================================================
+Mode: PEP
+⬇ Downloading Excel for: Product Exclusion Policy 
+✅ Success: File downloaded successfully
+📂 Found file: ProductExclusionFile (3).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\ProductExclusionFile1.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Distributor shuffling upload
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+-> Filling field ID: [distributor] with Value: [M/S. ATLANTIC DISTRIBUTION]
+-> Filling field ID: [pjpno] with Value: [leopardPOB - leopardPOB]
+-> Filling field ID: [Sections] with Value: [RQBTESTING]
+-> Filling field ID: [getGeoHierarchyCode] with Value: [DEWANHAT]
+-> Filling field ID: [OutletChannel] with Value: [DISTRIBUTOR]
+⬇ Downloading Excel for: Distributor shuffling upload 
+✅ Success: File downloaded successfully
+📂 Found file: Distributor (1).xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\DistributorShuffling1.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Distributor shuffling upload
+==============================================================
+Mode: UPLOAD_ONLY
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\DistributorShuffling2.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: User Bulk Upload
+==============================================================
+Mode: DOWNLOAD_UPDATE_UPLOAD
+⬇ Downloading Excel for: User Bulk Upload 
+✅ Success: File downloaded successfully
+📂 Found file: UserBulkUpload.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\UserBulkUpload.xlsx
+✅ Success: File upload successful
+==============================================================
+🚀 Processing Screen: Selling Category Bulk Upload
+==============================================================
+Mode: DOWNLOAD_UPLOAD
+⬇ Downloading Excel for: Selling Category Bulk Upload 
+✅ Success: File downloaded successfully
+📂 Found file: Selling_Category_Bulk_Upload.xlsx
+⬆ Uploading: D:\Automation\ExcelGenerator\ResourcesBD\Selling_Category_Bulk_Upload.xlsx
+✅ Success: File upload successful
+=== ✅ Test Run Completed Successfully! ===

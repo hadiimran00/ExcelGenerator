@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html lang="">
+<body>
+
+<select id="left"></select>
+<select id="right"></select>
+<button onclick="compare()">Compare</button>
+
+<script>
+    fetch('/envs')
+        .then(r => r.json())
+        .then(envs => {
+            envs.forEach(e => {
+                left.add(new Option(e, e));
+                right.add(new Option(e, e));
+            });
+        });
+
+    function compare() {
+        fetch(`/compare?left=${left.value}&right=${right.value}`, { method: 'POST' })
+            .then(r => r.text())
+            .then(alert);
+    }
+</script>
+
+</body>
+</html>
