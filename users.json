@@ -33,6 +33,6 @@
     "resourcesFolder": "ResourcesBD",
     "configPath": "configBD.xlsx",
     "country": "Bangladesh",
-    "execute": "yes"
+    "execute": "NO"
   }
 ]
