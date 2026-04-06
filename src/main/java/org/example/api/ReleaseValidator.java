@@ -333,13 +333,13 @@ public class ReleaseValidator {
                 String body = response.getBody().asString().trim();
                 // Remove quotes if present
                 body = body.replaceAll("^\"|\"$", "");
-                return body.isEmpty() ? " EMPTY RESPONSE " : body;
+                return body.isEmpty() ? "EMPTY_RESPONSE" : body;
             } else {
                 String body = response.getBody().asString().trim();
                 // Remove quotes if present
                 body = body.replaceAll("^\"|\"$", "");
                 return body.isEmpty()
-                        ? "HTTP: " + statusCode + " EMPTY RESPONSE "
+                        ? "HTTP: " + statusCode + "EMPTY_RESPONSE"
                         : " (HTTP: " + statusCode + ")" + body;
             }
         } catch (Exception e) {
