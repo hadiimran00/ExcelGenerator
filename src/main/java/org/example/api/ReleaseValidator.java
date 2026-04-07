@@ -307,8 +307,7 @@ public class ReleaseValidator {
         result.append("⬇️ Behind: ").append(behind).append("\n");
         result.append("⚠️ Errors: ").append(errors).append("\n");
         result.append("Total Mismatches: ").append(ahead + behind + errors).append("\n");
-        result.append("Lower Environment:").append(env1).append("\n");
-        result.append("Higher Environment:").append(env2).append("\n");
+
         return result.toString();
     }
 
@@ -333,13 +332,13 @@ public class ReleaseValidator {
                 String body = response.getBody().asString().trim();
                 // Remove quotes if present
                 body = body.replaceAll("^\"|\"$", "");
-                return body.isEmpty() ? "EMPTY_RESPONSE" : body;
+                return body.isEmpty() ? " EMPTY RESPONSE " : body;
             } else {
                 String body = response.getBody().asString().trim();
                 // Remove quotes if present
                 body = body.replaceAll("^\"|\"$", "");
                 return body.isEmpty()
-                        ? "HTTP: " + statusCode + "EMPTY_RESPONSE"
+                        ? "HTTP: " + statusCode + " EMPTY RESPONSE "
                         : " (HTTP: " + statusCode + ")" + body;
             }
         } catch (Exception e) {
@@ -355,8 +354,9 @@ public class ReleaseValidator {
     // Compare two version strings numerically
     private static ComparisonStatus compareVersionStrings(String v1, String v2) {
         // If either is an error, return ERROR
-        if (v1.startsWith("ERROR") || v1.startsWith("HTTP_") || v1.startsWith("TIMEOUT") ||
-                v2.startsWith("ERROR") || v2.startsWith("HTTP_") || v2.startsWith("TIMEOUT") ||
+        if (v1.startsWith("ERROR") || v1.startsWith("HTTP") || v1.contains("(HTTP:") ||
+                v1.startsWith("TIMEOUT") || v2.startsWith("ERROR") || v2.startsWith("HTTP") ||
+                v2.contains("(HTTP:") || v2.startsWith("TIMEOUT") ||
                 v1.equals("EMPTY_RESPONSE") || v2.equals("EMPTY_RESPONSE")) {
             return ComparisonStatus.ERROR;
         }
@@ -376,6 +376,7 @@ public class ReleaseValidator {
     }
 
     // Compare versions numerically (e.g., 21.1.10.0 vs 21.1.9.0)
+    // Also handles non-numeric parts (e.g., 1.1.101.hp_1 vs 1.1.101.hp_5)
     private static int compareVersions(String version1, String version2) {
         String[] v1Parts = version1.split("\\.");
         String[] v2Parts = version2.split("\\.");
@@ -383,17 +384,108 @@ public class ReleaseValidator {
         int maxLength = Math.max(v1Parts.length, v2Parts.length);
 
         for (int i = 0; i < maxLength; i++) {
-            int v1Part = i < v1Parts.length ? Integer.parseInt(v1Parts[i]) : 0;
-            int v2Part = i < v2Parts.length ? Integer.parseInt(v2Parts[i]) : 0;
+            String v1Part = i < v1Parts.length ? v1Parts[i] : "0";
+            String v2Part = i < v2Parts.length ? v2Parts[i] : "0";
 
-            if (v1Part < v2Part) {
-                return -1; // version1 < version2
-            } else if (v1Part > v2Part) {
-                return 1; // version1 > version2
+            // Try to compare as numbers first
+            try {
+                int v1Num = Integer.parseInt(v1Part);
+                int v2Num = Integer.parseInt(v2Part);
+
+                if (v1Num < v2Num) {
+                    return -1;
+                } else if (v1Num > v2Num) {
+                    return 1;
+                }
+            } catch (NumberFormatException e) {
+                // One or both parts are not pure numbers
+                // Handle mixed formats like "0" vs "hp_1" or "hp_1" vs "hp_5"
+                int compareResult = compareVersionPart(v1Part, v2Part);
+                if (compareResult != 0) {
+                    return compareResult;
+                }
             }
         }
 
         return 0; // versions are equal
+    }
+
+    // Compare individual version parts (handles both numeric and non-numeric)
+    private static int compareVersionPart(String part1, String part2) {
+        // Try parsing both as integers
+        boolean p1IsNum = isInteger(part1);
+        boolean p2IsNum = isInteger(part2);
+
+        if (p1IsNum && p2IsNum) {
+            // Both are numbers
+            int v1 = Integer.parseInt(part1);
+            int v2 = Integer.parseInt(part2);
+            return Integer.compare(v1, v2);
+        } else if (p1IsNum) {
+            // Numeric comes before non-numeric (0 < hp_1)
+            return -1;
+        } else if (p2IsNum) {
+            // Non-numeric comes after numeric (hp_1 > 0)
+            return 1;
+        } else {
+            // Both are non-numeric, compare lexicographically
+            // Extract numeric suffix if present (hp_1 vs hp_5)
+            return compareAlphanumeric(part1, part2);
+        }
+    }
+
+    // Check if string is a valid integer
+    private static boolean isInteger(String str) {
+        if (str == null || str.isEmpty()) {
+            return false;
+        }
+        try {
+            Integer.parseInt(str);
+            return true;
+        } catch (NumberFormatException e) {
+            return false;
+        }
+    }
+
+    // Compare alphanumeric strings (e.g., hp_1 vs hp_5)
+    private static int compareAlphanumeric(String s1, String s2) {
+        // Try to extract prefix and numeric suffix
+        String[] parts1 = splitAlphanumeric(s1);
+        String[] parts2 = splitAlphanumeric(s2);
+
+        // Compare prefix first
+        int prefixCompare = parts1[0].compareTo(parts2[0]);
+        if (prefixCompare != 0) {
+            return prefixCompare;
+        }
+
+        // Same prefix, compare numeric suffix
+        if (!parts1[1].isEmpty() && !parts2[1].isEmpty()) {
+            try {
+                int num1 = Integer.parseInt(parts1[1]);
+                int num2 = Integer.parseInt(parts2[1]);
+                return Integer.compare(num1, num2);
+            } catch (NumberFormatException e) {
+                return parts1[1].compareTo(parts2[1]);
+            }
+        }
+
+        // Fallback to string comparison
+        return s1.compareTo(s2);
+    }
+
+    // Split alphanumeric string into prefix and numeric suffix
+    // e.g., "hp_5" -> ["hp_", "5"], "abc123" -> ["abc", "123"]
+    private static String[] splitAlphanumeric(String s) {
+        int i = s.length() - 1;
+        while (i >= 0 && Character.isDigit(s.charAt(i))) {
+            i--;
+        }
+        if (i < s.length() - 1) {
+            return new String[]{s.substring(0, i + 1), s.substring(i + 1)};
+        } else {
+            return new String[]{s, ""};
+        }
     }
 
     // Load environments from properties file
