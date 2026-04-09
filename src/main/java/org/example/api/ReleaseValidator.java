@@ -27,7 +27,7 @@ public class ReleaseValidator {
             "studio-service", "target-service", "validation-service",
             "workflow-service", "financials-service", "transactionalreport-service",
             "sso-service", "kafkaauditlog-service", "scriptexecutor-service",
-            "centangularsndui-service"
+            "angular-service"
     };
 
     // Environment definition class
@@ -91,11 +91,11 @@ public class ReleaseValidator {
         JPanel topPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 15, 10));
         topPanel.setBorder(BorderFactory.createEmptyBorder(5, 5, 5, 5));
 
-        JLabel env1Label = new JLabel("Lower Environment:");
+        JLabel env1Label = new JLabel("Source Environment:");
         JComboBox<Environment> env1Dropdown = new JComboBox<>();
         env1Dropdown.setPreferredSize(new Dimension(150, 25));
 
-        JLabel env2Label = new JLabel("Higher Environment:");
+        JLabel env2Label = new JLabel("Target Environment:");
         JComboBox<Environment> env2Dropdown = new JComboBox<>();
         env2Dropdown.setPreferredSize(new Dimension(150, 25));
 
@@ -129,10 +129,10 @@ public class ReleaseValidator {
             reportArea.append("Expected file: " + PROPERTIES_FILE + "\n");
             reportArea.append("Location: Same folder as this application\n\n");
             reportArea.append("File format (key=value pairs):\n");
-            reportArea.append("  R1QA=https://dcodecnr1dev1.unilever.com/ngui/\n");
-            reportArea.append("  ProdR1=https://dcode.unilever.com/ngui/\n");
-            reportArea.append("  AstronDEV=https://danonengdev.centegyapps.com/ngui\n");
-            reportArea.append("  AstronSIT=https://danonengsit.centegyapps.com/ngui\n\n");
+            reportArea.append("  R1QA=https://dcodecnr1dev1.unilever.com/\n");
+            reportArea.append("  ProdR1=https://dcode.unilever.com/\n");
+            reportArea.append("  AstronDEV=https://danonengdev.centegyapps.com/\n");
+            reportArea.append("  AstronSIT=https://danonengsit.centegyapps.com/\n\n");
             reportArea.append("Please create the file and restart the application.");
         } else {
             for (Environment env : environments) {
@@ -307,7 +307,8 @@ public class ReleaseValidator {
         result.append("⬇️ Behind: ").append(behind).append("\n");
         result.append("⚠️ Errors: ").append(errors).append("\n");
         result.append("Total Mismatches: ").append(ahead + behind + errors).append("\n");
-
+        result.append("Source Environment: ").append(env1.baseUrl).append("\n");
+        result.append("Target Environment: ").append(env2.baseUrl).append("\n");
         return result.toString();
     }
 
@@ -317,38 +318,53 @@ public class ReleaseValidator {
             RestAssured.useRelaxedHTTPSValidation();
             RestAssured.baseURI = baseUrl;
 
-            Response response = RestAssured.given()
-                    .relaxedHTTPSValidation()
-                    .header("Accept", "application/json")
-                    .config(RestAssured.config()
-                            .httpClient(io.restassured.config.HttpClientConfig.httpClientConfig()
-                                    .setParam("http.connection.timeout", TIMEOUT_SECONDS * 1000)
-                                    .setParam("http.socket.timeout", TIMEOUT_SECONDS * 1000)))
-                    .when()
-                    .get("/" + service + "/api/v1/releaseversion/getReleaseVersion");
+            Response response;
+
+            // ✅ Special handling for Angular service
+            if ("angular-service".equals(service)) {
+                response = RestAssured.given()
+                        .relaxedHTTPSValidation()
+                        .config(RestAssured.config()
+                                .httpClient(io.restassured.config.HttpClientConfig.httpClientConfig()
+                                        .setParam("http.connection.timeout", TIMEOUT_SECONDS * 1000)
+                                        .setParam("http.socket.timeout", TIMEOUT_SECONDS * 1000)))
+                        .when()
+                        .get("ngui/main/resources/version.txt");   // for angular service
+            } else {
+                // ✅ Existing API call (unchanged)
+                response = RestAssured.given()
+                        .relaxedHTTPSValidation()
+                        .header("Accept", "application/json")
+                        .config(RestAssured.config()
+                                .httpClient(io.restassured.config.HttpClientConfig.httpClientConfig()
+                                        .setParam("http.connection.timeout", TIMEOUT_SECONDS * 1000)
+                                        .setParam("http.socket.timeout", TIMEOUT_SECONDS * 1000)))
+                        .when()
+                        .get("/" + service + "/api/v1/releaseversion/getReleaseVersion");
+            }
 
             int statusCode = response.getStatusCode();
+
             if (statusCode == 200) {
                 String body = response.getBody().asString().trim();
-                // Remove quotes if present
                 body = body.replaceAll("^\"|\"$", "");
-                return body.isEmpty() ? " EMPTY RESPONSE " : body;
+                return body.isEmpty() ? "EMPTY_RESPONSE" : body;
             } else {
                 String body = response.getBody().asString().trim();
-                // Remove quotes if present
                 body = body.replaceAll("^\"|\"$", "");
                 return body.isEmpty()
-                        ? "HTTP: " + statusCode + " EMPTY RESPONSE "
-                        : " (HTTP: " + statusCode + ")" + body;
+                        ? "HTTP: " + statusCode + "EMPTY_RESPONSE"
+                        : "(HTTP: " + statusCode + ") " + body;
             }
+
         } catch (Exception e) {
-            // Handle timeout, connection errors, etc.
-            if (e.getMessage() != null && (e.getMessage().contains("timeout") ||
-                    e.getMessage().contains("timed out"))) {
+            if (e.getMessage() != null &&
+                    (e.getMessage().contains("timeout") || e.getMessage().contains("timed out"))) {
                 return "TIMEOUT";
             }
             return "ERROR";
         }
+
     }
 
     // Compare two version strings numerically
