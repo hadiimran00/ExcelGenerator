@@ -16,14 +16,14 @@ import java.util.Date;
 public class ScreenshotService {
     private static final Logger logger = LoggerUtil.getLogger(ScreenshotService.class);
 
-    public static void takeScreenshot(WebDriver driver) {
+    public static void takeScreenshot(WebDriver driver, String ScreenName) {
         File screenshotsDir = new File("screenshots");
         if (!screenshotsDir.exists()) {
             screenshotsDir.mkdirs();
         }
 
         String timestamp = new SimpleDateFormat("yyyy-MM-dd_HH-mm-ss-SSS").format(new Date());
-        String fileName = "ErrorScreenshot_" + timestamp + ".png";
+        String fileName = "Screenshot_"+ ScreenName +"_"+ timestamp + ".png";
 
         try {
             // Take screenshot

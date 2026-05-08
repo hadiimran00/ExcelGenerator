@@ -12,15 +12,19 @@ public class TestSummary {
     private static int uploadSuccess = 0;
     private static int uploadFailure = 0;
 
+
     static Properties properties = new Properties();
     static String sharedPath;
+    static String ReportMsg;
     static String DateTime = java.time.LocalDateTime.now()
-            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd hh:mm:ss a"));
-
+            .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_hh-mm-ss_a"));
+    static String ExcelTestSummary="ExcelTestSummary_"+DateTime+".html";
     static {
         try {
             properties.load(new FileInputStream("application.properties"));
-            sharedPath = properties.getProperty("sharedPath", "");
+            sharedPath = properties.getProperty("sharedPath", "NA");
+            ReportMsg = properties.getProperty("ReportMsg", "");
+
             System.out.println("Shared Path: " + sharedPath);
         } catch (IOException e) {
             e.printStackTrace();
@@ -51,7 +55,7 @@ public class TestSummary {
 
     public static void clearSummaryFile() {
         try (OutputStreamWriter writer = new OutputStreamWriter(
-                new FileOutputStream("summary.html", false), StandardCharsets.UTF_8)) {
+                new FileOutputStream(ExcelTestSummary, false), StandardCharsets.UTF_8)) {
 
             writer.write("""
 <!DOCTYPE html>
@@ -134,12 +138,7 @@ public class TestSummary {
 
             writer.write("<h3>Test Execution Date & Time: <code>" + DateTime + "</code></h3>\n");
             writer.write("<h3>Screenshots & Downloaded Excels available on Shared Path: <code>" + sharedPath + "</code></h3>\n");
-
-            writer.write("""
-    <h4>Note: Folders are cleaned after every run.</h4>
-    <h4>Test detail logs are attached.</h4>
-    <h4>This is an automated email from Jenkins.</h4>
-""");
+            writer.write("<h3>" + ReportMsg + "</h3>\n");
 
 
         } catch (IOException e) {
@@ -149,7 +148,7 @@ public class TestSummary {
 
     public static void writeTestSummary(String country) {
         try (OutputStreamWriter writer = new OutputStreamWriter(
-                new FileOutputStream("summary.html", true), StandardCharsets.UTF_8)) {
+                new FileOutputStream(ExcelTestSummary, true), StandardCharsets.UTF_8)) {
 
             writer.write("<div class='card'>\n");
             writer.write("<h2>Country: " + country + "</h2>\n");
@@ -191,7 +190,7 @@ public class TestSummary {
 
     public static void closeSummaryHtml() {
         try (OutputStreamWriter writer = new OutputStreamWriter(
-                new FileOutputStream("summary.html", true), StandardCharsets.UTF_8)) {
+                new FileOutputStream(ExcelTestSummary, true), StandardCharsets.UTF_8)) {
             writer.write("</body></html>");
         } catch (IOException e) {
             e.printStackTrace();

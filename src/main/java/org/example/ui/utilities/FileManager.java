@@ -27,25 +27,33 @@ public class FileManager {
             ));
         } catch (Exception e) {
             logger.info("❌ Upload failed on screen: {}", screenName, e);
-            takeScreenshot(driver);
+            takeScreenshot(driver,screenName);
         }
         //waitForLoaderToDisappear(driver);
       //  waitForLoaderAndToast(driver);
         // Check for success message
         //WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(10)).until(
+                    d -> !d.findElements(By.id("notify_text_success")).isEmpty() && !d.findElements(By.id("notify_text_success")).get(0).getText().trim().isEmpty()
+                            || !d.findElements(By.id("notify_text_error")).isEmpty() && !d.findElements(By.id("notify_text_error")).get(0).getText().trim().isEmpty()
+            );
+        } catch (TimeoutException ignored) {}
         List < WebElement > successMsgList = driver.findElements(By.id("notify_text_success"));
         if (!successMsgList.isEmpty() && successMsgList.get(0).getText().contains("File upload successful")) {
             WebElement successMsg = successMsgList.get(0);
             logger.info("✅ Success: {}", successMsg.getText());
             recordUploadSuccess(screenName);
+            takeScreenshot(driver,screenName);
         } else {
             // Check for error message
-            takeScreenshot(driver);
+
             List < WebElement > errorMsgList = driver.findElements(By.id("notify_text_error"));
             if (!errorMsgList.isEmpty() && errorMsgList.get(0).getText().contains("Error while processing excel file, file downloaded.")) {
                 WebElement errorMsg = errorMsgList.get(0);
                 logger.info("❌ Upload Failed! {} ", errorMsg.getText());
                 recordUploadFailure(screenName, errorMsg.getText());
+                takeScreenshot(driver,screenName);
                 //checking for error file downlaoded
                 File downloadDir = new File(System.getProperty("user.dir"), "DownloadedExcels");
                 File[] files = downloadDir.listFiles((dir,name) -> name.toLowerCase().endsWith(".xlsx"));
@@ -89,7 +97,7 @@ public class FileManager {
                         WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + value + "')])[1]")));
                         item.click();
                     } catch (TimeoutException e) {
-                        takeScreenshot(driver);
+                        takeScreenshot(driver,screenName);
                         logger.info("⚠️ No dropdown item found for: {} (This may be data issue. Please check your config file.)", value);
                     }
                 }
@@ -116,6 +124,12 @@ public class FileManager {
         // Wait a bit for messages to appear
         //waitForLoaderToDisappear(driver);
        // waitForLoaderAndToast(driver);
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(10)).until(
+                    d -> !d.findElements(By.id("notify_text_success")).isEmpty() && !d.findElements(By.id("notify_text_success")).get(0).getText().trim().isEmpty()
+                            || !d.findElements(By.id("notify_text_error")).isEmpty() && !d.findElements(By.id("notify_text_error")).get(0).getText().trim().isEmpty()
+            );
+        } catch (TimeoutException ignored) {}
         List < WebElement > successMsgList = driver.findElements(By.id("notify_text_success"));
         if (!successMsgList.isEmpty() && successMsgList.get(0).getText().contains("File downloaded successfully")) {
             WebElement successMsg = successMsgList.get(0);
@@ -128,12 +142,13 @@ public class FileManager {
             if (latestFile != null && latestFile.length() > 0) {
                 logger.info("📂 Found file: {}", latestFile.getName());
                 recordDownloadSuccess(screenName);
+                takeScreenshot(driver,screenName);
             } else {
                 logger.info("❌ Downloaded File not found!");
             }
         } else {
             WebElement errorMsg = null;
-            takeScreenshot(driver);
+            takeScreenshot(driver,screenName);
             List<WebElement> errorMsgList = driver.findElements(By.id("notify_text_error"));
             if (!errorMsgList.isEmpty() && errorMsgList.get(0).isDisplayed()) {
                 errorMsg = errorMsgList.get(0);

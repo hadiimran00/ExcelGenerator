@@ -100,7 +100,7 @@ public class validateCashmemo {
 
                 Tmessage = messageEl.getText();
                 logger.info("❌ Validation Failed: {}", Tmessage);
-                ScreenshotService.takeScreenshot(driver);
+                ScreenshotService.takeScreenshot(driver,"LMT Validation Failed");
             }
 
         } catch (Exception e) {
@@ -109,7 +109,7 @@ public class validateCashmemo {
                     e.getMessage(),
                     e);
 
-            ScreenshotService.takeScreenshot(driver);
+            ScreenshotService.takeScreenshot(driver,"LMT Error");
         }
     }
 }

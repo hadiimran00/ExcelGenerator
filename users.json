@@ -11,23 +11,25 @@
   {
     "username": "kpo_SLV",
     "password": "Cent@123",
-    "url": "https://dcodecnr2dev3.unilever.com/ngui",
+    "url": "https://dcodecnr2dev1.unilever.com/ngui",
     "resourcesFolder": "ResourcesTH",
     "configPath": "configTH.xlsx",
     "country": "Thailand",
-    "execute": "no"
+    "execute": "NO"
   },
   {
-    "username": "kpo_mp",
+    "username": "Multi_Org_User",
     "password": "Cent@123",
     "url": "https://dcodecnr1dev1.unilever.com/ngui",
     "resourcesFolder": "ResourcesPK",
     "configPath": "configPK.xlsx",
     "country": "Pakistan",
-    "execute": "yes"
+    "execute": "YES",
+    "orga": "Unilever Pakistan Limited",
+    "dist": "50250327-MULLER & PHIPPS (KORANGI - KARACHI)"
   },
   {
-    "username": "kpo_bangla",
+    "username": "Multi_Org_User",
     "password": "Cent@123",
     "url": "https://dcodecnr1dev1.unilever.com/ngui",
     "resourcesFolder": "ResourcesBD",

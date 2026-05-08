@@ -29,7 +29,7 @@ public class Event {
                 WebElement element = driver.findElement(locator); // Re-find to avoid stale element
                 ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
             } catch (Exception jsException) {
-                ScreenshotService.takeScreenshot(driver);
+                ScreenshotService.takeScreenshot(driver,"-");
                 logger.error("❌ Both standard and JS click failed for locator: {}", locator);
                 throw jsException; // Re-throw the exception to fail the test
             }

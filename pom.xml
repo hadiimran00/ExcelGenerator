@@ -75,25 +75,12 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>org.example.api.ApiFieldValidator</mainClass> <!-- updated to your Spring Boot class -->
+                            <mainClass>org.example.ui.Main</mainClass> <!-- updated to your Spring Boot class -->
                         </manifest>
                     </archive>
                 </configuration>
             </plugin>
-            <plugin>
-                <groupId>org.apache.maven.plugins</groupId>
-                <artifactId>maven-jar-plugin</artifactId>
-                <version>3.1.0</version>
-                <configuration>
-                    <archive>
-                        <manifest>
-                            <addClasspath>true</addClasspath>
-                            <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>org.example.api.ReleaseValidator</mainClass>
-                        </manifest>
-                    </archive>
-                </configuration>
-            </plugin>
+
 
             <plugin>
                 <groupId>org.apache.maven.plugins</groupId>

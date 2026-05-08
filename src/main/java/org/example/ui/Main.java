@@ -53,6 +53,8 @@ public class Main {
                 String configPath = resourcesFolder + "\\" + config;
                 String country = user.get("country");
                 String executeUser = user.get("execute");
+                String orga = user.get("orga");
+                String dist=user.get("dist");
 
                 if (executeUser.equalsIgnoreCase("no")) {
                     logger.info(" ");
@@ -90,20 +92,65 @@ public class Main {
                 driver.manage().window().setSize(new Dimension(1920, 1080));
                 driver.get(url);
                 driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
+//                //  Zoom
+//                ((ChromeDriver) driver).executeCdpCommand(
+//                        "Emulation.setDeviceMetricsOverride",
+//                        Map.of(
+//                                "width", 1920,
+//                                "height", 1080,
+//                                "deviceScaleFactor", Double.parseDouble(zoom.replace("%", "")) / 100.0,
+//                                "mobile", false
+//                        )
+//                );
 
 
 
                 logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
                 logger.info("🔍 Running Tests for User: {} | Country: {}", username, country);
                 logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
-
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
                 // === Login ===
                 try {
                     driver.findElement(By.id("a3")).sendKeys(username);
                     driver.findElement(By.id("a4")).sendKeys(password);
                     driver.findElement(By.cssSelector("button[type='submit']")).click();
+                    waitForLoaderToDisappear(driver);
+
+
+                    List<WebElement> selectBoxes = driver.findElements(By.id("selectBox1"));
+
+                    if (!selectBoxes.isEmpty() && selectBoxes.get(0).isDisplayed()) {
+                        driver.findElement(By.id("selectBox1")).sendKeys(orga);
+                        try {
+                            WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + orga + "')])[1]")));
+                            item.click();
+                        } catch (TimeoutException e) {
+                            takeScreenshot(driver,"Login");
+                            logger.info("⚠️ No dropdown item found for: {} (This may be data issue. Please check your users file.)", orga);
+                        }
+                        driver.findElement(By.id("proceedBtn")).click();
+                        Thread.sleep(500);
+
+                    }
+                    waitForLoaderToDisappear(driver);
+
+
+                    if (!selectBoxes.isEmpty()) {
+                        driver.findElement(By.id("selectBox1")).sendKeys(dist);
+                        try {
+                            WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + dist + "')])[1]")));
+                            item.click();
+                        } catch (TimeoutException e) {
+                            takeScreenshot(driver,"Login");
+                            logger.info("⚠️ No dropdown item found for: {} (This may be data issue. Please check your users file.)", dist);
+                        }
+                        driver.findElement(By.id("proceedBtn")).click();
+                        Thread.sleep(500);
+
+                    }
+                    waitForLoaderToDisappear(driver);
                 } catch (Exception e) {
-                    takeScreenshot(driver);
+                    takeScreenshot(driver,"Login");
                     throw new RuntimeException("Login failed for user: " + username, e);
                 }
 
@@ -135,7 +182,7 @@ public class Main {
                                     ));
                         }
 
-                        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+                   //     WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
                         waitForLoaderToDisappear(driver);
                         try {
                             wait.until(ExpectedConditions.visibilityOfElementLocated(
@@ -147,7 +194,7 @@ public class Main {
                                 wait.until(ExpectedConditions.visibilityOfElementLocated(
                                         By.cssSelector("input[placeholder='Search Here']")));
                             } catch (TimeoutException e2) {
-                                takeScreenshot(driver);
+                                takeScreenshot(driver,"Menu");
                                 throw e2;
                             }
                         }
@@ -216,7 +263,7 @@ public class Main {
 
             } catch (Exception e) {
                 logger.info("💥 Unexpected error for user: {} | Message: {}", username, e.getMessage(), e);
-                if (driver != null) takeScreenshot(driver);
+                if (driver != null) takeScreenshot(driver,username);
             } finally {
                 if (driver != null) {
                     try {
