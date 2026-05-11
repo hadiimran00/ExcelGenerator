@@ -12,45 +12,50 @@ public class TestSummary {
     private static int uploadSuccess = 0;
     private static int uploadFailure = 0;
 
-
     static Properties properties = new Properties();
+    static String ReportsFolderName;
     static String sharedPath;
     static String ReportMsg;
     static String DateTime = java.time.LocalDateTime.now()
             .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_hh-mm-ss_a"));
-    static String ExcelTestSummary="ExcelTestSummary_"+DateTime+".html";
+
+
     static {
         try {
             properties.load(new FileInputStream("application.properties"));
             sharedPath = properties.getProperty("sharedPath", "NA");
             ReportMsg = properties.getProperty("ReportMsg", "");
-
-            System.out.println("Shared Path: " + sharedPath);
+            ReportsFolderName = properties.getProperty("ReportsFolderName", "");
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
+    static String ExcelTestSummary = ReportsFolderName + "/ExcelTestSummary_" + DateTime + ".html";
+
     private static final List<String> screenResults = new ArrayList<>();
 
-    public static void recordDownloadSuccess(String screenName) {
+    // --- Recording Methods (Fixed Separators) ---
+
+    public static void recordDownloadSuccess(String screenName, String base64Data) {
         downloadSuccess++;
-        screenResults.add("success|" + screenName + " -> Download Success");
+        screenResults.add("success|" + screenName + " -> Download Success|" + base64Data);
     }
 
-    public static void recordDownloadFailure(String screenName, String errorMsg) {
+    public static void recordDownloadFailure(String screenName, String errorMsg, String base64Data) {
         downloadFailure++;
-        screenResults.add("failure|" + screenName + " -> Download Failed: " + errorMsg);
+        screenResults.add("failure|" + screenName + " -> Download Failed: " + errorMsg + "|" + base64Data);
     }
 
-    public static void recordUploadSuccess(String screenName) {
+    public static void recordUploadSuccess(String screenName, String base64Data) {
         uploadSuccess++;
-        screenResults.add("success|" + screenName + " -> Upload Success");
+        // REMOVED DUPLICATE LINE HERE
+        screenResults.add("success|" + screenName + " -> Upload Success|" + base64Data);
     }
 
-    public static void recordUploadFailure(String screenName, String errorMsg) {
+    public static void recordUploadFailure(String screenName, String errorMsg, String base64Data) {
         uploadFailure++;
-        screenResults.add("failure|" + screenName + " -> Upload Failed: " + errorMsg);
+        screenResults.add("failure|" + screenName + " -> Upload Failed: " + errorMsg + "|" + base64Data);
     }
 
     public static void clearSummaryFile() {
@@ -63,123 +68,93 @@ public class TestSummary {
 <head>
     <meta charset="UTF-8">
     <style>
-        body {
-            font-family: Arial, sans-serif;
-            background-color: #f4f6f8;
-            color: #222222;
-            margin: 0;
-            padding: 20px;
-        }
-        h1 {
-            font-size: 22px;
-            color: #2c7a7b;
-            text-align: center;
-            margin-bottom: 30px;
-        }
-        h3, h4 {
-            font-size: 14px;
-            margin: 6px 0;
-        }
-        .card {
-            background-color: #ffffff;
-            border: 1px solid #dddddd;
-            padding: 16px;
-            margin-bottom: 20px;
-        }
-        h2 {
-            font-size: 16px;
-            color: #276749;
-            border-left: 4px solid #38a169;
-            padding-left: 10px;
-            margin-bottom: 10px;
-        }
-        table {
-            width: 100%;
-            border-collapse: collapse;
-            font-size: 14px;
-        }
-        th {
-            background-color: #38a169;
-            color: #ffffff;
-            padding: 8px;
-            text-align: left;
-        }
-        td {
-            padding: 8px;
-            border-bottom: 1px solid #e2e8f0;
-        }
-        .success {
-            color: #2f855a;
-            font-weight: bold;
-        }
-        .failure {
-            color: #c53030;
-            font-weight: bold;
-        }
-        .summary {
-            background-color: #e6fffa;
-            border: 1px solid #b2f5ea;
-            padding: 10px;
-            font-size: 14px;
-            margin-top: 20px;
-            text-align: center;
-        }
-        code {
-            background-color: #f1f1f1;
-            padding: 2px 4px;
-            border-radius: 4px;
-            font-family: monospace;
-        }
+        body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; background-color: #f8f9fa; color: #333; padding: 30px; }
+        h1 { color: #2d3748; text-align: center; text-transform: uppercase; letter-spacing: 1px; }
+        .card { background: white; border-radius: 8px; box-shadow: 0 4px 6px rgba(0,0,0,0.1); padding: 20px; margin-bottom: 30px; }
+        h2 { color: #38a169; border-bottom: 2px solid #e2e8f0; padding-bottom: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th { background-color: #4a5568; color: white; padding: 12px; text-align: left; }
+        td { padding: 12px; border-bottom: 1px solid #edf2f7; vertical-align: middle; }
+        .success { color: #2f855a; font-weight: bold; }
+        .failure { color: #e53e3e; font-weight: bold; }
+        .thumbnail { width: 120px; height: auto; border: 1px solid #cbd5e0; border-radius: 4px; cursor: pointer; transition: 0.3s; }
+        .thumbnail:hover { transform: scale(1.1); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
+        .summary-bar { display: flex; justify-content: space-around; background: #edf2f7; padding: 15px; border-radius: 8px; margin-top: 20px; font-weight: bold; }
+        code { background: #edf2f7; padding: 2px 5px; border-radius: 4px; color: #805ad5; }
+        
+        /* Modal Styles */
+        #imgModal { display: none; position: fixed; z-index: 1000; padding-top: 50px; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); }
+        .modal-content { margin: auto; display: block; max-width: 90%; max-height: 85vh; border-radius: 5px; }
+        #closeModal { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
     </style>
+    <script>
+        function openImg(src) {
+            var modal = document.getElementById("imgModal");
+            var modalImg = document.getElementById("expandedImg");
+            modal.style.display = "block";
+            modalImg.src = src;
+        }
+        function closeImg() {
+            document.getElementById("imgModal").style.display = "none";
+        }
+    </script>
 </head>
 <body>
-    <h1>Automation Summary Report</h1>
+    <h1>🚀 Automation Test Report</h1>
+    <!-- Modal Structure -->
+    <div id="imgModal" onclick="closeImg()">
+        <span id="closeModal" onclick="closeImg()">&times;</span>
+        <img class="modal-content" id="expandedImg">
+    </div>
 """);
-
-            writer.write("<h3>Test Execution Date & Time: <code>" + DateTime + "</code></h3>\n");
-            writer.write("<h3>Screenshots & Downloaded Excels available on Shared Path: <code>" + sharedPath + "</code></h3>\n");
-            writer.write("<h3>" + ReportMsg + "</h3>\n");
-
+            writer.write("<p><b>Execution Time:</b> <code>" + DateTime + "</code></p>");
+            writer.write("<p><b>Shared Path:</b> <code>" + sharedPath + "</code></p>");
+            if (!ReportMsg.isEmpty()) writer.write("<p><b>Notes:</b> " + ReportMsg + "</p>");
 
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
-
     public static void writeTestSummary(String country) {
         try (OutputStreamWriter writer = new OutputStreamWriter(
                 new FileOutputStream(ExcelTestSummary, true), StandardCharsets.UTF_8)) {
 
             writer.write("<div class='card'>\n");
-            writer.write("<h2>Country: " + country + "</h2>\n");
+            writer.write("<h2>📍 Country: " + country + "</h2>\n");
             writer.write("<table>\n");
-            writer.write("<tr><th>Status</th><th>Screen</th></tr>\n");
+            writer.write("<tr><th style='width: 10%'>Status</th><th style='width: 65%'>Screen & Action</th><th style='width: 25%'>Screenshot</th></tr>\n");
 
             for (String result : screenResults) {
-                String[] parts = result.split("\\|", 2);
-                if (parts.length != 2) continue;
+                String[] parts = result.split("\\|", 3);
+                if (parts.length < 2) continue;
 
-                String cssClass = parts[0].trim(); // "success" or "failure"
-                String text = parts[1].trim();
-                String label = cssClass.equals("success") ? "SUCCESS" : "FAILURE";
+                String cssClass = parts[0].trim();
+                String message = parts[1].trim();
+                String base64Data = (parts.length == 3) ? parts[2].trim() : "";
+                String label = cssClass.equalsIgnoreCase("success") ? "PASS" : "FAIL";
 
                 writer.write("<tr>");
                 writer.write("<td class='" + cssClass + "'>" + label + "</td>");
-                writer.write("<td>" + text + "</td>");
+                writer.write("<td>" + message + "</td>");
+
+                if (!base64Data.isEmpty()) {
+                    writer.write("<td>"
+                            + "<img src='data:image/png;base64," + base64Data + "' "
+                            + "class='thumbnail' "
+                            + "onclick=\"openImg(this.src)\">"
+                            + "</td>");
+                } else {
+                    writer.write("<td style='color: #a0aec0; font-style: italic;'>No Image</td>");
+                }
                 writer.write("</tr>\n");
             }
 
             writer.write("</table>\n");
 
-            writer.write("<div class='summary'>"
-                    + "<span class='success'>Download Success: " + downloadSuccess + "</span>"
-                    + "<span class='failure'>  Download Failure: " + downloadFailure + "</span>"
-                    + "<span style='margin: 0 20px;'>|</span>"
-                    + "<span class='success'>Upload Success: " + uploadSuccess + "</span>"
-                    + "<span class='failure'>  Upload Failure: " + uploadFailure + "</span>"
+            writer.write("<div class='summary-bar'>"
+                    + "<div>Downloads: <span class='success'>✔ " + downloadSuccess + "</span> / <span class='failure'>✖ " + downloadFailure + "</span></div>"
+                    + "<div>Uploads: <span class='success'>✔ " + uploadSuccess + "</span> / <span class='failure'>✖ " + uploadFailure + "</span></div>"
                     + "</div>\n");
-
-
 
             writer.write("</div>\n");
 

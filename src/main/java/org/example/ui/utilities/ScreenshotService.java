@@ -12,6 +12,8 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.text.SimpleDateFormat;
 import java.util.Date;
+import java.util.Base64;
+import java.nio.file.Files;
 
 public class ScreenshotService {
     private static final Logger logger = LoggerUtil.getLogger(ScreenshotService.class);
@@ -32,6 +34,17 @@ public class ScreenshotService {
             logger.info("📸 Screenshot captured: {}" , fileName);
         } catch (Exception e) {
             logger.error("❌ Failed to take screenshot: {}", e.getMessage());
+        }
+    }
+    public static String getBase64Screenshot(WebDriver driver) {
+        try {
+            // Capture screenshot as bytes
+            byte[] imageBytes = ((TakesScreenshot) driver).getScreenshotAs(OutputType.BYTES);
+            // Encode to Base64 string
+            return Base64.getEncoder().encodeToString(imageBytes);
+        } catch (Exception e) {
+            logger.error("❌ Failed to encode screenshot: {}", e.getMessage());
+            return "";
         }
     }
 }
