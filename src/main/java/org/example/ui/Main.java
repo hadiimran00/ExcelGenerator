@@ -119,7 +119,7 @@ public class Main {
 
                     List<WebElement> selectBoxes = driver.findElements(By.id("selectBox1"));
 
-                    if (!selectBoxes.isEmpty() && selectBoxes.get(0).isDisplayed()) {
+                    if (!selectBoxes.isEmpty() && selectBoxes.get(0).isDisplayed() && orga != null) {
                         driver.findElement(By.id("selectBox1")).sendKeys(orga);
                         try {
                             WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + orga + "')])[1]")));
@@ -135,7 +135,7 @@ public class Main {
                     waitForLoaderToDisappear(driver);
 
 
-                    if (!selectBoxes.isEmpty()) {
+                    if (!selectBoxes.isEmpty() && dist != null) {
                         driver.findElement(By.id("selectBox1")).sendKeys(dist);
                         try {
                             WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + dist + "')])[1]")));
