@@ -164,6 +164,7 @@ public class Main {
                     String templatePath = (String) screen.get("templatePath");
                     String rootPath = System.getProperty("user.dir") + "\\" + resourcesFolder;
                     templatePath = Paths.get(rootPath, templatePath).toString();
+                    String testID = (String) screen.get("testID");
 
                     if (execute.isBlank() || execute.equalsIgnoreCase("y")) {
                         @SuppressWarnings("unchecked")
@@ -216,12 +217,14 @@ public class Main {
                             case "DOWNLOAD_UPLOAD":
                                 FileManager.downloadExcel(driver, screenName, stringParams);
                                 FileManager.uploadFile(driver, screenName, templatePath);
+                                PostUploadValidator.run(driver, screen, testID, templatePath, downloadDir);
                                 break;
 
                             case "DOWNLOAD_UPDATE_UPLOAD":
-                                updatedFile = ExcelGen.generateExcel(templatePath, rules);
+                                updatedFile = ExcelGen.generateExcel(templatePath, rules, testID);
                                 FileManager.downloadExcel(driver, screenName, stringParams);
                                 FileManager.uploadFile(driver, screenName, updatedFile);
+                                PostUploadValidator.run(driver, screen, testID, updatedFile, downloadDir);
                                 break;
 
                             case "DOWNLOAD_ONLY":
@@ -230,6 +233,7 @@ public class Main {
 
                             case "UPLOAD_ONLY":
                                 FileManager.uploadFile(driver, screenName, templatePath);
+                                PostUploadValidator.run(driver, screen, testID, templatePath, downloadDir);
                                 break;
 
                             case "PEP":
@@ -241,7 +245,7 @@ public class Main {
 
                             case "LMT":
                                 //special case for LMT/order bulk upload
-                                updatedFile = ExcelGen.generateExcel(templatePath, rules);
+                                updatedFile = ExcelGen.generateExcel(templatePath, rules,testID);
                                 FileManager.downloadExcel(driver, screenName, stringParams);
                                 FileManager.uploadFile(driver, screenName, updatedFile);
                                 validateCashmemo.validateCashmemoForLMT(driver, wait);

@@ -1,18 +1,22 @@
 package org.example.ui;
 import org.apache.poi.ss.usermodel.*;
 import org.apache.poi.xssf.usermodel.XSSFWorkbook;
+import org.example.ui.utilities.GeneratedDataStore;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.io.*;
 import java.time.LocalDate;
 import java.util.*;
+import static org.example.ui.utilities.GeneratedDataStore.store;
 
 public class ExcelGen {
 
     private static final Logger logger = LoggerFactory.getLogger(ExcelGen.class);
 
-    public static String generateExcel(String templatePath, Map<String, Map<String, Object>> columnRules) {
+    public static String generateExcel(String templatePath,
+                                       Map<String, Map<String, Object>> columnRules,
+                                       String testId) {
         try {
             logger.info("Column Rules: {}", columnRules);
 
@@ -46,6 +50,7 @@ public class ExcelGen {
                     Map<String, Object> ruleConfig = columnRules.get(columnName);
                     String type = (String) ruleConfig.get("type");
 
+                    String generated = null;
                     // Ensure the cell exists
                     int colIndex = headerCell.getColumnIndex();
                     Cell cell = row.getCell(colIndex);
@@ -59,20 +64,28 @@ public class ExcelGen {
                             int length = (int) ruleConfig.getOrDefault("length", 8);
                             String prefix = (String) ruleConfig.getOrDefault("prefix", "");
                            String uuidPart = UUID.randomUUID().toString().replaceAll("-", "").substring(0, length);
-                            cell.setCellValue(prefix + uuidPart.toUpperCase());
+                           generated = prefix + uuidPart.toUpperCase();
+                            cell.setCellValue(generated);
+                            GeneratedDataStore.store(testId, columnName, generated);
                             break;
                         case "PHONE":
                             int totalLength = (int) ruleConfig.getOrDefault("length", 11); // full phone length
                             int suffixLength = totalLength - 2; // subtract '03' prefix
                             String ts = String.valueOf(System.nanoTime());
                             String lastDigits = ts.substring(ts.length() - suffixLength);
-                            cell.setCellValue("03" + lastDigits);
+                            generated = "03" + lastDigits;
+                            cell.setCellValue(generated);
+                            GeneratedDataStore.store(testId, columnName, generated);
                             break;
                         case "EMAIL":
-                            cell.setCellValue("test" + System.currentTimeMillis() + "@mail.com");
+                            generated = "test" + System.currentTimeMillis() + "@mail.com";
+                            cell.setCellValue(generated);
+                            GeneratedDataStore.store(testId, columnName, generated);
                             break;
                         case "PLATE":
-                            cell.setCellValue("ABC-" + (1000 + random.nextInt(9000)));
+                            generated = "ABC-" + (1000 + random.nextInt(9000));
+                            cell.setCellValue(generated);
+                            GeneratedDataStore.store(testId, columnName, generated);
                             break;
                         case "NUM":
                             int num = (int) ruleConfig.getOrDefault("length", 5);
@@ -86,9 +99,13 @@ public class ExcelGen {
                             }
                             // if length <= 15, safe to store as number, else store as text
                             if (num <= 15) {
-                                cell.setCellValue(Double.parseDouble(randomNum.toString()));
+                                generated = String.valueOf(Double.parseDouble(randomNum.toString()));
+                                cell.setCellValue(generated);
+                                GeneratedDataStore.store(testId, columnName, generated);
                             } else {
-                                cell.setCellValue(randomNum.toString()); // store as text for long numbers
+                                generated=randomNum.toString();
+                                cell.setCellValue(generated);
+                                GeneratedDataStore.store(testId, columnName, generated);// store as text for long numbers
                             }
                             break;
 
@@ -96,11 +113,15 @@ public class ExcelGen {
                             int num2 = (int) ruleConfig.getOrDefault("length", 0);
                             LocalDate date = LocalDate.now().plusDays(num2);
                             String formattedDate = date.toString(); // yyyy-MM-dd
-                            cell.setCellValue(formattedDate);
+                            generated = formattedDate;
+                            cell.setCellValue(generated);
+                            GeneratedDataStore.store(testId, columnName, generated);
                             break;
                         case "COORDINATES":
                             double cord = 24 + random.nextDouble();
                             cell.setCellValue(cord);
+                            generated = String.valueOf(cord);
+                            GeneratedDataStore.store(testId, columnName,generated);
                             break;
                         case "NIC":
                             String nanoTimeStr = String.valueOf(System.nanoTime());
@@ -120,7 +141,10 @@ public class ExcelGen {
                             String part2 = last13Digits.substring(5, 12);   // Next 7 digits
                             String part3 = last13Digits.substring(12, 13);  // Last 1 digit
 
-                            cell.setCellValue(part1 + "-" + part2 + "-" + part3);
+                            generated = part1 + "-" + part2 + "-" + part3;
+                            cell.setCellValue(generated);
+                            GeneratedDataStore.store(testId, columnName, generated);
+
                             break;
 
                         default:

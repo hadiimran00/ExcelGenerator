@@ -35,7 +35,7 @@
     "resourcesFolder": "ResourcesBD",
     "configPath": "configBD.xlsx",
     "country": "Bangladesh",
-    "execute": "YES",
+    "execute": "NO",
   "orga": "Bangladesh",
     "dist": "Atlantic"
   }

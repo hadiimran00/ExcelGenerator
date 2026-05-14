@@ -11,6 +11,8 @@ public class TestSummary {
     private static int downloadFailure = 0;
     private static int uploadSuccess = 0;
     private static int uploadFailure = 0;
+    private static int validationPass = 0;
+    private static int validationFail = 0;
 
     static Properties properties = new Properties();
     static String ReportsFolderName;
@@ -172,11 +174,25 @@ public class TestSummary {
         }
     }
 
+    public static void recordValidationResult(ValidationResult result) {
+        if (result.passed) {
+            validationPass++;
+            result.passes.forEach(p ->
+                    screenResults.add("val-pass|" + result.screenName + " → " + p));
+        } else {
+            validationFail++;
+            result.failures.forEach(f ->
+                    screenResults.add("val-fail|" + result.screenName + " → " + f));
+        }
+    }
+
     public static void resetTestCounter() {
         downloadSuccess = 0;
         downloadFailure = 0;
         uploadSuccess = 0;
         uploadFailure = 0;
+        validationPass = 0;
+        validationFail = 0;
         screenResults.clear();
     }
 }
