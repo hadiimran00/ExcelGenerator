@@ -165,13 +165,13 @@ public class Main {
                     String rootPath = System.getProperty("user.dir") + "\\" + resourcesFolder;
                     templatePath = Paths.get(rootPath, templatePath).toString();
                     String testID = (String) screen.get("testID");
+                    Map<String, Map<String, Object>> validations = (Map<String, Map<String, Object>>) screen.get("validations");
 
                     if (execute.isBlank() || execute.equalsIgnoreCase("y")) {
                         @SuppressWarnings("unchecked")
                         Map<String, Object> params = (Map<String, Object>) screen.get("params");
                         @SuppressWarnings("unchecked")
                         Map<String, Map<String, Object>> rules = (Map<String, Map<String, Object>>) screen.get("rules");
-
                         Map<String, String> stringParams = new LinkedHashMap<>();
                         if (params != null) {
                             stringParams = params.entrySet().stream()
@@ -213,18 +213,20 @@ public class Main {
 
                         driver.findElement(By.id(screenId)).click();
 
+
                         switch (mode) {
                             case "DOWNLOAD_UPLOAD":
                                 FileManager.downloadExcel(driver, screenName, stringParams);
                                 FileManager.uploadFile(driver, screenName, templatePath);
-                                PostUploadValidator.run(driver, screen, testID, templatePath, downloadDir);
+                                PostUploadValidator.run(driver, validations.get(testID), testID, templatePath, downloadDir);
                                 break;
 
                             case "DOWNLOAD_UPDATE_UPLOAD":
                                 updatedFile = ExcelGen.generateExcel(templatePath, rules, testID);
                                 FileManager.downloadExcel(driver, screenName, stringParams);
                                 FileManager.uploadFile(driver, screenName, updatedFile);
-                                PostUploadValidator.run(driver, screen, testID, updatedFile, downloadDir);
+                            //    PostUploadValidator.run(driver,validations.get(testID), testID, updatedFile, downloadDir);
+                                TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, updatedFile, downloadDir));
                                 break;
 
                             case "DOWNLOAD_ONLY":
@@ -233,7 +235,7 @@ public class Main {
 
                             case "UPLOAD_ONLY":
                                 FileManager.uploadFile(driver, screenName, templatePath);
-                                PostUploadValidator.run(driver, screen, testID, templatePath, downloadDir);
+                                PostUploadValidator.run(driver,validations.get(testID), testID, templatePath, downloadDir);
                                 break;
 
                             case "PEP":

@@ -51,7 +51,7 @@ public class TestSummary {
 
     public static void recordUploadSuccess(String screenName, String base64Data) {
         uploadSuccess++;
-        // REMOVED DUPLICATE LINE HERE
+
         screenResults.add("success|" + screenName + " -> Upload Success|" + base64Data);
     }
 
@@ -174,15 +174,42 @@ public class TestSummary {
         }
     }
 
-    public static void recordValidationResult(ValidationResult result) {
-        if (result.passed) {
-            validationPass++;
-            result.passes.forEach(p ->
-                    screenResults.add("val-pass|" + result.screenName + " → " + p));
-        } else {
-            validationFail++;
-            result.failures.forEach(f ->
-                    screenResults.add("val-fail|" + result.screenName + " → " + f));
+//    public static void recordValidationResult(ValidationResult result) {
+//        if (result.passed) {
+//            validationPass++;
+//            result.passes.forEach(p ->
+//                    screenResults.add("val-pass|" + result.screenName + " → " + p));
+//        } else {
+//            validationFail++;
+//            result.failures.forEach(f ->
+//                    screenResults.add("val-fail|" + result.screenName + " → " + f));
+//        }
+//    }
+
+    public static void appendValidation(ValidationResult result) {
+        if (screenResults.isEmpty() || result == null) return;
+
+        int lastIdx = screenResults.size() - 1;
+        String[] parts = screenResults.get(lastIdx).split("\\|", 3);
+
+        if (parts.length >= 2) {
+            String status = parts[0];
+            String message = parts[1];
+            String base64 = parts.length == 3 ? "|" + parts[2] : "";
+
+            // Append validation status text
+            if (result.passed) {
+                message += "<br><span style='color:#2f855a;'><b>✅ Validation Passed</b></span>";
+            } else {
+                message += "<br><span style='color:#e53e3e;'><b>❌ Validation Failed:</b> " + String.join(", ", result.failures) + "</span>";
+                // Flip row to red failure block and adjust counter if upload was marked as success
+                if ("success".equals(status)) {
+                    status = "failure";
+                    uploadSuccess--;
+                    uploadFailure++;
+                }
+            }
+            screenResults.set(lastIdx, status + "|" + message + base64);
         }
     }
 

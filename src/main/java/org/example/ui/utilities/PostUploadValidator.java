@@ -50,79 +50,85 @@ public class PostUploadValidator {
 
         List<String> validateCols = splitCsv(str(screen, "validateCols"));
 
-        // ── DOWNLOAD_COMPARE ──────────────────────────────────────────────────
-        if (validateMode.equals("DOWNLOAD_COMPARE") || validateMode.equals("BOTH")) {
-            try {
-                // Trigger download (reuse existing params)
-                @SuppressWarnings("unchecked")
-                Map<String, String> params = (Map<String, String>) screen.getOrDefault("params", Map.of());
-                FileManager.downloadExcel(driver, screenName + "_redownload", params);
+        // ── VALIDATION MODE SWITCH ────────────────────────────────────────────
+        switch (validateMode) {
+            case "DOWNLOAD_COMPARE": {
+                try {
+                    // Trigger download (reuse existing params)
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> params = (Map<String, String>) screen.getOrDefault("params", Map.of());
+                    FileManager.downloadExcel(driver, screenName + "_redownload", params);
 
-                File downloaded = latestFile(downloadDir);
-                DownloadComparator.compareGeneratedVsDownloaded(
-                        downloaded, testId, validateCols, result);
-            } catch (Exception e) {
-                result.fail("Download-compare step failed: " + e.getMessage());
-                logger.info("Download-compare error", e);
+                    File downloaded = latestFile(downloadDir);
+                    DownloadComparator.compareGeneratedVsDownloaded(
+                            downloaded, testId, validateCols, result);
+                } catch (Exception e) {
+                    result.fail("Download-compare step failed: " + e.getMessage());
+                    logger.info("Download-compare error", e);
+                }
+                break;
             }
+
+            case "UI_SEARCH": {
+                String menuItemId      = str(screen, "validateScreenId");
+                //     String searchColName   = str(screen, "validateSearchCol");
+                String validateGeneratedCol = str(screen, "validateGeneratedCol");
+                String validateGridCol = str(screen, "validateGridCol");
+                //   String searchValue  = str(screen, "validateSearchValue");
+
+                String searchValue =
+                        GeneratedDataStore.get(testId, validateGeneratedCol);
+                // String searchValue = "DSR";
+                logger.info(
+                        "Generated value for [{}][{}] = {}",
+                        testId,
+                        validateGeneratedCol,
+                        searchValue
+                );
+                if (menuItemId.isBlank()) {
+
+                    result.fail("validateScreenId is blank — cannot navigate for UI search");
+
+                } else if (validateGeneratedCol.isBlank()) {
+
+                    result.fail("validateSearchCol is blank");
+
+                } else if (searchValue.isBlank()) {
+
+                    result.fail("No generated value found for column: " + validateGeneratedCol);
+
+                } else {
+
+                    // fallback to screenName if menuSearch empty
+                    String keywordToSearch =
+                            menuSearch.isBlank() ? screenName : menuSearch;
+
+                    // navigate to target screen
+                    navigateToMenuScreen(
+                            driver,
+                            keywordToSearch,
+                            menuItemId
+                    );
+
+                    // perform search + validation
+                    UIValidator.navigateSearchAndVerify(
+                            driver,
+                            validateGridCol,
+                            searchValue,
+                            result,
+                            columnId
+                    );
+                }
+                break;
+            }
+
+            default:
+                logger.info("Invalid validation mode: {}", validateMode);
+                break;
         }
 
-        // ── UI_SEARCH ─────────────────────────────────────────────────────────
-        // ── UI_SEARCH ─────────────────────────────────────────────────────────
-        if (validateMode.equals("UI_SEARCH") || validateMode.equals("BOTH")) {
-
-            String menuItemId      = str(screen, "validateScreenId");
-       //     String searchColName   = str(screen, "validateSearchCol");
-            String validateGeneratedCol = str(screen, "validateGeneratedCol");
-            String validateGridCol = str(screen, "validateGridCol");
-         //   String searchValue  = str(screen, "validateSearchValue");
-
-            String searchValue =
-                    GeneratedDataStore.get(testId, validateGeneratedCol);
-           // String searchValue = "DSR";
-            logger.info(
-                    "Generated value for [{}][{}] = {}",
-                    testId,
-                    validateGeneratedCol,
-                    searchValue
-            );
-            if (menuItemId.isBlank()) {
-
-                result.fail("validateScreenId is blank — cannot navigate for UI search");
-
-            } else if (validateGeneratedCol.isBlank()) {
-
-                result.fail("validateSearchCol is blank");
-
-            } else if (searchValue.isBlank()) {
-
-                result.fail("No generated value found for column: " + validateGeneratedCol);
-
-            } else {
-
-                // fallback to screenName if menuSearch empty
-                String keywordToSearch =
-                        menuSearch.isBlank() ? screenName : menuSearch;
-
-                // navigate to target screen
-                navigateToMenuScreen(
-                        driver,
-                        keywordToSearch,
-                        menuItemId
-                );
-
-                // perform search + validation
-                UIValidator.navigateSearchAndVerify(
-                        driver,
-                        validateGridCol,
-                        searchValue,
-                        result,
-                      columnId
-                );
-            }
-        }
         result.logSummary(logger);
-        TestSummary.recordValidationResult(result);
+    //    TestSummary.recordValidationResult(result);
         return result;
     }
 

@@ -25,7 +25,7 @@ public class ValidationResult {
 
     public void logSummary(org.apache.logging.log4j.Logger logger) {
         if (passed) {
-            logger.info("✅ Validation PASSED [{}] — {} checks OK", screenName, passes.size());
+            logger.info("✅ Validation PASSED [{}]", screenName);
         } else {
             logger.info("❌ Validation FAILED [{}]", screenName);
             failures.forEach(f -> logger.info("   ↳ {}", f));

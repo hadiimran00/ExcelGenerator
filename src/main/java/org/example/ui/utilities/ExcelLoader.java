@@ -92,6 +92,50 @@ public class ExcelLoader {
                     });
         }
 
+        // --- Validations Sheet ---
+        Sheet validationsSheet = workbook.getSheet("Validations");
+
+        if (validationsSheet != null) {
+
+            List<String> validationHeaders =
+                    getHeaders(validationsSheet.getRow(0));
+
+            for (int i = 1; i <= validationsSheet.getLastRowNum(); i++) {
+
+                Row row = validationsSheet.getRow(i);
+                if (row == null) continue;
+
+                String testID = row.getCell(0).getStringCellValue().trim();
+
+                Map<String, Object> validationMap =
+                        new LinkedHashMap<>();
+
+                for (int j = 0; j < validationHeaders.size(); j++) {
+
+                    Cell cell = row.getCell(j);
+
+                    String value =
+                            (cell == null) ? "" : cell.toString().trim();
+
+                    validationMap.put(validationHeaders.get(j), value);
+                }
+
+                screens.stream()
+                        .filter(s -> s.get("testID").equals(testID))
+                        .forEach(s -> {
+                            Map<String, Map<String, Object>> validations =
+                                    (Map<String, Map<String, Object>>) s.getOrDefault(
+                                            "validations",
+                                            new LinkedHashMap<>()
+                                    );
+
+                            validations.put(testID, validationMap);
+
+                            s.put("validations", validations);
+                        });
+            }
+        }
+
         workbook.close();
         fis.close();
         return screens;

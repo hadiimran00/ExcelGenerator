@@ -4,9 +4,7 @@ import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.*;
 import java.time.Duration;
-import java.util.List;
 
-//import static org.example.ui.utilities.PostUploadValidator.str;
 
 public class UIValidator {
 
@@ -74,48 +72,8 @@ public class UIValidator {
         }
     }
 
-    // ─── private helpers ──────────────────────────────────────────────────────
 
-    /**
-     * Ensures menu is open and types the specific search keyword into the menu search box
-     */
-    private static void ensureMenuAndSearch(WebDriver driver, WebDriverWait wait, String menuSearchValue) {
-        try {
-            WebElement menuSearchBox;
-            try {
-                menuSearchBox = driver.findElement(By.cssSelector("input[placeholder='Search Here']"));
-            } catch (NoSuchElementException e) {
-                // If not found, click hamburger to open
-                wait.until(ExpectedConditions.elementToBeClickable(By.id("menurollin"))).click();
-                menuSearchBox = wait.until(ExpectedConditions.visibilityOfElementLocated(
-                        By.cssSelector("input[placeholder='Search Here']")));
-            }
 
-            // Type the parameter from Excel into the menu search
-            menuSearchBox.clear();
-            menuSearchBox.sendKeys(menuSearchValue);
-            // Small sleep to allow menu filtered results to appear
-            Thread.sleep(500);
-
-        } catch (Exception e) {
-            logger.info("Could not perform menu search: {}", e.getMessage());
-        }
-    }
-
-    private static WebElement findSearchBox(WebDriver driver, WebDriverWait wait) {
-        String[] candidates = {
-                "#rowfilter_TXT__EPP2DESC",
-                "input[placeholder='Search Here']",
-                "input[placeholder='Search...']",
-                ".dx-texteditor-input[type='text']"
-        };
-        for (String css : candidates) {
-            try {
-                return wait.until(ExpectedConditions.elementToBeClickable(By.cssSelector(css)));
-            } catch (TimeoutException ignored) {}
-        }
-        return null;
-    }
 
     private static void waitForGridRows(WebDriver driver, WebDriverWait wait) {
         try {
@@ -128,22 +86,16 @@ public class UIValidator {
         }
     }
 
-    private static boolean isValueInGrid(WebDriver driver, String value) {
-        String xpath = String.format(
-                "//tr[contains(@class,'dx-data-row')]//td[normalize-space()='%s']",
-                value
-        );
-        return !driver.findElements(By.xpath(xpath)).isEmpty();
-    }
+
     private static boolean isValueInColumn(
             WebDriver driver,
-            String columnName,
-            String value) {
+            String searchColumn,
+            String searchValue) {
 
         String xpath =
                 "//tr[contains(@class,'dx-data-row')]"
-                        + "//td[contains(@id,'_" + columnName + "') "
-                        + "and @title='" + value + "']";
+                        + "//td[contains(@id,'_" + searchColumn + "') "
+                        + "and @title='" + searchValue + "']";
 
         return !driver.findElements(By.xpath(xpath)).isEmpty();
     }
