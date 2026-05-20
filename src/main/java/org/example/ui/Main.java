@@ -79,17 +79,25 @@ public class Main {
                 chromePrefs.put("profile.default_content_setting_values.automatic_downloads", 1);
                 options.setExperimentalOption("prefs", chromePrefs);
 
-                boolean isHeadless = Boolean.parseBoolean(properties.getProperty("selenium.headless", "false"));
+                boolean isHeadless = Boolean.parseBoolean(
+                        properties.getProperty("selenium.headless", "false"));
+
                 if (isHeadless) {
                     options.addArguments("--headless=new");
                     options.addArguments("--window-size=1920,1080");
                     options.addArguments("--disable-gpu");
-                      options.addArguments("--no-sandbox");
-                    options.addArguments("user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/140.0.0.0 Safari/537.36");
+                    options.addArguments("--no-sandbox");
+                    options.addArguments("--disable-dev-shm-usage");
                 }
 
                 driver = new ChromeDriver(options);
-                driver.manage().window().setSize(new Dimension(1920, 1080));
+
+                if (isHeadless) {
+                    driver.manage().window().setSize(new Dimension(1920, 1080));
+                } else {
+                    driver.manage().window().maximize();
+                }
+
                 driver.get(url);
                 driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
 //                //  Zoom
