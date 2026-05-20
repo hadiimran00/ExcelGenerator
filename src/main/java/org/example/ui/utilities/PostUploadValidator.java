@@ -42,7 +42,7 @@ public class PostUploadValidator {
 
         if (validateMode.isBlank()) {
             logger.info("No validation configured for: {}", screenName);
-            return result; // nothing to do
+            return null; // nothing to do
         }
 
         logger.info("──────────────────────────────────────────");

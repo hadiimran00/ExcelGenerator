@@ -15,7 +15,7 @@ public class UIValidator {
      * Navigate to a grid screen via its menu item id, then search and verify a row exists.
      *
      * @param searchColumn      the element id of the menu link
-     * @param menuSearchValue the value to type into the MENU search bar (new parameter)
+     * @param columnId the value to type into the MENU search bar (new parameter)
      * @param searchValue     the value to type into the GRID search box (the record to find)
      * @param result          collects pass/fail
      */
@@ -68,12 +68,9 @@ public class UIValidator {
         } catch (Exception e) {
             result.fail("UI validation error: " + e.getMessage());
             ScreenshotService.takeScreenshot(driver, "ui_val_error");
-            logger.error("UI validation exception", e);
+            logger.info("UI validation exception", e);
         }
     }
-
-
-
 
     private static void waitForGridRows(WebDriver driver, WebDriverWait wait) {
         try {
@@ -85,7 +82,6 @@ public class UIValidator {
             logger.info("Timed out waiting for grid rows");
         }
     }
-
 
     private static boolean isValueInColumn(
             WebDriver driver,
