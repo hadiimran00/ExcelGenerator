@@ -1,0 +1,89 @@
+package org.example.ui.utilities;
+
+import org.apache.logging.log4j.Logger;
+import org.example.ui.pages.PurchasePricePage;
+import org.openqa.selenium.WebDriver;
+
+import java.util.Map;
+
+public class ProdPriceExcelValidation {
+
+    private static final Logger logger =
+            LoggerUtil.getLogger(ProdPriceExcelValidation.class);
+
+    public static void validate(WebDriver driver,
+                                String testId,
+                                Map<String, String> ScenarioData, ValidationResult result) {
+
+        System.out.println("==================================");
+        System.out.println("Scenario Data:");
+        ScenarioData.forEach((k, v) -> System.out.println(k + " = " + v));
+        System.out.println("==================================");
+        // Product
+        String productCode =
+                ScenarioData.get("Product Code");
+
+        System.out.println("Product Code: " + productCode);
+
+        if (productCode.isBlank()) {
+            result.fail(" Product Code not found.");
+            return;
+        }
+
+        // Read from ScenarioData
+        String PriceToValidate =
+                ScenarioData.get("PriceToValidate");// e.g. VAT Price
+
+        String priceScreenID =
+                ScenarioData.get("priceScreenID");
+
+        if (PriceToValidate == null || PriceToValidate.isBlank()) {
+            result.fail("ScenarioData missing 'PriceToValidate'.");
+            return;
+        }
+
+        // Expected value from generated Excel
+        String expectedPrice =
+                GeneratedDataStore.get(testId, PriceToValidate);
+
+        System.out.println(GeneratedDataStore.getAll("03"));
+
+        if (expectedPrice.isBlank()) {
+            result.fail("Generated value not found for '" + PriceToValidate + "'");
+            return;
+        }
+
+        PurchasePricePage page = new PurchasePricePage(driver);
+
+        page.navigateToScreen(
+                ScenarioData.get("ScreenName"),
+                ScenarioData.get("ScreenId")
+        );
+
+        page.searchProduct(productCode);
+        page.openProductPrice(productCode);
+
+        String actualPrice =
+                page.getPrice(priceScreenID);
+
+        if (expectedPrice.equals(actualPrice)) {
+
+            result.pass(
+                    PriceToValidate +
+                            " matched. Expected=" +
+                            expectedPrice +
+                            " Actual=" +
+                            actualPrice
+            );
+        } else {
+
+            result.fail(
+                    PriceToValidate +
+                            " mismatch. Expected=" +
+                            expectedPrice +
+                            " Actual=" +
+                            actualPrice
+            );
+        }
+    }
+}

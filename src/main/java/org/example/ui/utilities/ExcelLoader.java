@@ -135,11 +135,41 @@ public class ExcelLoader {
                         });
             }
         }
+        // --- ScenarioData Sheet ---
+        Sheet scenarioSheet = workbook.getSheet("ScenarioData");
+
+        if (scenarioSheet != null) {
+
+            for (int i = 1; i <= scenarioSheet.getLastRowNum(); i++) {
+
+                Row row = scenarioSheet.getRow(i);
+                if (row == null) continue;
+
+                String testID = row.getCell(0).toString().trim();
+                String key = row.getCell(1).toString().trim();
+                String value = row.getCell(2).toString().trim();
+
+                screens.stream()
+                        .filter(s -> testID.equals(s.get("testID")))
+                        .forEach(s -> {
+
+                            Map<String, String> scenarioData =
+                                    (Map<String, String>) s.getOrDefault(
+                                            "scenarioData",
+                                            new LinkedHashMap<>());
+
+                            scenarioData.put(key, value);
+
+                            s.put("scenarioData", scenarioData);
+                        });
+            }
+        }
 
         workbook.close();
         fis.close();
         return screens;
     }
+
 
     private static List<String> getHeaders(Row headerRow) {
         List<String> headers = new ArrayList<>();

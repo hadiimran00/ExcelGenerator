@@ -199,7 +199,9 @@ public class TestSummary {
 
             // Append validation status text
             if (result.passed) {
-                message += "<br><span style='color:#2f855a;'><b>✅ Validation Passed</b></span>";
+                //     message += "<br><span style='color:#2f855a;'><b>✅ Validation Passed</b></span>";
+                message += "<br><span style='color:#2f855a;'><b>✅ Validation Passed</b> " + String.join(", ", result.passes) + "</span>";
+
             } else {
                 message += "<br><span style='color:#e53e3e;'><b>❌ Validation Failed:</b> " + String.join(", ", result.failures) + "</span>";
                 // Flip row to red failure block and adjust counter if upload was marked as success

@@ -29,14 +29,11 @@ public class PostUploadValidator {
                                        Map<String, Object> screen,
                                        String testId,
                                        String uploadedFilePath,
-                                       String downloadDir) {
+                                       String downloadDir, String validateMode, Map<String, String> scenarioData) {
         System.out.println("Inside post upload");
         String screenName   = str(screen, "screenName");
-        String validateMode = str(screen, "validateMode").toUpperCase();
         String columnId = str(screen, "columnId");
-
-        // 1. Extract the new parameter from Excel
-        String menuSearch   = str(screen, "menuSearch");
+        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
 
         ValidationResult result = new ValidationResult(screenName);
 
@@ -49,7 +46,9 @@ public class PostUploadValidator {
         logger.info("🔎 Post-upload validation [{}] mode={}", screenName, validateMode);
 
         List<String> validateCols = splitCsv(str(screen, "validateCols"));
-
+        validateMode = validateMode == null
+                ? ""
+                : validateMode.trim().toUpperCase();
         // ── VALIDATION MODE SWITCH ────────────────────────────────────────────
         switch (validateMode) {
             case "DOWNLOAD_COMPARE": {
@@ -70,60 +69,29 @@ public class PostUploadValidator {
             }
 
             case "UI_SEARCH": {
-                String menuItemId      = str(screen, "validateScreenId");
-                //     String searchColName   = str(screen, "validateSearchCol");
-                String validateGeneratedCol = str(screen, "validateGeneratedCol");
-                String validateGridCol = str(screen, "validateGridCol");
-                //   String searchValue  = str(screen, "validateSearchValue");
-
-                String searchValue =
-                        GeneratedDataStore.get(testId, validateGeneratedCol);
-                // String searchValue = "DSR";
-                logger.info(
-                        "Generated value for [{}][{}] = {}",
-                        testId,
-                        validateGeneratedCol,
-                        searchValue
-                );
-                if (menuItemId.isBlank()) {
-
-                    result.fail("validateScreenId is blank — cannot navigate for UI search");
-
-                } else if (validateGeneratedCol.isBlank()) {
-
-                    result.fail("validateSearchCol is blank");
-
-                } else if (searchValue.isBlank()) {
-
-                    result.fail("No generated value found for column: " + validateGeneratedCol);
-
-                } else {
-
-                    // fallback to screenName if menuSearch empty
-                    String keywordToSearch =
-                            menuSearch.isBlank() ? screenName : menuSearch;
-
-                    // navigate to target screen
-                    navigateToMenuScreen(
-                            driver,
-                            keywordToSearch,
-                            menuItemId
-                    );
-
-                    // perform search + validation
-                    UIValidator.navigateSearchAndVerify(
-                            driver,
-                            validateGridCol,
-                            searchValue,
-                            result,
-                            columnId
-                    );
-                }
+                runUISearchValidation(driver, screen, testId, result, columnId);
                 break;
             }
+            case "LMT": {
+                validateCashmemo.validateCashmemoForLMT(driver, wait, result);
+                break;
+            }
+            case "PROD_PRICE": { //For price master excel
+                ProdPriceExcelValidation.validate(
+                        driver,
+                        testId,
+                        scenarioData,
+                        result
+                );
+                break;
+            }
+                case "PROD_ENRICH":{
+
+                };
 
             default:
                 logger.info("Invalid validation mode: {}", validateMode);
+                result.fail("Invalid validation mode");
                 break;
         }
 
@@ -192,5 +160,56 @@ public class PostUploadValidator {
     private static List<String> splitCsv(String raw) {
         if (raw == null || raw.isBlank()) return List.of();
         return Arrays.asList(raw.split(","));
+    }
+
+    private static void runUISearchValidation(
+            WebDriver driver,
+            Map<String, Object> screen,
+            String testId,
+            ValidationResult result,
+            String columnId) {
+
+        String menuItemId = str(screen, "validateScreenId");
+        String validateGeneratedCol = str(screen, "validateGeneratedCol");
+        String validateGridCol = str(screen, "validateGridCol");
+        String menuSearch = str(screen, "menuSearch");
+        String screenName = str(screen, "screenName");
+
+        String searchValue =
+                GeneratedDataStore.get(testId, validateGeneratedCol);
+
+        logger.info("Generated value for [{}][{}] = {}", testId, validateGeneratedCol, searchValue);
+
+        if (menuItemId.isBlank()) {
+            result.fail("validateScreenId is blank — cannot navigate for UI search");
+            return;
+        }
+
+        if (validateGeneratedCol.isBlank()) {
+            result.fail("validateGeneratedCol is blank");
+            return;
+        }
+
+        if (searchValue == null || searchValue.isBlank()) {
+            result.fail("No generated value found for column: " + validateGeneratedCol);
+            return;
+        }
+
+        String keywordToSearch =
+                menuSearch.isBlank() ? screenName : menuSearch;
+
+        navigateToMenuScreen(
+                driver,
+                keywordToSearch,
+                menuItemId
+        );
+
+        UIValidator.navigateSearchAndVerify(
+                driver,
+                validateGridCol,
+                searchValue,
+                result,
+                columnId
+        );
     }
 }

@@ -97,8 +97,11 @@ public class ExcelGen {
                             }
                             // if length <= 15, safe to store as number, else store as text
                             if (num <= 15) {
-                                generated = String.valueOf(Double.parseDouble(randomNum.toString()));
-                                cell.setCellValue(generated);
+                                generated = randomNum.toString();
+                                // Write as a numeric value (not String)
+                                long numericValue = Long.parseLong(generated);
+                                cell.setCellValue((double) numericValue);
+
                                 GeneratedDataStore.store(testId, columnName, generated);
                             } else {
                                 generated=randomNum.toString();

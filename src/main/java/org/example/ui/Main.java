@@ -56,6 +56,7 @@ public class Main {
                 String orga = user.get("orga");
                 String dist=user.get("dist");
 
+
                 if (executeUser.equalsIgnoreCase("no")) {
                     logger.info(" ");
                     logger.info("⏩ Skipping user: {} (execute= NO)", username);
@@ -77,6 +78,7 @@ public class Main {
                 HashMap<String, Object> chromePrefs = new HashMap<>();
                 chromePrefs.put("download.default_directory", downloadDir);
                 chromePrefs.put("profile.default_content_setting_values.automatic_downloads", 1);
+
                 options.setExperimentalOption("prefs", chromePrefs);
 
                 boolean isHeadless = Boolean.parseBoolean(
@@ -89,6 +91,8 @@ public class Main {
                     options.addArguments("--no-sandbox");
                     options.addArguments("--disable-dev-shm-usage");
                 }
+                String zoom =properties.getProperty("zoom");
+                options.addArguments("--force-device-scale-factor=0."+zoom);
 
                 driver = new ChromeDriver(options);
 
@@ -100,17 +104,6 @@ public class Main {
 
                 driver.get(url);
                 driver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
-//                //  Zoom
-//                ((ChromeDriver) driver).executeCdpCommand(
-//                        "Emulation.setDeviceMetricsOverride",
-//                        Map.of(
-//                                "width", 1920,
-//                                "height", 1080,
-//                                "deviceScaleFactor", Double.parseDouble(zoom.replace("%", "")) / 100.0,
-//                                "mobile", false
-//                        )
-//                );
-
 
 
                 logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
@@ -143,6 +136,8 @@ public class Main {
                     waitForLoaderToDisappear(driver);
 
 
+
+
                     if (!selectBoxes.isEmpty() && dist != null) {
                         driver.findElement(By.id("selectBox1")).sendKeys(dist);
                         try {
@@ -173,8 +168,14 @@ public class Main {
                     String rootPath = System.getProperty("user.dir") + "\\" + resourcesFolder;
                     templatePath = Paths.get(rootPath, templatePath).toString();
                     String testID = (String) screen.get("testID");
+                    String validateMode=(String) screen.get("validateMode");
                     Map<String, Map<String, Object>> validations = (Map<String, Map<String, Object>>) screen.get("validations");
-
+                    @SuppressWarnings("unchecked")
+                    Map<String, String> scenarioData =
+                            (Map<String, String>) screen.getOrDefault(
+                                    "scenarioData",
+                                    Map.of()
+                            );
                     if (execute.isBlank() || execute.equalsIgnoreCase("y")) {
                         @SuppressWarnings("unchecked")
                         Map<String, Object> params = (Map<String, Object>) screen.get("params");
@@ -226,7 +227,7 @@ public class Main {
                             case "DOWNLOAD_UPLOAD":
                                 FileManager.downloadExcel(driver, screenName, stringParams);
                                 FileManager.uploadFile(driver, screenName, templatePath);
-                                PostUploadValidator.run(driver, validations.get(testID), testID, templatePath, downloadDir);
+                                PostUploadValidator.run(driver, validations.get(testID), testID, templatePath, downloadDir, validateMode,scenarioData);
                                 break;
 
                             case "DOWNLOAD_UPDATE_UPLOAD":
@@ -234,7 +235,7 @@ public class Main {
                                 FileManager.downloadExcel(driver, screenName, stringParams);
                                 FileManager.uploadFile(driver, screenName, updatedFile);
                             //    PostUploadValidator.run(driver,validations.get(testID), testID, updatedFile, downloadDir);
-                                TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, updatedFile, downloadDir));
+                                TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, updatedFile, downloadDir,validateMode,scenarioData));
                                 break;
 
                             case "DOWNLOAD_ONLY":
@@ -243,7 +244,7 @@ public class Main {
 
                             case "UPLOAD_ONLY":
                                 FileManager.uploadFile(driver, screenName, templatePath);
-                                PostUploadValidator.run(driver,validations.get(testID), testID, templatePath, downloadDir);
+                                PostUploadValidator.run(driver,validations.get(testID), testID, templatePath, downloadDir, validateMode,scenarioData);
                                 break;
 
                             case "PEP":
@@ -258,7 +259,7 @@ public class Main {
                                 updatedFile = ExcelGen.generateExcel(templatePath, rules,testID);
                                 FileManager.downloadExcel(driver, screenName, stringParams);
                                 FileManager.uploadFile(driver, screenName, updatedFile);
-                                validateCashmemo.validateCashmemoForLMT(driver, wait);
+                             //   validateCashmemo.validateCashmemoForLMT(driver, wait);
                                 break;
 
                             default:
