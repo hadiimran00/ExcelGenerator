@@ -147,7 +147,8 @@ public class Main {
                             takeScreenshot(driver,"Login");
                             logger.info("⚠️ No dropdown item found for: {} (This may be data issue. Please check your users file.)", dist);
                         }
-                        driver.findElement(By.id("proceedBtn")).click();
+
+                        Event.robustClick(driver,By.id("proceedBtn"));
                         Thread.sleep(500);
 
                     }
@@ -227,13 +228,13 @@ public class Main {
                             case "DOWNLOAD_UPLOAD":
                                 FileManager.downloadExcel(driver, screenName, stringParams);
                                 FileManager.uploadFile(driver, screenName, templatePath);
-                                PostUploadValidator.run(driver, validations.get(testID), testID, templatePath, downloadDir, validateMode,scenarioData);
+                                TestSummary.appendValidation(PostUploadValidator.run(driver,validations.get(testID), testID, templatePath, downloadDir, validateMode,scenarioData));
                                 break;
 
                             case "DOWNLOAD_UPDATE_UPLOAD":
                                 updatedFile = ExcelGen.generateExcel(templatePath, rules, testID);
-                                FileManager.downloadExcel(driver, screenName, stringParams);
                                 FileManager.uploadFile(driver, screenName, updatedFile);
+                                FileManager.downloadExcel(driver, screenName, stringParams);
                             //    PostUploadValidator.run(driver,validations.get(testID), testID, updatedFile, downloadDir);
                                 TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, updatedFile, downloadDir,validateMode,scenarioData));
                                 break;
@@ -244,8 +245,21 @@ public class Main {
 
                             case "UPLOAD_ONLY":
                                 FileManager.uploadFile(driver, screenName, templatePath);
-                                PostUploadValidator.run(driver,validations.get(testID), testID, templatePath, downloadDir, validateMode,scenarioData);
+                             TestSummary.appendValidation(PostUploadValidator.run(driver,validations.get(testID), testID, templatePath, downloadDir, validateMode,scenarioData));
+                                ValidationResult result =
+                                        PostUploadValidator.run(
+                                                driver,
+                                                validations.get(testID),
+                                                testID,
+                                                templatePath,
+                                                downloadDir,
+                                                validateMode,
+                                                scenarioData);
+
+
+
                                 break;
+
 
                             case "PEP":
                                 //special case for Product exclusion policy

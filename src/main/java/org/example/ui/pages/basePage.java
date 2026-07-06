@@ -1,17 +1,25 @@
 package org.example.ui.pages;
 
+import org.example.ui.utilities.Event;
 import org.example.ui.utilities.LoaderWait;
+import org.example.ui.utilities.PostUploadValidator;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.*;
 
 import java.time.Duration;
+import java.util.Map;
 
+import static com.fasterxml.jackson.databind.type.LogicalType.Map;
+
+import static org.example.ui.utilities.PostUploadValidator.str;
 
 
 public abstract class basePage {
 
     protected final WebDriver driver;
     protected final WebDriverWait wait;
+
+
 
     protected basePage(WebDriver driver) {
         this.driver = driver;
@@ -23,15 +31,49 @@ public abstract class basePage {
     }
 
     protected void click(By locator) {
-        wait.until(ExpectedConditions.elementToBeClickable(locator)).click();
+
+        waitForLoader();
+
+        // Find the element
+        Event.robustClick(driver, locator);
+        waitForLoader();
+
     }
 
     protected void type(By locator, String text) {
-        WebElement element = find(locator);
-        element.clear();
-        element.sendKeys(text);
-    }
 
+        System.out.println("Typing into locator: " + locator);
+        System.out.println("Text: " + text);
+
+        try {
+            WebElement element = find(locator);
+            System.out.println("Element found");
+
+            element.clear();
+            System.out.println("Field cleared");
+
+            // Re-find the element in case the DOM refreshed
+            element = find(locator);
+            System.out.println("Element found again");
+
+            System.out.println("Current HTML: " + element.getAttribute("outerHTML"));
+
+            element.sendKeys(text);
+            System.out.println("Text entered successfully");
+
+        } catch (StaleElementReferenceException e) {
+
+            System.out.println("Element became stale. Retrying...");
+
+            WebElement element = find(locator);
+
+            element.clear();
+            element = find(locator);
+            element.sendKeys(text);
+
+            System.out.println("Retry successful");
+        }
+    }
     protected String value(By locator) {
         return find(locator).getAttribute("value");
     }
@@ -47,18 +89,66 @@ public abstract class basePage {
     }
 
     protected void waitForLoader() {
-        LoaderWait.waitForLoaderToDisappear(driver);
+
+        By loader = By.cssSelector(".dx-loadindicator-wrapper");
+
+        try {
+            WebDriverWait shortWait = new WebDriverWait(driver, Duration.ofSeconds(2));
+
+            // Wait until loader is actually visible on the UI (not just present)
+            WebElement visibleLoader = shortWait.until(ExpectedConditions.visibilityOfElementLocated(loader));
+
+            // Only log if loader appeared
+            if (visibleLoader != null) {
+
+
+                // Wait until loader disappears
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
+                wait.until(ExpectedConditions.invisibilityOfElementLocated(loader));
+
+
+            }
+
+        } catch (TimeoutException e) {
+            // Loader never appeared → safe to continue
+
+        }
+
+    }
+    protected void selectDropdown(By locator, String value) {
+
+        waitForLoader();
+        WebElement field = wait.until(
+                ExpectedConditions.elementToBeClickable(locator));
+
+        field.click();
+        field.clear();
+        field.sendKeys(value);
+        try {
+            Thread.sleep(500);
+        } catch (InterruptedException e) {
+            Thread.currentThread().interrupt();
+        }
+        waitForLoader();
+        wait.until(ExpectedConditions.elementToBeClickable(
+                By.xpath("(//div[@id='dropdown-content']//*[contains(text(),'" + value + "')])[1]")
+        )).click();
+
+        waitForLoader();
     }
 
-    public void navigateToScreen(String screenName, String menuItemId) {
 
+    public void navigateToScreen(Map<String, Object> screen) {
+
+        String menuSearch = PostUploadValidator.str(screen, "menuSearch");
+        String screenId = PostUploadValidator.str(screen, "validateScreenId");
         try {
 
             // Click hamburger if menu is collapsed
             try {
-                wait.until(ExpectedConditions
-                                .elementToBeClickable(By.id("menurollin")))
-                        .click();
+//                wait.until(ExpectedConditions.visibilityOfElementLocated(
+//                        By.id("menurollin")));
+                Event.robustClick(driver, By.id("menurollin"));
             } catch (NoSuchElementException e) {
                 wait.until(ExpectedConditions.visibilityOfElementLocated(
                         By.cssSelector("input[placeholder='Search Here']")));
@@ -70,14 +160,14 @@ public abstract class basePage {
                             By.cssSelector("input[placeholder='Search Here']")));
 
             searchBox.clear();
-            searchBox.sendKeys(screenName);
+            searchBox.sendKeys(menuSearch);
 
             Thread.sleep(400);
 
             // Open screen
             wait.until(ExpectedConditions
-                            .elementToBeClickable(By.id(menuItemId)))
-                    .click();
+                            .elementToBeClickable(By.id(screenId)));
+                    Event.robustClick(driver, By.id(screenId));
 
             waitForLoader();
 
@@ -87,8 +177,8 @@ public abstract class basePage {
 
         } catch (Exception e) {
             throw new RuntimeException(
-                    "Could not navigate to screen: " + screenName, e);
+                    "Could not navigate to screen: " + menuSearch, e);
         }
-    }
+    }}
 
-    }
+

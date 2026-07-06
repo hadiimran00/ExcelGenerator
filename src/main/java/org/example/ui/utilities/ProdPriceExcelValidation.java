@@ -13,7 +13,7 @@ public class ProdPriceExcelValidation {
 
     public static void validate(WebDriver driver,
                                 String testId,
-                                Map<String, String> ScenarioData, ValidationResult result) {
+                                Map<String, Object> screen, Map<String, String> ScenarioData, ValidationResult result) {
 
         System.out.println("==================================");
         System.out.println("Scenario Data:");
@@ -31,11 +31,11 @@ public class ProdPriceExcelValidation {
         }
 
         // Read from ScenarioData
-        String PriceToValidate =
-                ScenarioData.get("PriceToValidate");// e.g. VAT Price
+            String PriceToValidate =
+                    ScenarioData.get("PriceToValidate");// e.g. VAT Price
 
         String priceScreenID =
-                ScenarioData.get("priceScreenID");
+                ScenarioData.get("priceScreenID");  //field id on UI
 
         if (PriceToValidate == null || PriceToValidate.isBlank()) {
             result.fail("ScenarioData missing 'PriceToValidate'.");
@@ -55,10 +55,7 @@ public class ProdPriceExcelValidation {
 
         PurchasePricePage page = new PurchasePricePage(driver);
 
-        page.navigateToScreen(
-                ScenarioData.get("ScreenName"),
-                ScenarioData.get("ScreenId")
-        );
+        page.navigateToScreen(screen);
 
         page.searchProduct(productCode);
         page.openProductPrice(productCode);

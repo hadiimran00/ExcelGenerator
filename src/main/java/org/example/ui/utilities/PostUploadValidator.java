@@ -26,13 +26,13 @@ public class PostUploadValidator {
      */
 
     public static ValidationResult run(WebDriver driver,
-                                       Map<String, Object> screen,
+                                       Map<String, Object> validationsSheet,
                                        String testId,
                                        String uploadedFilePath,
                                        String downloadDir, String validateMode, Map<String, String> scenarioData) {
-        System.out.println("Inside post upload");
-        String screenName   = str(screen, "screenName");
-        String columnId = str(screen, "columnId");
+       System.out.println(validationsSheet);
+        String screenName   = str(validationsSheet, "screenName");
+        String columnId = str(validationsSheet, "columnId");
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
 
         ValidationResult result = new ValidationResult(screenName);
@@ -45,7 +45,7 @@ public class PostUploadValidator {
         logger.info("──────────────────────────────────────────");
         logger.info("🔎 Post-upload validation [{}] mode={}", screenName, validateMode);
 
-        List<String> validateCols = splitCsv(str(screen, "validateCols"));
+        List<String> validateCols = splitCsv(str(validationsSheet, "validateCols"));
         validateMode = validateMode == null
                 ? ""
                 : validateMode.trim().toUpperCase();
@@ -55,7 +55,7 @@ public class PostUploadValidator {
                 try {
                     // Trigger download (reuse existing params)
                     @SuppressWarnings("unchecked")
-                    Map<String, String> params = (Map<String, String>) screen.getOrDefault("params", Map.of());
+                    Map<String, String> params = (Map<String, String>) validationsSheet.getOrDefault("params", Map.of());
                     FileManager.downloadExcel(driver, screenName + "_redownload", params);
 
                     File downloaded = latestFile(downloadDir);
@@ -69,7 +69,7 @@ public class PostUploadValidator {
             }
 
             case "UI_SEARCH": {
-                runUISearchValidation(driver, screen, testId, result, columnId);
+                runUISearchValidation(driver, validationsSheet, testId, result);
                 break;
             }
             case "LMT": {
@@ -79,15 +79,71 @@ public class PostUploadValidator {
             case "PROD_PRICE": { //For price master excel
                 ProdPriceExcelValidation.validate(
                         driver,
-                        testId,
+                        testId,validationsSheet,
                         scenarioData,
                         result
                 );
                 break;
             }
-                case "PROD_ENRICH":{
+                case "PROD_ENRICH": { // for product enrichment
+                    ProdEnrichValidation.validate(
+                            driver,
+                            testId, validationsSheet,
+                            scenarioData,
+                            result
+                    );
+                    break;
+                }
+                    case "DIST_PROFILE":{ // for DIST EXCEL
+                        DistProfileValidation.validate(
+                                driver,
+                                testId,validationsSheet,
+                                scenarioData,
+                                result
+                        );
+                        break;
 
-                };
+                }
+                case "VALID_EXCEL":{ // for Validation EXCEL
+                ValidationExcelValidation.validate(
+                        driver,
+                        testId,validationsSheet,
+                        scenarioData,
+                        result
+                );
+                break;
+
+
+            }
+                case "COMPARE": { // for Validation EXCEL
+                    try {
+
+                        File downloaded = latestFile(downloadDir);
+
+                        if (downloaded == null) {
+                            result.fail("Downloaded file not found.");
+                            break;
+                        }
+
+
+
+                        String compareColumns = scenarioData.get("CompareColumns");
+                        List<String> columns = Arrays.stream(compareColumns.split(","))
+                                .map(String::trim)
+                                .toList();
+                        UploadedVsDownloadedComparator.compare(
+                                new File(uploadedFilePath),
+                                downloaded,
+                                columns,
+                                result
+                        );
+
+                    } catch (Exception e) {
+                        result.fail(e.getMessage());
+                    }
+
+                    break;
+            }
 
             default:
                 logger.info("Invalid validation mode: {}", validateMode);
@@ -97,6 +153,7 @@ public class PostUploadValidator {
 
         result.logSummary(logger);
     //    TestSummary.recordValidationResult(result);
+
         return result;
     }
 
@@ -152,7 +209,7 @@ public class PostUploadValidator {
                 .orElse(null);
     }
 
-    private static String str(Map<String, Object> map, String key) {
+    public static String str(Map<String, Object> map, String key) {
         Object val = map.get(key);
         return val == null ? "" : val.toString().trim();
     }
@@ -164,17 +221,16 @@ public class PostUploadValidator {
 
     private static void runUISearchValidation(
             WebDriver driver,
-            Map<String, Object> screen,
+            Map<String, Object> validationsSheet,
             String testId,
-            ValidationResult result,
-            String columnId) {
+            ValidationResult result) {
 
-        String menuItemId = str(screen, "validateScreenId");
-        String validateGeneratedCol = str(screen, "validateGeneratedCol");
-        String validateGridCol = str(screen, "validateGridCol");
-        String menuSearch = str(screen, "menuSearch");
-        String screenName = str(screen, "screenName");
-
+        String menuItemId = str(validationsSheet, "validateScreenId");
+        String validateGeneratedCol = str(validationsSheet, "validateGeneratedCol");
+        String validateGridCol = str(validationsSheet, "validateGridCol");
+        String menuSearch = str(validationsSheet, "menuSearch");
+        String screenName = str(validationsSheet, "screenName");
+        String columnId = str(validationsSheet ,"columnId");
         String searchValue =
                 GeneratedDataStore.get(testId, validateGeneratedCol);
 
@@ -211,5 +267,6 @@ public class PostUploadValidator {
                 result,
                 columnId
         );
+
     }
 }
