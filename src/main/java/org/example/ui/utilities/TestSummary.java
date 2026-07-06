@@ -41,23 +41,23 @@ public class TestSummary {
 
     public static void recordDownloadSuccess(String screenName, String base64Data) {
         downloadSuccess++;
-        screenResults.add("success|" + screenName + " -> Download Success|" + base64Data);
+        screenResults.add("success|<b>" + screenName + "</b> -> Download Success|" + base64Data);
     }
 
     public static void recordDownloadFailure(String screenName, String errorMsg, String base64Data) {
         downloadFailure++;
-        screenResults.add("failure|" + screenName + " -> Download Failed: " + errorMsg + "|" + base64Data);
+        screenResults.add("failure|<b>" + screenName + "</b> -> Download Failed: " + errorMsg + "|" + base64Data);
     }
 
     public static void recordUploadSuccess(String screenName, String base64Data) {
         uploadSuccess++;
 
-        screenResults.add("success|" + screenName + " -> Upload Success|" + base64Data);
+        screenResults.add("success|<b>" + screenName + "</b> -> Upload Success|" + base64Data);
     }
 
     public static void recordUploadFailure(String screenName, String errorMsg, String base64Data) {
         uploadFailure++;
-        screenResults.add("failure|" + screenName + " -> Upload Failed: " + errorMsg + "|" + base64Data);
+        screenResults.add("failure|<b>" + screenName + "</b> -> Upload Failed: " + errorMsg + "|" + base64Data);
     }
 
     public static void clearSummaryFile() {
@@ -200,10 +200,10 @@ public class TestSummary {
             // Append validation status text
             if (result.passed) {
                 //     message += "<br><span style='color:#2f855a;'><b>✅ Validation Passed</b></span>";
-                message += "<br><span style='color:#2f855a;'><b>✅ Validation Passed</b> " + String.join(", ", result.passes) + "</span>";
+                message += "<br><span style='color:#2f855a;'><b>✅</b> " + String.join(", ", result.passes) + "</span>";
 
             } else {
-                message += "<br><span style='color:#e53e3e;'><b>❌ Validation Failed:</b> " + String.join(", ", result.failures) + "</span>";
+                message += "<br><span style='color:#e53e3e;'><b>❌</b> " + String.join(", ", result.failures) + "</span>";
                 // Flip row to red failure block and adjust counter if upload was marked as success
                 if ("success".equals(status)) {
                     status = "failure";
