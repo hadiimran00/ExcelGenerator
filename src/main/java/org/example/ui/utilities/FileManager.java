@@ -75,35 +75,35 @@ public class FileManager {
 
     public static void downloadExcel(WebDriver driver, String screenName, Map<String, String> params) throws InterruptedException, IOException {
         waitForLoaderToDisappear(driver);
+        if (params != null && !params.isEmpty()) {
+            for (Map.Entry<String, String> field : params.entrySet()) {
+                String paramId = field.getKey();
+                String value = field.getValue();
+                WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
 
-        for (Map.Entry<String, String> field : params.entrySet()) {
-            String paramId = field.getKey();
-            String value = field.getValue();
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
+                try {
+                    waitForLoaderToDisappear(driver);
+                    WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id(paramId)));
+                    logger.info("-> Filling field ID: [{}] with Value: [{}]", paramId, value);
+                    Thread.sleep(1000);
+                    element.clear();
+                    element.sendKeys(value);
+                    Thread.sleep(500);
 
-            try {
-                waitForLoaderToDisappear(driver);
-                WebElement element = wait.until(ExpectedConditions.elementToBeClickable(By.id(paramId)));
-                logger.info("-> Filling field ID: [{}] with Value: [{}]", paramId, value);
-                Thread.sleep(1000);
-                element.clear();
-                element.sendKeys(value);
-                Thread.sleep(500);
-
-                if (!value.matches("\\d{4}-\\d{2}-\\d{2}|\\d{2}-\\d{2}-\\d{4}")) {
-                    try {
-                        WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + value + "')])[1]")));
-                        item.click();
-                    } catch (TimeoutException e) {
-                        takeScreenshot(driver, screenName);
-                        logger.info("⚠️ No dropdown item found for: {} (This may be data issue.)", value);
+                    if (!value.matches("\\d{4}-\\d{2}-\\d{2}|\\d{2}-\\d{2}-\\d{4}")) {
+                        try {
+                            WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + value + "')])[1]")));
+                            item.click();
+                        } catch (TimeoutException e) {
+                            takeScreenshot(driver, screenName);
+                            logger.info("⚠️ No dropdown item found for: {} (This may be data issue.)", value);
+                        }
                     }
+                } catch (Exception e) {
+                    logger.info("❌ Process element error: {}", e.getMessage());
                 }
-            } catch (Exception e) {
-                logger.info("❌ Process element error: {}", e.getMessage());
             }
         }
-
         logger.info("⬇ Downloading Excel for: {} ", screenName);
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//*[contains(@class, 'dx-toast-message')]")));

@@ -18,6 +18,7 @@ import java.util.*;
 import java.util.stream.Collectors;
 
 import static org.example.ui.utilities.LoaderWait.waitForLoaderToDisappear;
+import static org.example.ui.utilities.PJPExcelUpload.findScreenByTestId;
 import static org.example.ui.utilities.ScreenshotService.takeScreenshot;
 import static org.example.ui.utilities.TestSummary.*;
 
@@ -134,9 +135,6 @@ public class Main {
 
                     }
                     waitForLoaderToDisappear(driver);
-
-
-
 
                     if (!selectBoxes.isEmpty() && dist != null) {
                         driver.findElement(By.id("selectBox1")).sendKeys(dist);
@@ -275,7 +273,33 @@ public class Main {
                                 FileManager.uploadFile(driver, screenName, updatedFile);
                              //   validateCashmemo.validateCashmemoForLMT(driver, wait);
                                 break;
+                            case "PJP": {
+                                // scenarioData for the PJP row itself carries the three testIds
+                                // that tell us which rows in the Excel-config sheet are the
+                                // DSR / Header / Detail screens for this flow.
+                                String dsrTestId = scenarioData.get("DSRTestId");
+                                String headerTestId = scenarioData.get("PJPHeaderTestId");
+                                String detailTestId = scenarioData.get("PJPConfigTestId");
 
+                                Map<String, Object> dsrScreen =
+                                        findScreenByTestId(screens, dsrTestId, resourcesFolder);
+                                Map<String, Object> headerScreen =
+                                        findScreenByTestId(screens, headerTestId, resourcesFolder);
+                                Map<String, Object> detailScreen =
+                                        findScreenByTestId(screens, detailTestId, resourcesFolder);
+
+                                ValidationResult pjpResult = PJPExcelUpload.run(
+                                        driver,
+                                        dsrScreen,
+                                        headerScreen,
+                                        detailScreen,
+                                        scenarioData,
+                                        downloadDir
+                                );
+
+                                TestSummary.appendValidation(pjpResult);
+                                break;
+                            }
                             default:
                                 logger.info("❌ Unknown mode: {}", mode);
                         }

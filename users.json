@@ -18,7 +18,7 @@
     "execute": "NO"
   },
   {
-    "username": "Multi_Org_User",
+    "username": "KPO_MP",
     "password": "Cent@123",
     "url": "https://dcodecnr1dev1.unilever.com/ngui",
     "resourcesFolder": "ResourcesPK",
@@ -29,7 +29,7 @@
     "dist": "50250327-MULLER & PHIPPS (KORANGI - KARACHI)"
   },
   {
-    "username": "Multi_Org_User",
+    "username": "kpo_bangla",
     "password": "Cent@123",
     "url": "https://dcodecnr1dev1.unilever.com/ngui",
     "resourcesFolder": "ResourcesBD",

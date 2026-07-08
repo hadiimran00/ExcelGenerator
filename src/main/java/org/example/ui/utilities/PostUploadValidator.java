@@ -119,14 +119,10 @@ public class PostUploadValidator {
                     try {
 
                         File downloaded = latestFile(downloadDir);
-
                         if (downloaded == null) {
                             result.fail("Downloaded file not found.");
                             break;
                         }
-
-
-
                         String compareColumns = scenarioData.get("CompareColumns");
                         List<String> columns = Arrays.stream(compareColumns.split(","))
                                 .map(String::trim)
@@ -143,7 +139,23 @@ public class PostUploadValidator {
                     }
 
                     break;
+
             }
+//            case "PJP_EXCEL":
+//
+//                createDSR(driver, scenarioData);
+//
+//                createSellingCategory(driver, scenarioData);
+//
+//                FileManager.downloadExcel(driver, "Header", params);
+//                FileManager.uploadFile(driver, headerExcel);
+//                PostUploadValidator.run(...);
+//
+//                FileManager.downloadExcel(driver, "Detail", params);
+//                FileManager.uploadFile(driver, detailExcel);
+//                PostUploadValidator.run(...);
+//
+//                break;
 
             default:
                 logger.info("Invalid validation mode: {}", validateMode);

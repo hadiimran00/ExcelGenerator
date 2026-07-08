@@ -4,6 +4,10 @@ import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.*;
 import java.time.Duration;
+import java.util.List;
+
+import static org.example.ui.utilities.TestSummary.recordUploadFailure;
+import static org.example.ui.utilities.TestSummary.recordUploadSuccess;
 
 
 public class UIValidator {
@@ -28,8 +32,7 @@ public class UIValidator {
 
 
         try {
-
-            driver.findElement(By.id("gridFilterCheckbox")).click();
+            Event.robustClick(driver,By.id("gridFilterCheckbox"));
 
             By searchBoxLocator = By.id(columnId);
             WebDriverWait wait =
@@ -57,9 +60,70 @@ public class UIValidator {
             );
 
             if (found) {
-                result.pass("Found '" + searchValue + "' in grid on screen: " + searchColumn);
-                logger.info("✅ UI Validation passed — '{}' found in grid", searchValue);
+
+                wait.until(ExpectedConditions.or(
+                        ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".dx-data-row td")),
+                        ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".dx-empty-message"))
+                ));
+
+                Event.robustClick(driver, By.cssSelector(".dx-data-row td"));
+                Thread.sleep(500);
+                LoaderWait.waitForLoaderToDisappear(driver);
+                Event.robustClick(driver, By.id("updateBtn"));
+                try {
+                    LoaderWait.waitForLoaderToDisappear(driver);
+                    WebElement yesButton = new WebDriverWait(driver, Duration.ofSeconds(3))
+                            .until(ExpectedConditions.visibilityOfElementLocated(By.id("yes")));
+
+                    Event.robustClick(driver, By.id("yes"));
+                    logger.info("Confirmation dialog found. Clicked 'Yes'.");
+
+                } catch (TimeoutException e) {
+//                    logger.info("Confirmation dialog not displayed. Continuing.");
+                }
+                String notification;
+
+                try {
+                    notification = new WebDriverWait(driver, Duration.ofSeconds(30))
+                            .until(d -> {
+                                try {
+                                    List<WebElement> notifications =
+                                            d.findElements(By.xpath("//*[starts-with(@id,'notify_text_')]"));
+
+                                    for (WebElement element : notifications) {
+                                        String text = element.getText().trim();
+                                        if (!text.isEmpty()) {
+                                            return text;
+                                        }
+                                    }
+                                } catch (StaleElementReferenceException ignored) {
+                                }
+                                return null;
+                            });
+
+                } catch (TimeoutException e) {
+                    result.fail("No success/error notification appeared after update.");
+                    ScreenshotService.takeScreenshot(driver, "update_timeout");
+                    return;
+                }
+
+                logger.info("Notification: {}", notification);
+
+                if (notification.toLowerCase().contains("success")
+                        || notification.toLowerCase().contains("successful")) {
+
+                    result.pass("Record " +searchValue+ " Found in Grid and Updated successfully: " + notification);
+                    logger.info("✅ {}", notification);
+
+                } else {
+
+                    result.fail("Record " +searchValue+" Found but Update failed: " + notification);
+                    ScreenshotService.takeScreenshot(driver, "update_failed");
+                    logger.error("❌ {}", notification);
+                }
+
             } else {
+
                 result.fail("Value '" + searchValue + "' NOT found in grid on screen: " + searchColumn);
                 ScreenshotService.takeScreenshot(driver, "ui_val_fail_" + searchValue);
                 logger.info("❌ UI Validation failed — '{}' not found", searchValue);
