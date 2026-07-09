@@ -6,8 +6,6 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
-import java.util.List;
-
 public class CompanyMappingPage extends basePage {
 
     public CompanyMappingPage(WebDriver driver) {
@@ -50,26 +48,5 @@ public class CompanyMappingPage extends basePage {
     }
 
 
-    public boolean isCheckboxChecked(String sellCatCode) {
-        try {
-            WebElement checkbox = wait.until(
-                    ExpectedConditions.visibilityOfElementLocated(
-                            By.xpath("//tr[contains(@class,'dx-data-row')][.//td[normalize-space()='" + sellCatCode + "']]//div[@role='checkbox']")
-                    )
-            );
-
-            String value = checkbox.findElement(By.cssSelector("input[type='hidden']"))
-                    .getAttribute("value");
-
-            System.out.println("Selling Category Code = " + sellCatCode);
-            System.out.println("Checkbox value = " + value);
-
-            return "true".equalsIgnoreCase(value);
-
-        } catch (Exception e) {
-            e.printStackTrace();
-            return false;
-        }
-    }
 }
 

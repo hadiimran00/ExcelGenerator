@@ -31,12 +31,23 @@ public class PostUploadValidator {
                                        String uploadedFilePath,
                                        String downloadDir, String validateMode, Map<String, String> scenarioData) {
        System.out.println(validationsSheet);
+        if ( validationsSheet == null || validateMode.isBlank() || validationsSheet.isEmpty()) {
+            logger.info("⏩ No validation configuration found. Skipping validation.");
+            return null;
+        }
+//        if (validateMode.isBlank()) {
+//            logger.info("No validation configured for: {}", screenName);
+//            return null; // nothing to do
+//        }
         String screenName   = str(validationsSheet, "screenName");
         String columnId = str(validationsSheet, "columnId");
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
 
         ValidationResult result = new ValidationResult(screenName);
-
+        if (validationsSheet.isEmpty()) {
+            logger.info("⏩ No validation configuration found. Skipping validation.");
+            return null;
+        }
         if (validateMode.isBlank()) {
             logger.info("No validation configured for: {}", screenName);
             return null; // nothing to do

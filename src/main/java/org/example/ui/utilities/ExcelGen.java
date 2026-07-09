@@ -149,7 +149,9 @@ public class ExcelGen {
                             break;
 
                         default:
-                            cell.setCellValue(type); // literal value if needed
+                            cell.setBlank();
+                            cell.setCellValue(type);
+                            GeneratedDataStore.store(testId, columnName, type);// literal value if needed
                     }
                 }
             }

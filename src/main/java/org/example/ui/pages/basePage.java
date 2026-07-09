@@ -179,6 +179,30 @@ public abstract class basePage {
             throw new RuntimeException(
                     "Could not navigate to screen: " + menuSearch, e);
         }
-    }}
+
+    }
+    public boolean isCheckboxChecked(String Code) {
+        try {
+            WebElement checkbox = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(
+                            By.xpath("//tr[contains(@class,'dx-data-row')][.//td[normalize-space()='" + Code + "']]//div[@role='checkbox']")
+                    )
+            );
+
+            String value = checkbox.findElement(By.cssSelector("input[type='hidden']"))
+                    .getAttribute("value");
+
+            System.out.println("Selling Category Code = " + Code);
+            System.out.println("Checkbox value = " + value);
+
+            return "true".equalsIgnoreCase(value);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
+    }
+
+}
 
 
