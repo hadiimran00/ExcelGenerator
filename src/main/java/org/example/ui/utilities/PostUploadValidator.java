@@ -156,6 +156,15 @@ public class PostUploadValidator {
 //                PostUploadValidator.run(...);
 //
 //                break;
+            case "SELLCAT" :{
+                SellCatBulkUploadValidation.validate(
+                        driver,
+                        testId,validationsSheet,
+                        scenarioData,
+                        result
+                );
+                break;
+            }
 
             default:
                 logger.info("Invalid validation mode: {}", validateMode);

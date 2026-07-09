@@ -6,15 +6,17 @@ import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
+import java.util.List;
+
 public class CompanyMappingPage extends basePage {
 
     public CompanyMappingPage(WebDriver driver) {
         super(driver);
     }
 
-    public void searchDist(String Dist) {
+    public void searchAndClickDist(String Dist) {
+        Event.robustClick(driver, By.id("checkbox-0"));
 
-        click(By.id("gridFilterCheckbox"));
 
         By searchBoxLocator = By.id("rowfilter_TXT__ENTITYCODE");
 
@@ -25,10 +27,15 @@ public class CompanyMappingPage extends basePage {
         searchBox.sendKeys(Dist);
 
         waitForLoader();
-    }
-    public void searchSelLCat(String SellCat) {
+        By descriptionCell = By.id("row_1_description");
+        wait.until(ExpectedConditions.elementToBeClickable(descriptionCell));
+        Event.robustClick(driver, descriptionCell);
 
-        click(By.id("gridFilterCheckbox"));
+    }
+
+    public void ClickTabAndSearchSellCat(String SellCat) {
+        Event.robustClick(driver, By.id("tab_group_1"));
+        Event.robustClick(driver, By.id("checkbox-6"));
 
         By searchBoxLocator = By.id("rowfilter_available.EPL1_BUSENT_LOG_LVL1_CODE");
 
@@ -39,12 +46,30 @@ public class CompanyMappingPage extends basePage {
         searchBox.sendKeys(SellCat);
 
         waitForLoader();
+
     }
 
 
-    public String getAttributeValue(String fieldId) {
-        By locator = By.id(fieldId);
-        scrollTo(locator);
-        return value(locator);
+    public boolean isCheckboxChecked(String sellCatCode) {
+        try {
+            WebElement checkbox = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(
+                            By.xpath("//tr[contains(@class,'dx-data-row')][.//td[normalize-space()='" + sellCatCode + "']]//div[@role='checkbox']")
+                    )
+            );
+
+            String value = checkbox.findElement(By.cssSelector("input[type='hidden']"))
+                    .getAttribute("value");
+
+            System.out.println("Selling Category Code = " + sellCatCode);
+            System.out.println("Checkbox value = " + value);
+
+            return "true".equalsIgnoreCase(value);
+
+        } catch (Exception e) {
+            e.printStackTrace();
+            return false;
+        }
     }
 }
+
