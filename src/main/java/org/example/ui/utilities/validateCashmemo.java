@@ -14,7 +14,7 @@ public class validateCashmemo {
 
     private static final Logger logger = LoggerUtil.getLogger(validateCashmemo.class);
 
-    public static void validateCashmemoForLMT(WebDriver driver, WebDriverWait wait, ValidationResult result) {
+    public static void validateCashmemoForLMT(WebDriver driver, WebDriverWait wait, ValidationResult result,String testId) {
 
         String Tmessage=null;
         try {
@@ -91,7 +91,7 @@ public class validateCashmemo {
 
                 logger.info("✅ {} with Order No: {}", Tmessage, cashmemoNo);
                 result.pass(Tmessage + " Order No:" + cashmemoNo);
-
+                GeneratedDataStore.store(testId,"cashmemoNo",cashmemoNo);
 
             } catch (TimeoutException e) {
                 WebElement messageEl = wait.until(

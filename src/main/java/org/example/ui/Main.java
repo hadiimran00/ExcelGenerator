@@ -168,7 +168,12 @@ public class Main {
                     templatePath = Paths.get(rootPath, templatePath).toString();
                     String testID = (String) screen.get("testID");
                     String validateMode=(String) screen.get("validateMode");
-                    Map<String, Map<String, Object>> validations = (Map<String, Map<String, Object>>) screen.get("validations");
+                    Map<String, Map<String, Object>> validations =
+                            (Map<String, Map<String, Object>>) screen.get("validations");
+
+                    if (validations == null) {
+                        validations = Collections.emptyMap();
+                    }
                     @SuppressWarnings("unchecked")
                     Map<String, String> scenarioData =
                             (Map<String, String>) screen.getOrDefault(
@@ -266,13 +271,6 @@ public class Main {
                                 FileManager.uploadFile(driver, screenName, templatePath);
                                 break;
 
-                            case "LMT":
-                                //special case for LMT/order bulk upload
-                                updatedFile = ExcelGen.generateExcel(templatePath, rules,testID);
-                                FileManager.downloadExcel(driver, screenName, stringParams);
-                                FileManager.uploadFile(driver, screenName, updatedFile);
-                             //   validateCashmemo.validateCashmemoForLMT(driver, wait);
-                                break;
                             case "PJP": {
                                 // scenarioData for the PJP row itself carries the three testIds
                                 // that tell us which rows in the Excel-config sheet are the
@@ -298,6 +296,33 @@ public class Main {
                                 );
 
                                 TestSummary.appendValidation(pjpResult);
+                                break;
+                            }
+                            case "DOWNLOAD_MODIFY_UPLOAD": {
+
+                                // Download latest file from application
+                                FileManager.downloadExcel(driver, screenName, stringParams);
+
+                                // Find downloaded file
+                                String downloadedFile = FileManager.getLatestDownloadedFile(downloadDir);
+
+                                // Update downloaded excel
+                                String updatedDownloadedFile =
+                                        ExcelGen.generateExcel(downloadedFile, rules, testID);
+
+                                // Upload modified file
+                                FileManager.uploadFile(driver, screenName, updatedDownloadedFile);
+
+                                // Validate
+                                TestSummary.appendValidation(PostUploadValidator.run(
+                                        driver,
+                                        validations.get(testID),
+                                        testID,
+                                        updatedDownloadedFile,
+                                        downloadDir,
+                                        validateMode,
+                                        scenarioData));
+
                                 break;
                             }
                             default:
