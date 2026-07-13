@@ -57,7 +57,6 @@ public class Main {
                 String orga = user.get("orga");
                 String dist=user.get("dist");
 
-
                 if (executeUser.equalsIgnoreCase("no")) {
                     logger.info(" ");
                     logger.info("⏩ Skipping user: {} (execute= NO)", username);
@@ -165,6 +164,10 @@ public class Main {
                     String mode = (String) screen.get("mode");
                     String templatePath = (String) screen.get("templatePath");
                     String rootPath = System.getProperty("user.dir") + "\\" + resourcesFolder;
+//              
+
+                    FileManager.setResourceFolder(rootPath);
+
                     templatePath = Paths.get(rootPath, templatePath).toString();
                     String testID = (String) screen.get("testID");
                     String validateMode=(String) screen.get("validateMode");
@@ -244,6 +247,7 @@ public class Main {
 
                             case "DOWNLOAD_ONLY":
                                 FileManager.downloadExcel(driver, screenName, stringParams);
+                                TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, "", downloadDir,validateMode,scenarioData));
                                 break;
 
                             case "UPLOAD_ONLY":
