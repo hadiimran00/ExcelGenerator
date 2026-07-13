@@ -16,10 +16,20 @@ import static org.example.ui.utilities.TestSummary.*;
 
 public class FileManager {
     private static final Logger logger = LoggerUtil.getLogger(FileManager.class);
+    private static String resourceFolder;
 
+    public static void setResourceFolder(String folder) {
+        resourceFolder = folder;
+    }
+
+    public static String getResourceFile(String fileName) {
+        return new File(resourceFolder, fileName).getAbsolutePath();
+    }
     public static void uploadFile(WebDriver driver, String screenName, String filePath) throws InterruptedException {
         waitForLoaderToDisappear(driver);
         final String[] capturedMessage = { "" };
+
+
 
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
@@ -172,5 +182,18 @@ public class FileManager {
                 logExcelErrors(latestFile);
             }
         }
+    }
+    public static String getLatestDownloadedFile(String downloadDir) {
+
+        File folder = new File(downloadDir);
+
+        File latestFile = Arrays.stream(
+                        Objects.requireNonNull(folder.listFiles((dir, name) ->
+                                name.endsWith(".xlsx") || name.endsWith(".xls"))))
+                .max(Comparator.comparingLong(File::lastModified))
+                .orElseThrow(() ->
+                        new RuntimeException("No downloaded Excel found."));
+
+        return latestFile.getAbsolutePath();
     }
 }

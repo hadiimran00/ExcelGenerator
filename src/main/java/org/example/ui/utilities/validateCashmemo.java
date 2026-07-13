@@ -92,6 +92,7 @@ public class validateCashmemo {
                 logger.info("✅ {} with Order No: {}", Tmessage, cashmemoNo);
                 result.pass(Tmessage + " Order No:" + cashmemoNo);
                 GeneratedDataStore.store(testId,"cashmemoNo",cashmemoNo);
+                System.out.println("Testid" + testId );
 
             } catch (TimeoutException e) {
                 WebElement messageEl = wait.until(

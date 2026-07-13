@@ -29,16 +29,21 @@ public class PostUploadValidator {
                                        Map<String, Object> validationsSheet,
                                        String testId,
                                        String uploadedFilePath,
-                                       String downloadDir, String validateMode, Map<String, String> scenarioData) {
+                                       String downloadDir, String validateMode, Map<String, String> scenarioData) throws Exception {
        System.out.println(validationsSheet);
-        if ( validationsSheet == null || validateMode.isBlank() || validationsSheet.isEmpty()) {
-            logger.info("⏩ No validation configuration found. Skipping validation.");
-            return null;
+        // COMPARE mode doesn't require Validation sheet
+        if (!"COMPARE".equals(validateMode)) {
+
+            if (validationsSheet == null || validationsSheet.isEmpty()) {
+                logger.info("⏩ No validation configuration found. Skipping validation.");
+                return null;
+            }
         }
 //        if (validateMode.isBlank()) {
 //            logger.info("No validation configured for: {}", screenName);
 //            return null; // nothing to do
 //        }
+
         String screenName   = str(validationsSheet, "screenName");
         String columnId = str(validationsSheet, "columnId");
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
@@ -84,11 +89,19 @@ public class PostUploadValidator {
                 break;
             }
             case "LMT": {
-                validateCashmemo.validateCashmemoForLMT(driver, wait, result);
+                validateCashmemo.validateCashmemoForLMT(driver, wait, result,testId);
                 break;
             }
             case "PROD_PRICE": { //For price master excel
                 ProdPriceExcelValidation.validate(
+                        driver,
+                        testId,validationsSheet,
+                        scenarioData,
+                        result
+                );
+                break;
+            }    case "PROD_DIST_PRICE": { //For price master excel APPROVAL
+                ProdPriceApprovalExcelValidation.validate(
                         driver,
                         testId,validationsSheet,
                         scenarioData,
@@ -126,9 +139,25 @@ public class PostUploadValidator {
 
 
             }
-                case "COMPARE": { // for Validation EXCEL
-                    try {
+            case "LOCUS":{ // for Validation EXCEL
+                File downloaded = latestFile(downloadDir);
+                if (downloaded == null) {
+                    result.fail("Downloaded file not found.");
+                    break;
+                }
 
+                LocusDownloadExcelValidation.validate(
+                        driver,
+                        testId,validationsSheet,
+                        scenarioData,
+                        downloaded,
+                        result
+                );
+                break;
+            }
+                case "COMPARE": { // for Validation EXCEL
+
+                    try {
                         File downloaded = latestFile(downloadDir);
                         if (downloaded == null) {
                             result.fail("Downloaded file not found.");
@@ -144,6 +173,18 @@ public class PostUploadValidator {
                                 columns,
                                 result
                         );
+                        String testDataExcel = scenarioData.get("testDataExcel");
+
+                        if (testDataExcel != null && !testDataExcel.isBlank()) {
+                            FileManager.uploadFile(
+                                    driver,
+                                    screenName,
+                                    FileManager.getResourceFile(testDataExcel)
+                            );
+                        }
+                        //optional for creating test data
+
+
 
                     } catch (Exception e) {
                         result.fail(e.getMessage());
@@ -242,6 +283,11 @@ public class PostUploadValidator {
     }
 
     public static String str(Map<String, Object> map, String key) {
+
+        if (map == null) {
+            return "";
+        }
+
         Object val = map.get(key);
         return val == null ? "" : val.toString().trim();
     }

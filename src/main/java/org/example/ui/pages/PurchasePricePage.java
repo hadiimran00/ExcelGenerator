@@ -29,7 +29,7 @@ public class PurchasePricePage extends basePage {
 
         waitForLoader();
     }
-    public void openProductPrice(String product) {
+    public void openProductPrice(String product, String tabid) {
 
         // Open the product row
         click(By.xpath("//td[text()='" + product + "']"));
@@ -44,8 +44,11 @@ public class PurchasePricePage extends basePage {
         // Open the price details
         click(priceCodeRow);
 
+        click(By.id(tabid));
+
         waitForLoader();
     }
+
 
     public String getPrice(String screenId) {
         By locator = By.id(screenId);

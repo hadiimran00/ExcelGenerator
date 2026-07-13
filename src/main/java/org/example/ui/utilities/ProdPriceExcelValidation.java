@@ -58,7 +58,7 @@ public class ProdPriceExcelValidation {
         page.navigateToScreen(screen);
 
         page.searchProduct(productCode);
-        page.openProductPrice(productCode);
+        page.openProductPrice(productCode,"tab_1");
 
         String actualPrice =
                 page.getPrice(priceScreenID);
