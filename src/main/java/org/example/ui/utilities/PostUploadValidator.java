@@ -155,6 +155,32 @@ public class PostUploadValidator {
                 );
                 break;
             }
+            case "EXACT_COMPARE": {
+
+                File downloaded = latestFile(downloadDir);
+
+                if (downloaded == null) {
+                    result.fail("Downloaded file not found.");
+                    break;
+                }
+
+                ExactExcelComparator.compare(
+                        new File(uploadedFilePath),
+                        downloaded,
+                        result
+                );
+                String testDataExcel = scenarioData.get("testDataExcel");
+
+                if (testDataExcel != null && !testDataExcel.isBlank()) {
+                    FileManager.uploadFile(
+                            driver,
+                            screenName,
+                            FileManager.getResourceFile(testDataExcel)
+                    );
+                }
+
+                break;
+            }
                 case "COMPARE": { // for Validation EXCEL
 
                     try {

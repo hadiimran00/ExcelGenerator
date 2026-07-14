@@ -164,7 +164,7 @@ public class Main {
                     String mode = (String) screen.get("mode");
                     String templatePath = (String) screen.get("templatePath");
                     String rootPath = System.getProperty("user.dir") + "\\" + resourcesFolder;
-//              
+//
 
                     FileManager.setResourceFolder(rootPath);
 
@@ -232,8 +232,9 @@ public class Main {
 
                         switch (mode) {
                             case "DOWNLOAD_UPLOAD":
-                                FileManager.downloadExcel(driver, screenName, stringParams);
                                 FileManager.uploadFile(driver, screenName, templatePath);
+                                System.out.println(screenName);
+                                FileManager.downloadExcel(driver, screenName, stringParams);
                                 TestSummary.appendValidation(PostUploadValidator.run(driver,validations.get(testID), testID, templatePath, downloadDir, validateMode,scenarioData));
                                 break;
 
