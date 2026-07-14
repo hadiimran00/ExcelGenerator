@@ -89,19 +89,11 @@ public class PostUploadValidator {
                 break;
             }
             case "LMT": {
-                validateCashmemo.validateCashmemoForLMT(driver, wait, result,testId);
+                validateCashmemo.validateCashmemoForLMT(driver, wait, result);
                 break;
             }
             case "PROD_PRICE": { //For price master excel
                 ProdPriceExcelValidation.validate(
-                        driver,
-                        testId,validationsSheet,
-                        scenarioData,
-                        result
-                );
-                break;
-            }    case "PROD_DIST_PRICE": { //For price master excel APPROVAL
-                ProdPriceApprovalExcelValidation.validate(
                         driver,
                         testId,validationsSheet,
                         scenarioData,
@@ -139,51 +131,9 @@ public class PostUploadValidator {
 
 
             }
-            case "LOCUS":{ // for Validation EXCEL
-                File downloaded = latestFile(downloadDir);
-                if (downloaded == null) {
-                    result.fail("Downloaded file not found.");
-                    break;
-                }
-
-                LocusDownloadExcelValidation.validate(
-                        driver,
-                        testId,validationsSheet,
-                        scenarioData,
-                        downloaded,
-                        result
-                );
-                break;
-            }
-            case "EXACT_COMPARE": {
-
-                File downloaded = latestFile(downloadDir);
-
-                if (downloaded == null) {
-                    result.fail("Downloaded file not found.");
-                    break;
-                }
-
-                ExactExcelComparator.compare(
-                        new File(uploadedFilePath),
-                        downloaded,
-                        result
-                );
-                String testDataExcel = scenarioData.get("testDataExcel");
-
-                if (testDataExcel != null && !testDataExcel.isBlank()) {
-                    FileManager.uploadFile(
-                            driver,
-                            screenName,
-                            FileManager.getResourceFile(testDataExcel)
-                    );
-                }
-
-                break;
-            }
                 case "COMPARE": { // for Validation EXCEL
-
                     try {
+
                         File downloaded = latestFile(downloadDir);
                         if (downloaded == null) {
                             result.fail("Downloaded file not found.");
@@ -199,18 +149,6 @@ public class PostUploadValidator {
                                 columns,
                                 result
                         );
-                        String testDataExcel = scenarioData.get("testDataExcel");
-
-                        if (testDataExcel != null && !testDataExcel.isBlank()) {
-                            FileManager.uploadFile(
-                                    driver,
-                                    screenName,
-                                    FileManager.getResourceFile(testDataExcel)
-                            );
-                        }
-                        //optional for creating test data
-
-
 
                     } catch (Exception e) {
                         result.fail(e.getMessage());
@@ -309,11 +247,6 @@ public class PostUploadValidator {
     }
 
     public static String str(Map<String, Object> map, String key) {
-
-        if (map == null) {
-            return "";
-        }
-
         Object val = map.get(key);
         return val == null ? "" : val.toString().trim();
     }
