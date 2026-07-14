@@ -89,7 +89,7 @@ public class PostUploadValidator {
                 break;
             }
             case "LMT": {
-                validateCashmemo.validateCashmemoForLMT(driver, wait, result);
+                validateCashmemo.validateCashmemoForLMT(driver, wait,result,testId);
                 break;
             }
             case "PROD_PRICE": { //For price master excel
@@ -181,6 +181,31 @@ public class PostUploadValidator {
                 );
                 break;
             }
+            case "EXACT_COMPARE": {
+                try {
+                    File downloaded = latestFile(downloadDir);
+
+                if (downloaded == null) {
+                    result.fail("Downloaded file not found.");
+                    break;
+                }
+                String compareColumns = scenarioData.get("CompareColumns");
+                List<String> columns = Arrays.stream(compareColumns.split(","))
+                        .map(String::trim)
+                        .toList();
+                ExactExcelComparator.compare(
+                        new File(uploadedFilePath),
+                        downloaded,
+                        columns,
+                        result
+                );
+
+            } catch (Exception e) {
+                    result.fail(e.getMessage());
+                }
+                break;
+            }
+
 
             default:
                 logger.info("Invalid validation mode: {}", validateMode);

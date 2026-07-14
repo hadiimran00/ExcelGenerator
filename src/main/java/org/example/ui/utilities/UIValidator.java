@@ -2,41 +2,27 @@ package org.example.ui.utilities;
 
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.*;
-import org.openqa.selenium.support.ui.*;
+import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
 import java.time.Duration;
 import java.util.List;
-
-import static org.example.ui.utilities.TestSummary.recordUploadFailure;
-import static org.example.ui.utilities.TestSummary.recordUploadSuccess;
-
 
 public class UIValidator {
 
     private static final Logger logger = LoggerUtil.getLogger(UIValidator.class);
     private static final Duration WAIT = Duration.ofSeconds(10);
 
-    /**
-     * Navigate to a grid screen via its menu item id, then search and verify a row exists.
-     *
-     * @param searchColumn      the element id of the menu link
-     * @param columnId the value to type into the MENU search bar (new parameter)
-     * @param searchValue     the value to type into the GRID search box (the record to find)
-     * @param result          collects pass/fail
-     */
     public static void navigateSearchAndVerify(
             WebDriver driver,
             String searchColumn,
             String searchValue,
-            ValidationResult result,String columnId) {
-
-
+            ValidationResult result, String columnId) {
 
         try {
-            Event.robustClick(driver,By.id("gridFilterCheckbox"));
+            Event.robustClick(driver, By.id("gridFilterCheckbox"));
 
             By searchBoxLocator = By.id(columnId);
-            WebDriverWait wait =
-                    new WebDriverWait(driver, WAIT);
+            WebDriverWait wait = new WebDriverWait(driver, WAIT);
             WebElement searchBox = wait.until(
                     ExpectedConditions.elementToBeClickable(searchBoxLocator)
             );
@@ -48,85 +34,77 @@ public class UIValidator {
 
             searchBox.clear();
             searchBox.sendKeys(searchValue);
+            logger.info("🔎 Typed search value [{}] into columnId [{}]", searchValue, columnId);
 
-            // Wait for grid to settle
             waitForGridRows(driver, wait);
 
-            // Look for the value anywhere in the visible grid
-            boolean found = isValueInColumn(
-                    driver,
-                    searchColumn,
-                    searchValue
-            );
+            boolean found = isValueInColumn(driver, searchColumn, searchValue);
+            logger.info("🔎 Row found in grid for value [{}]? {}", searchValue, found);
 
-            if (found) {
-
-                wait.until(ExpectedConditions.or(
-                        ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".dx-data-row td")),
-                        ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".dx-empty-message"))
-                ));
-
-                Event.robustClick(driver, By.cssSelector(".dx-data-row td"));
-                Thread.sleep(500);
-                LoaderWait.waitForLoaderToDisappear(driver);
-                Event.robustClick(driver, By.id("updateBtn"));
-                try {
-                    LoaderWait.waitForLoaderToDisappear(driver);
-                    WebElement yesButton = new WebDriverWait(driver, Duration.ofSeconds(3))
-                            .until(ExpectedConditions.visibilityOfElementLocated(By.id("yes")));
-
-                    Event.robustClick(driver, By.id("yes"));
-                    logger.info("Confirmation dialog found. Clicked 'Yes'.");
-
-                } catch (TimeoutException e) {
-//                    logger.info("Confirmation dialog not displayed. Continuing.");
-                }
-                String notification;
-
-                try {
-                    notification = new WebDriverWait(driver, Duration.ofSeconds(30))
-                            .until(d -> {
-                                try {
-                                    List<WebElement> notifications =
-                                            d.findElements(By.xpath("//*[starts-with(@id,'notify_text_')]"));
-
-                                    for (WebElement element : notifications) {
-                                        String text = element.getText().trim();
-                                        if (!text.isEmpty()) {
-                                            return text;
-                                        }
-                                    }
-                                } catch (StaleElementReferenceException ignored) {
-                                }
-                                return null;
-                            });
-
-                } catch (TimeoutException e) {
-                    result.fail("No success/error notification appeared after update.");
-                    ScreenshotService.takeScreenshot(driver, "update_timeout");
-                    return;
-                }
-
-                logger.info("Notification: {}", notification);
-
-                if (notification.toLowerCase().contains("success")
-                        || notification.toLowerCase().contains("successful")) {
-
-                    result.pass("Record " +searchValue+ " Found in Grid and Updated successfully: " + notification);
-                    logger.info("✅ {}", notification);
-
-                } else {
-
-                    result.fail("Record " +searchValue+" Found but Update failed: " + notification);
-                    ScreenshotService.takeScreenshot(driver, "update_failed");
-                    logger.error("❌ {}", notification);
-                }
-
-            } else {
-
+            if (!found) {
                 result.fail("Value '" + searchValue + "' NOT found in grid on screen: " + searchColumn);
                 ScreenshotService.takeScreenshot(driver, "ui_val_fail_" + searchValue);
                 logger.info("❌ UI Validation failed — '{}' not found", searchValue);
+                return;
+            }
+
+            wait.until(ExpectedConditions.or(
+                    ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".dx-data-row td")),
+                    ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".dx-empty-message"))
+            ));
+
+            logger.info("🖱 Clicking on row to open record...");
+            Event.robustClick(driver, By.cssSelector(".dx-data-row td"));
+            LoaderWait.waitForLoaderToDisappear(driver);
+
+            // Wait for existing toasts/notifications to clear before triggering the update
+            wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//*[contains(@class, 'dx-toast-message')]")));
+
+            logger.info("🖱 Clicking Update button...");
+            Event.robustClick(driver, By.id("updateBtn"));
+
+            // Polling block using the reliable FileManager strategy
+            final String[] capturedMessage = { "" };
+            try {
+                new WebDriverWait(driver, Duration.ofSeconds(30)).until(d -> {
+                    try {
+                        // Handle intermediate 'Yes' confirmation dialog if it gets in the way
+                        List<WebElement> yesButtons = d.findElements(By.id("yes"));
+                        if (!yesButtons.isEmpty() && yesButtons.get(0).isDisplayed()) {
+                            Event.robustClick(d, By.id("yes"));
+                            logger.info("👍 Confirmation dialog handled.");
+                        }
+
+                        // Collect target notification text using the specific notify_text_ locator pattern
+                        List<WebElement> allNotes = d.findElements(By.xpath("//*[starts-with(@id, 'notify_text_')]"));
+                        for (WebElement note : allNotes) {
+                            String text = note.getText().trim();
+                            if (!text.isEmpty()) {
+                                capturedMessage[0] = text;
+                                return true;
+                            }
+                        }
+                    } catch (StaleElementReferenceException e) {
+                        return false;
+                    }
+                    return false;
+                });
+            } catch (TimeoutException e) {
+                logger.error("⚠️ [TIMEOUT] No notification appeared after clicking Update.", e);
+            }
+
+            String finalMsg = capturedMessage[0];
+
+            if (finalMsg.toLowerCase().contains("successful") || finalMsg.toLowerCase().contains("success")) {
+                result.pass("Record " + searchValue + " Found in Grid and Updated successfully: " + finalMsg);
+                logger.info("✅ {}", finalMsg);
+            } else if (!finalMsg.isEmpty()) {
+                result.fail("Record " + searchValue + " Found but Update failed: " + finalMsg);
+                ScreenshotService.takeScreenshot(driver, "update_failed");
+                logger.error("❌ {}", finalMsg);
+            } else {
+                result.fail("No success/error notification appeared after update.");
+                ScreenshotService.takeScreenshot(driver, "update_timeout");
             }
 
         } catch (Exception e) {

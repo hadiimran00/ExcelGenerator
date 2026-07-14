@@ -229,8 +229,8 @@ public class Main {
 
                         switch (mode) {
                             case "DOWNLOAD_UPLOAD":
-                                FileManager.downloadExcel(driver, screenName, stringParams);
                                 FileManager.uploadFile(driver, screenName, templatePath);
+                                FileManager.downloadExcel(driver, screenName, stringParams);
                                 TestSummary.appendValidation(PostUploadValidator.run(driver,validations.get(testID), testID, templatePath, downloadDir, validateMode,scenarioData));
                                 break;
 

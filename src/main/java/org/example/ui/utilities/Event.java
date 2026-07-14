@@ -1,6 +1,5 @@
 package org.example.ui.utilities;
 
-import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
@@ -22,18 +21,25 @@ public class Event {
             WebElement element = wait.until(ExpectedConditions.elementToBeClickable(locator));
             JavascriptExecutor js = (JavascriptExecutor) driver;
             js.executeScript("arguments[0].scrollIntoView({block: 'center'});", element);
+            try {
+                Thread.sleep(300);
+            } catch (InterruptedException ignored) {
+                Thread.currentThread().interrupt();
+            }
             element.click();
+
         } catch (Exception e) {
-            //System.out.println("⚠️ Standard click failed, attempting JS click for locator: " + locator);
+            logger.info("⚠️ Standard click failed for locator: {} — reason: {}. Falling back to JS click.",
+                    locator, e.getMessage());
             try {
                 WebElement element = driver.findElement(locator); // Re-find to avoid stale element
                 ((JavascriptExecutor) driver).executeScript("arguments[0].click();", element);
+                logger.info("✅ JS click fallback succeeded for locator: {}", locator);
             } catch (Exception jsException) {
-                ScreenshotService.takeScreenshot(driver,"-");
+                ScreenshotService.takeScreenshot(driver, "-");
                 logger.error("❌ Both standard and JS click failed for locator: {}", locator);
-                throw jsException; // Re-throw the exception to fail the test
+                throw jsException;
             }
         }
     }
 }
-
