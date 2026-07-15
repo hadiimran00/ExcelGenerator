@@ -153,34 +153,9 @@ public class PostUploadValidator {
                     } catch (Exception e) {
                         result.fail(e.getMessage());
                     }
-                    String testDataExcel = scenarioData.get("testDataExcel");
-
-                    if (testDataExcel != null && !testDataExcel.isBlank()) {
-                        FileManager.uploadFile(
-                                driver,
-                                screenName,
-                                FileManager.getResourceFile(testDataExcel)
-                        );
-                    }
-
                     break;
 
             }
-//            case "PJP_EXCEL":
-//
-//                createDSR(driver, scenarioData);
-//
-//                createSellingCategory(driver, scenarioData);
-//
-//                FileManager.downloadExcel(driver, "Header", params);
-//                FileManager.uploadFile(driver, headerExcel);
-//                PostUploadValidator.run(...);
-//
-//                FileManager.downloadExcel(driver, "Detail", params);
-//                FileManager.uploadFile(driver, detailExcel);
-//                PostUploadValidator.run(...);
-//
-//                break;
             case "SELLCAT" :{
                 SellCatBulkUploadValidation.validate(
                         driver,
@@ -211,15 +186,6 @@ public class PostUploadValidator {
 
             } catch (Exception e) {
                     result.fail(e.getMessage());
-                }
-                String testDataExcel = scenarioData.get("testDataExcel");
-
-                if (testDataExcel != null && !testDataExcel.isBlank()) {
-                    FileManager.uploadFile(
-                            driver,
-                            screenName,
-                            FileManager.getResourceFile(testDataExcel)
-                    );
                 }
                 break;
             }

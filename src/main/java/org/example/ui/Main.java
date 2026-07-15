@@ -243,6 +243,7 @@ public class Main {
                                 FileManager.uploadFile(driver, screenName, templatePath);
                                 FileManager.downloadExcel(driver, screenName, stringParams);
                                 TestSummary.appendValidation(PostUploadValidator.run(driver,validations.get(testID), testID, templatePath, downloadDir, validateMode,scenarioData));
+                                TestDataCleanup(scenarioData, driver);
                                 break;
 
                             case "DOWNLOAD_UPDATE_UPLOAD":
@@ -251,7 +252,9 @@ public class Main {
                                 FileManager.downloadExcel(driver, screenName, stringParams);
                             //    PostUploadValidator.run(driver,validations.get(testID), testID, updatedFile, downloadDir);
                                 TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, updatedFile, downloadDir,validateMode,scenarioData));
+                                TestDataCleanup(scenarioData, driver);
                                 break;
+
 
                             case "DOWNLOAD_ONLY":
                                 FileManager.downloadExcel(driver, screenName, stringParams);
@@ -260,18 +263,10 @@ public class Main {
                             case "UPLOAD_ONLY":
                                 FileManager.uploadFile(driver, screenName, templatePath);
                              TestSummary.appendValidation(PostUploadValidator.run(driver,validations.get(testID), testID, templatePath, downloadDir, validateMode,scenarioData));
-                                ValidationResult result =
-                                        PostUploadValidator.run(
-                                                driver,
-                                                validations.get(testID),
-                                                testID,
-                                                templatePath,
-                                                downloadDir,
-                                                validateMode,
-                                                scenarioData);
 
 
 
+                                TestDataCleanup(scenarioData, driver);
                                 break;
 
 
@@ -334,6 +329,7 @@ public class Main {
                                         validateMode,
                                         scenarioData));
 
+                                TestDataCleanup(scenarioData, driver);
                                 break;
                             }
                             default:
@@ -366,5 +362,16 @@ public class Main {
         // Run once after all users
         closeSummaryHtml();
         logger.info("=== ✅ Test Run Completed Successfully! ===");
+    }
+
+    private static void TestDataCleanup(Map<String, String> scenarioData, WebDriver driver) throws InterruptedException {
+        String testDataExcel = scenarioData.get("testDataExcel");
+
+        if (testDataExcel != null && !testDataExcel.isBlank()) {
+            FileManager.uploadFileSilent(
+                    driver,
+                    FileManager.getResourceFile(testDataExcel)
+            );
+        }
     }
 }

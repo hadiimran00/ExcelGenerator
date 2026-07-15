@@ -196,4 +196,56 @@ public class FileManager {
 
         return latestFile.getAbsolutePath();
     }
+    public static void uploadFileSilent(WebDriver driver, String filePath) throws InterruptedException {
+//to be used by test data cleanup
+        waitForLoaderToDisappear(driver);
+
+        final String[] capturedMessage = { "" };
+
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            wait.until(ExpectedConditions.invisibilityOfElementLocated(
+                    By.xpath("//*[contains(@class,'dx-toast-message')]")));
+
+            logger.info("🧹 Cleanup Upload: {}", filePath);
+
+            WebElement fileInput = driver.findElement(By.cssSelector("input[type='file']"));
+            fileInput.sendKeys(filePath);
+
+            Thread.sleep(1500);
+
+        } catch (Exception e) {
+            logger.error("Cleanup upload failed", e);
+            throw e;
+        }
+
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(30)).until(d -> {
+                try {
+                    List<WebElement> notes =
+                            d.findElements(By.xpath("//*[starts-with(@id,'notify_text_')]"));
+
+                    for (WebElement note : notes) {
+                        String text = note.getText().trim();
+                        if (!text.isEmpty()) {
+                            capturedMessage[0] = text;
+                            return true;
+                        }
+                    }
+                } catch (StaleElementReferenceException ignored) {
+                }
+                return false;
+            });
+        } catch (TimeoutException ignored) {
+        }
+
+        if (!capturedMessage[0].isEmpty()) {
+            logger.info("🧹 Cleanup upload result: {}", capturedMessage[0]);
+
+            if (capturedMessage[0].toLowerCase().contains("file downloaded")
+                    || capturedMessage[0].toLowerCase().contains("error")) {
+                handleErrorFile("Cleanup");
+            }
+        }
+    }
 }
