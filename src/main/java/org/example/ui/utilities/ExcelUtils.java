@@ -1,8 +1,8 @@
 package org.example.ui.utilities;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
+import org.apache.poi.ss.usermodel.*;
+
+import java.io.*;
 
 public class ExcelUtils {
 
@@ -52,5 +52,47 @@ public class ExcelUtils {
 
             return false;
         }
+    }
+    static void updateColumnValue(String filePath, String columnName, String newValue) throws Exception {
+        FileInputStream fis = new FileInputStream(filePath);
+        Workbook workbook = WorkbookFactory.create(fis);
+        fis.close();
+
+        Sheet sheet = workbook.getSheetAt(0);
+        Row headerRow = sheet.getRow(0);
+
+        if (headerRow == null) {
+            workbook.close();
+            throw new RuntimeException("Header row missing in Excel: " + filePath);
+        }
+
+        int columnIndex = -1;
+        for (Cell cell : headerRow) {
+            if (columnName.equalsIgnoreCase(cell.getStringCellValue().trim())) {
+                columnIndex = cell.getColumnIndex();
+                break;
+            }
+        }
+
+        if (columnIndex == -1) {
+            workbook.close();
+            throw new RuntimeException("Column '" + columnName + "' not found in Excel: " + filePath);
+        }
+
+        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
+            Row row = sheet.getRow(i);
+            if (row == null) continue;
+
+            Cell cell = row.getCell(columnIndex);
+            if (cell == null) {
+                cell = row.createCell(columnIndex);
+            }
+            cell.setCellValue(newValue);
+        }
+
+        FileOutputStream fos = new FileOutputStream(filePath);
+        workbook.write(fos);
+        fos.close();
+        workbook.close();
     }
 }

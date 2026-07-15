@@ -120,6 +120,18 @@ public class PostUploadValidator {
                         break;
 
                 }
+            case "LOCUS":{ // for DIST EXCEL
+
+                File downloaded = latestFile(downloadDir);
+                LocusDownloadExcelValidation.validate(
+                        driver,
+                        testId,validationsSheet,
+                        scenarioData,downloaded,
+                        result
+                );
+                break;
+
+            }
                 case "VALID_EXCEL":{ // for Validation EXCEL
                 ValidationExcelValidation.validate(
                         driver,

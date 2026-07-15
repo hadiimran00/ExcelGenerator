@@ -16,6 +16,7 @@ import java.time.Duration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Objects;
 
 import static org.example.ui.utilities.LoaderWait.waitForLoaderToDisappear;
 
@@ -77,7 +78,7 @@ public class PJPExcelUpload {
 
         logger.info("Step 3: Updating Header Excel column [{}] with value [{}]",
                 headerDsrColumn, dsrCode);
-        updateColumnValue(headerTemplatePath, headerDsrColumn, dsrCode);
+        ExcelUtils.updateColumnValue(headerTemplatePath, headerDsrColumn, dsrCode);
         logger.info("Step 3 complete: Header Excel updated.");
 
         // ---------- STEP 4: Upload Header Excel ----------
@@ -105,7 +106,7 @@ public class PJPExcelUpload {
 
         logger.info("Step 6: Updating Detail Excel column [{}] with value [{}]",
                 PJPNoColumnInConfig, pjpCode);
-        updateColumnValue(detailTemplatePath, PJPNoColumnInConfig, pjpCode);
+      ExcelUtils.updateColumnValue(detailTemplatePath, PJPNoColumnInConfig, pjpCode);
         logger.info("Step 6 complete: Detail Excel updated.");
 
         // ---------- STEP 7: Upload Detail Excel ----------
@@ -164,8 +165,9 @@ public class PJPExcelUpload {
     // populate GeneratedDataStore before we try to read from it.
     // -------------------------------------------------------------------
     @SuppressWarnings("unchecked")
-    private static void uploadScreenRespectingMode(WebDriver driver, Map<String, Object> screen) throws Exception {
+        static void uploadScreenRespectingMode(WebDriver driver, Map<String, Object> screen) throws Exception {
         String screenName = (String) screen.get("screenName");
+        String mode = (String) screen.get("mode");
         String screenId = (String) screen.get("screenId");
         String templatePath = (String) screen.get("templatePath");
         String testId = (String) screen.get("testID");
@@ -180,7 +182,12 @@ public class PJPExcelUpload {
         // because a screen's mode (e.g. "PJP" on the Header row) may not
         // literally be DOWNLOAD_UPDATE_UPLOAD even though it still needs
         // generated data.
-        if (rules != null && !rules.isEmpty()) {
+      if (Objects.equals(mode, "LOCUS_UP")) {
+          logger.info("  -> Generating Excel for testId [{}] (rules present: true)", testId);
+        //  String generatedFile = ExcelGen.generateExcel(templatePath, null, testId);
+          FileManager.uploadFile(driver, screenName, templatePath);
+        }
+        else if (rules != null && !rules.isEmpty()) {
             logger.info("  -> Generating Excel for testId [{}] (rules present: true)", testId);
             String generatedFile = ExcelGen.generateExcel(templatePath, rules, testId);
             FileManager.uploadFile(driver, screenName, generatedFile);
@@ -219,80 +226,6 @@ public class PJPExcelUpload {
         waitForLoaderToDisappear(driver);
     }
 
-    private static void updateColumnValue(String filePath, String columnName, String newValue) throws Exception {
-        FileInputStream fis = new FileInputStream(filePath);
-        Workbook workbook = WorkbookFactory.create(fis);
-        fis.close();
 
-        Sheet sheet = workbook.getSheetAt(0);
-        Row headerRow = sheet.getRow(0);
 
-        if (headerRow == null) {
-            workbook.close();
-            throw new RuntimeException("Header row missing in Excel: " + filePath);
-        }
-
-        int columnIndex = -1;
-        for (Cell cell : headerRow) {
-            if (columnName.equalsIgnoreCase(cell.getStringCellValue().trim())) {
-                columnIndex = cell.getColumnIndex();
-                break;
-            }
-        }
-
-        if (columnIndex == -1) {
-            workbook.close();
-            throw new RuntimeException("Column '" + columnName + "' not found in Excel: " + filePath);
-        }
-
-        for (int i = 1; i <= sheet.getLastRowNum(); i++) {
-            Row row = sheet.getRow(i);
-            if (row == null) continue;
-
-            Cell cell = row.getCell(columnIndex);
-            if (cell == null) {
-                cell = row.createCell(columnIndex);
-            }
-            cell.setCellValue(newValue);
-        }
-
-        FileOutputStream fos = new FileOutputStream(filePath);
-        workbook.write(fos);
-        fos.close();
-        workbook.close();
-    }
-    /**
-     * Finds a screen config (row from the Excel-config sheet) by its testID,
-     * and resolves its templatePath to an absolute path against resourcesFolder.
-     * Used by the PJP flow to fetch the DSR / Header / Detail screen configs
-     * referenced from the PJP row's scenarioData.
-     */
-    public static Map<String, Object> findScreenByTestId(
-            List<Map<String, Object>> screens,
-            String testId,
-            String resourcesFolder) {
-
-        if (testId == null || testId.isBlank()) {
-            throw new RuntimeException(
-                    "PJP scenarioData is missing a required testId (DSRTestId / PJPHeaderTestId / PJPConfigTestId).");
-        }
-
-        for (Map<String, Object> screen : screens) {
-            if (testId.equals(screen.get("testID"))) {
-                // Return a shallow copy so we don't mutate the shared config list
-                // when resolving templatePath to an absolute path.
-                Map<String, Object> resolved = new LinkedHashMap<>(screen);
-
-                String templatePath = (String) resolved.get("templatePath");
-                if (templatePath != null) {
-                    String rootPath = System.getProperty("user.dir") + File.separator + resourcesFolder;
-                    resolved.put("templatePath", Paths.get(rootPath, templatePath).toString());
-                }
-
-                return resolved;
-            }
-        }
-
-        throw new RuntimeException("No screen found in config with testID: " + testId);
-    }
 }

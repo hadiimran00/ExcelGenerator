@@ -17,8 +17,8 @@ import java.time.Duration;
 import java.util.*;
 import java.util.stream.Collectors;
 
+import static org.example.ui.pages.basePage.findScreenByTestId;
 import static org.example.ui.utilities.LoaderWait.waitForLoaderToDisappear;
-import static org.example.ui.utilities.PJPExcelUpload.findScreenByTestId;
 import static org.example.ui.utilities.ScreenshotService.takeScreenshot;
 import static org.example.ui.utilities.TestSummary.*;
 
@@ -258,6 +258,7 @@ public class Main {
 
                             case "DOWNLOAD_ONLY":
                                 FileManager.downloadExcel(driver, screenName, stringParams);
+                                TestSummary.appendValidation(PostUploadValidator.run(driver,validations.get(testID), testID, templatePath, downloadDir, validateMode,scenarioData));
                                 break;
 
                             case "UPLOAD_ONLY":
@@ -330,6 +331,61 @@ public class Main {
                                         scenarioData));
 
                                 TestDataCleanup(scenarioData, driver);
+                                break;
+                            }
+                            case "LOCUS_UP": {
+                                // 1. Extract direct values from your scenarioData
+                                String bulkOrderUploadTestID = scenarioData.get("bulkOrderUploadTestID");
+                                String deliverScreenId = scenarioData.get("DeliverScreenId");
+                                String deliveryScreenName = scenarioData.get("DeliveryScreenName");
+                                String transScreenId = scenarioData.get("TransscreenId");
+                                String transScreenName = scenarioData.get("TransscreenName");
+                                String locusUploadTestId = scenarioData.get("LocusUploadTestId");
+
+                                // --- Defensive Checks ---
+                                if (bulkOrderUploadTestID == null || bulkOrderUploadTestID.isBlank()) {
+                                    throw new IllegalArgumentException("❌ 'bulkOrderUploadTestID' is missing in scenarioData for Row " + testID);
+                                }
+                                if (deliverScreenId == null || deliverScreenId.isBlank()) {
+                                    throw new IllegalArgumentException("❌ 'DeliverScreenId' (DYL_201080) is missing in scenarioData for Row " + testID);
+                                }
+                                if (transScreenId == null || transScreenId.isBlank()) {
+                                    throw new IllegalArgumentException("❌ 'TransscreenId' (DYL_BG1016) is missing in scenarioData for Row " + testID);
+                                }
+
+                                // --- Look up screens that have dedicated config sheets ---
+                                // This finds the Bulk Upload Screen (Test ID: 04)
+                                Map<String, Object> bulkOrderScreen =
+                                        findScreenByTestId(screens, bulkOrderUploadTestID.trim(), resourcesFolder);
+
+                                // This finds the Locus Upload Screen (Test ID: 26, using parent loop fallback)
+                                String targetLocusTestId = (locusUploadTestId != null && !locusUploadTestId.isBlank())
+                                        ? locusUploadTestId.trim() : testID;
+                                Map<String, Object> locusUploadScreen =
+                                        findScreenByTestId(screens, targetLocusTestId, resourcesFolder);
+
+                                // --- Construct Screen Maps on the fly ---
+                                // We package these directly so LocusUploadFlow.run receives the Map structure it expects
+                                Map<String, Object> deliveryDateChangeScreen = new HashMap<>();
+                                deliveryDateChangeScreen.put("screenId", deliverScreenId.trim());
+                                deliveryDateChangeScreen.put("screenName", deliveryScreenName != null ? deliveryScreenName.trim() : "delivery date change");
+
+                                Map<String, Object> transactionInquiryScreen = new HashMap<>();
+                                transactionInquiryScreen.put("screenId", transScreenId.trim());
+                                transactionInquiryScreen.put("screenName", transScreenName != null ? transScreenName.trim() : "BG - Transaction Inquiry");
+
+                                // --- Run Flow ---
+                                ValidationResult locusResult = LocusUploadFlow.run(
+                                        driver,
+                                        bulkOrderScreen,
+                                        deliveryDateChangeScreen, // Sent as a map
+                                        locusUploadScreen,
+                                        transactionInquiryScreen,  // Sent as a map
+                                        scenarioData,
+                                        downloadDir
+                                );
+
+                                TestSummary.appendValidation(locusResult);
                                 break;
                             }
                             default:
