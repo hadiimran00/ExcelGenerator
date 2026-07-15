@@ -6,7 +6,11 @@ import org.example.ui.utilities.PostUploadValidator;
 import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.*;
 
+import java.io.File;
+import java.nio.file.Paths;
 import java.time.Duration;
+import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 import static com.fasterxml.jackson.databind.type.LogicalType.Map;
@@ -30,13 +34,11 @@ public abstract class basePage {
         return wait.until(ExpectedConditions.visibilityOfElementLocated(locator));
     }
 
-    protected void click(By locator) {
-
-        waitForLoader();
+    public void click(By locator) {
 
         // Find the element
         Event.robustClick(driver, locator);
-        waitForLoader();
+
 
     }
 
@@ -115,7 +117,7 @@ public abstract class basePage {
         }
 
     }
-    protected void selectDropdown(By locator, String value) {
+    public void selectDropdown(By locator, String value) {
 
         waitForLoader();
         WebElement field = wait.until(
@@ -201,6 +203,46 @@ public abstract class basePage {
             e.printStackTrace();
             return false;
         }
+    }
+    public void acceptAlertIfPresent(WebDriver driver) {
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(3));
+            Alert alert = wait.until(ExpectedConditions.alertIsPresent());
+
+            System.out.println("Accepting alert: {}" + alert.getText());
+
+            alert.accept();
+        } catch (TimeoutException ignored) {
+        }
+    }
+
+    public static Map<String, Object> findScreenByTestId(
+            List<Map<String, Object>> screens,
+            String testId,
+            String resourcesFolder) {
+
+        if (testId == null || testId.isBlank()) {
+            throw new RuntimeException(
+                    "ScenarioData is missing a required testId");
+        }
+
+        for (Map<String, Object> screen : screens) {
+            if (testId.equals(screen.get("testID"))) {
+                // Return a shallow copy so we don't mutate the shared config list
+                // when resolving templatePath to an absolute path.
+                Map<String, Object> resolved = new LinkedHashMap<>(screen);
+
+                String templatePath = (String) resolved.get("templatePath");
+                if (templatePath != null) {
+                    String rootPath = System.getProperty("user.dir") + File.separator + resourcesFolder;
+                    resolved.put("templatePath", Paths.get(rootPath, templatePath).toString());
+                }
+
+                return resolved;
+            }
+        }
+
+        throw new RuntimeException("No screen found in config with testID: " + testId);
     }
 
 }
