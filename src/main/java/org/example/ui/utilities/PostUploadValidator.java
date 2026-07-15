@@ -153,6 +153,15 @@ public class PostUploadValidator {
                     } catch (Exception e) {
                         result.fail(e.getMessage());
                     }
+                    String testDataExcel = scenarioData.get("testDataExcel");
+
+                    if (testDataExcel != null && !testDataExcel.isBlank()) {
+                        FileManager.uploadFile(
+                                driver,
+                                screenName,
+                                FileManager.getResourceFile(testDataExcel)
+                        );
+                    }
 
                     break;
 
@@ -202,6 +211,15 @@ public class PostUploadValidator {
 
             } catch (Exception e) {
                     result.fail(e.getMessage());
+                }
+                String testDataExcel = scenarioData.get("testDataExcel");
+
+                if (testDataExcel != null && !testDataExcel.isBlank()) {
+                    FileManager.uploadFile(
+                            driver,
+                            screenName,
+                            FileManager.getResourceFile(testDataExcel)
+                    );
                 }
                 break;
             }

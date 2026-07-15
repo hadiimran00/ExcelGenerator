@@ -24,6 +24,16 @@ import static org.example.ui.utilities.TestSummary.*;
 
 public class Main {
     private static final Logger logger = LoggerUtil.getLogger(Main.class);
+    private static String resourceFolder;
+
+    public static void setResourceFolder(String folder) {
+        resourceFolder = folder;
+    }
+
+    public static String getResourceFile(String fileName) {
+        return new File(resourceFolder, fileName).getAbsolutePath();
+    }
+
 
     public static void main(String[] args) throws Exception {
 
@@ -165,6 +175,7 @@ public class Main {
                     String mode = (String) screen.get("mode");
                     String templatePath = (String) screen.get("templatePath");
                     String rootPath = System.getProperty("user.dir") + "\\" + resourcesFolder;
+                    FileManager.setResourceFolder(rootPath);
                     templatePath = Paths.get(rootPath, templatePath).toString();
                     String testID = (String) screen.get("testID");
                     String validateMode=(String) screen.get("validateMode");
