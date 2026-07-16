@@ -2,13 +2,13 @@ package org.example.ui.utilities;
 
 import org.apache.logging.log4j.Logger;
 import org.example.ui.pages.OrderDeliveryDatePage;
-import org.openqa.selenium.By;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.example.ui.pages.executeNodeJob;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
+import java.util.List; // FIXED: Added missing import for List
 import java.util.Map;
 
 import static org.example.ui.utilities.LoaderWait.waitForLoaderToDisappear;
@@ -73,13 +73,10 @@ public class LocusUploadFlow {
             PJPExcelUpload.uploadScreenRespectingMode(driver, locusUploadScreen);
             logger.info("Step 5 complete.");
 
-            // ---------- STEP 6: Call Locus API ----------
-            logger.info("Step 6: Calling Locus API...");
-            callLocusApi(scenarioData, result);
-            if (!result.passed) {
-                // API call failed — stop here, don't bother checking Transaction Inquiry
-                return result;
-            }
+            // ---------- STEP 6: Execute Background Node Job ----------
+            logger.info("Step 6: Executing Node Executor Job in isolated background browser...");
+            executeNodeJob nodeJob = new executeNodeJob(driver);
+            nodeJob.run(scenarioData, result);
             logger.info("Step 6 complete.");
 
             // ---------- STEP 7: Transaction Inquiry Validation ----------
@@ -123,23 +120,8 @@ public class LocusUploadFlow {
     }
 
     // -------------------------------------------------------------------
-    // STEP 6 helper — now records failure into result instead of throwing
-    // -------------------------------------------------------------------
-    private static void callLocusApi(Map<String, String> scenarioData, ValidationResult result) {
-        // TODO: restore real API call once ready; stubbed to 200 for now.
-        int statusCode = 200;
-        logger.info("Locus API response code: {}", statusCode);
-
-        if (statusCode != 200) {
-            result.fail("Locus API call failed. Status=" + statusCode);
-        } else {
-            result.pass("Locus API call succeeded. Status=" + statusCode);
-        }
-    }
-
-    // -------------------------------------------------------------------
-    // STEP 7 helper — read-only grid check, records into the passed-in result
-    // -------------------------------------------------------------------
+// STEP 7 helper — read-only grid check, records into the passed-in result
+// -------------------------------------------------------------------
     private static void validateTransactionInquiry(WebDriver driver,
                                                    Map<String, Object> transactionInquiryScreen,
                                                    Map<String, String> scenarioData,
@@ -151,50 +133,111 @@ public class LocusUploadFlow {
 
         navigateToScreen(driver, screenName, screenId);
 
-        String orderSearchColumnId = scenarioData.get("TransInquiryOrderColumnId");
         String statusColumnId = scenarioData.get("StatusColumnId");
         String ginColumnId = scenarioData.get("GinColumnId");
-        String expectedStatus = scenarioData.get("ExpectedStatus");
+        String expectedStatus = "Planning completed";
 
+        logger.info("Applying Transaction Inquiry filters for order: {}", orderNumber);
         Event.robustClick(driver, By.id("gridFilterCheckbox"));
 
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         WebElement searchBox = wait.until(
-                ExpectedConditions.elementToBeClickable(By.id(orderSearchColumnId)));
+                ExpectedConditions.elementToBeClickable(By.id("rowfilter_TXT__TCMMDOCNO")));
+
         searchBox.clear();
         searchBox.sendKeys(orderNumber);
+        searchBox.sendKeys(Keys.ENTER);
 
+        // DevExtreme typing debounce buffer
+        Thread.sleep(800);
         waitForLoaderToDisappear(driver);
 
-        String actualStatus = readFirstRowCell(driver, statusColumnId);
-        String actualGin = readFirstRowCell(driver, ginColumnId);
-
-        logger.info("Transaction Inquiry -> Status=[{}], GIN Number=[{}]", actualStatus, actualGin);
-
-        if (actualStatus == null || actualStatus.isBlank()) {
+        List<WebElement> visibleRows = driver.findElements(By.xpath("//tr[contains(@class,'dx-data-row')]"));
+        if (visibleRows.isEmpty()) {
+            logger.warn("No records returned in grid for order: {}", orderNumber);
+            List<WebElement> emptyMessage = driver.findElements(By.className("dx-datagrid-nodata"));
+            if (!emptyMessage.isEmpty()) {
+                logger.warn("Grid system message: \"{}\"", emptyMessage.get(0).getText());
+            }
             result.fail("Order [" + orderNumber + "] not found in Transaction Inquiry.");
             return;
         }
 
-        if (!actualStatus.trim().equalsIgnoreCase(expectedStatus.trim())) {
+        String statusCol = (statusColumnId != null && !statusColumnId.isBlank()) ? statusColumnId : "row_1_execution_status";
+        String ginCol = (ginColumnId != null && !ginColumnId.isBlank()) ? ginColumnId : "row_1_gin_no";
+
+        String actualStatus = readFirstRowCell(driver, statusCol);
+        String actualGin = readFirstRowCell(driver, ginCol);
+
+        logger.info("Transaction Inquiry Result -> Status=[{}], GIN=[{}]", actualStatus, actualGin);
+
+        if (actualStatus.isBlank()) {
+            result.fail("Failed to extract Status for order [" + orderNumber + "].");
+            return;
+        }
+
+        if (!actualStatus.equalsIgnoreCase(expectedStatus)) {
             result.fail("Status mismatch. Expected=" + expectedStatus + " Actual=" + actualStatus);
         } else {
             result.pass("Status matched: " + actualStatus);
         }
 
-        if (actualGin == null || actualGin.isBlank()) {
+        if (actualGin.isBlank()) {
             result.fail("GIN Number was not generated.");
         } else {
-            result.pass("GIN Number generated: " + actualGin);
+            result.pass("Auto GIN Created, GIN No: " + actualGin);
         }
     }
 
     private static String readFirstRowCell(WebDriver driver, String columnId) {
-        String xpath = "//tr[contains(@class,'dx-data-row')][1]//td[contains(@id,'_" + columnId + "')]";
-        var cells = driver.findElements(By.xpath(xpath));
-        return cells.isEmpty() ? "" : cells.get(0).getText().trim();
+        String rowXpath = "//tr[contains(@class,'dx-data-row')][1]";
+        String cellXpath = rowXpath + "//td[@id='" + columnId + "']";
+
+        List<WebElement> cells = driver.findElements(By.xpath(cellXpath));
+        String text = "";
+
+        // 1. Try to read textContent instantly if the element is already in the DOM
+        if (!cells.isEmpty()) {
+            text = cells.get(0).getAttribute("textContent").trim();
+        }
+
+        // 2. Scroll only if the cell is completely unrendered (virtualized) or truly empty
+        if (text.isEmpty()) {
+            logger.info("Cell '{}' not in DOM or empty. Scrolling grid to render...", columnId);
+            List<WebElement> rows = driver.findElements(By.xpath(rowXpath));
+            if (!rows.isEmpty()) {
+                scrollGridToFarRight(driver, rows.get(0));
+
+                // Re-locate cell to avoid StaleElementReferenceException after scroll repaint
+                cells = driver.findElements(By.xpath(cellXpath));
+                if (!cells.isEmpty()) {
+                    text = cells.get(0).getAttribute("textContent").trim();
+                    logger.info("Resolved cell '{}' post-scroll: [{}]", columnId, text);
+                } else {
+                    logger.warn("Cell '{}' could not be found even after scrolling.", columnId);
+                }
+            } else {
+                logger.warn("No active data rows found; skipping scroll sequence.");
+            }
+        } else {
+            logger.info("Resolved cell '{}' instantly using textContent: [{}]", columnId, text);
+        }
+
+        return text;
     }
 
+    private static void scrollGridToFarRight(WebDriver driver, WebElement rowElement) {
+        try {
+            JavascriptExecutor js = (JavascriptExecutor) driver;
+            js.executeScript(
+                    "var container = arguments[0].closest('.dx-scrollable-container');" +
+                            "if (container) { container.scrollLeft = container.scrollWidth; }"
+            );
+            Thread.sleep(400); // Wait briefly for DevExtreme to repaint virtual columns
+        } catch (Exception e) {
+            logger.error("Failed to execute horizontal grid scroll", e);
+        }
+    }
     // -------------------------------------------------------------------
     // Shared navigation helper
     // -------------------------------------------------------------------

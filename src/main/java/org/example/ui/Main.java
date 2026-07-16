@@ -1,9 +1,11 @@
+
 package org.example.ui;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.github.bonigarcia.wdm.WebDriverManager;
 import org.apache.logging.log4j.Logger;
+import org.example.ui.pages.loginPage;
 import org.example.ui.utilities.*;
 import org.openqa.selenium.*;
 import org.openqa.selenium.chrome.ChromeDriver;
@@ -25,7 +27,7 @@ import static org.example.ui.utilities.TestSummary.*;
 public class Main {
     private static final Logger logger = LoggerUtil.getLogger(Main.class);
     private static String resourceFolder;
-
+    public static Map<String, String> currentUser;
     public static void setResourceFolder(String folder) {
         resourceFolder = folder;
     }
@@ -56,6 +58,7 @@ public class Main {
             WebDriver driver = null;
             String username = null;
             try {
+                currentUser = user;
                 username = user.get("username");
                 String password = user.get("password");
                 String url = user.get("url");
@@ -122,49 +125,53 @@ public class Main {
                 logger.info("^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^");
                 WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
                 // === Login ===
-                try {
-                    driver.findElement(By.id("a3")).sendKeys(username);
-                    driver.findElement(By.id("a4")).sendKeys(password);
-                    driver.findElement(By.cssSelector("button[type='submit']")).click();
-                    waitForLoaderToDisappear(driver);
+                loginPage loginPage = new loginPage(driver);
+                loginPage.login(username, password, orga, dist);
 
-
-                    List<WebElement> selectBoxes = driver.findElements(By.id("selectBox1"));
-
-                    if (!selectBoxes.isEmpty() && selectBoxes.get(0).isDisplayed() && orga != null) {
-                        driver.findElement(By.id("selectBox1")).sendKeys(orga);
-                        try {
-                            WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + orga + "')])[1]")));
-                            item.click();
-                        } catch (TimeoutException e) {
-                            takeScreenshot(driver,"Login");
-                            logger.info("⚠️ No dropdown item found for: {} (This may be data issue. Please check your users file.)", orga);
-                        }
-                        driver.findElement(By.id("proceedBtn")).click();
-                        Thread.sleep(500);
-
-                    }
-                    waitForLoaderToDisappear(driver);
-
-                    if (!selectBoxes.isEmpty() && dist != null) {
-                        driver.findElement(By.id("selectBox1")).sendKeys(dist);
-                        try {
-                            WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + dist + "')])[1]")));
-                            item.click();
-                        } catch (TimeoutException e) {
-                            takeScreenshot(driver,"Login");
-                            logger.info("⚠️ No dropdown item found for: {} (This may be data issue. Please check your users file.)", dist);
-                        }
-
-                        Event.robustClick(driver,By.id("proceedBtn"));
-                        Thread.sleep(500);
-
-                    }
-                    waitForLoaderToDisappear(driver);
-                } catch (Exception e) {
-                    takeScreenshot(driver,"Login");
-                    throw new RuntimeException("Login failed for user: " + username, e);
-                }
+//                try {
+//
+//                    driver.findElement(By.id("a3")).sendKeys(username);
+//                    driver.findElement(By.id("a4")).sendKeys(password);
+//                    driver.findElement(By.cssSelector("button[type='submit']")).click();
+//                    waitForLoaderToDisappear(driver);
+//
+//
+//                    List<WebElement> selectBoxes = driver.findElements(By.id("selectBox1"));
+//
+//                    if (!selectBoxes.isEmpty() && selectBoxes.get(0).isDisplayed() && orga != null) {
+//                        driver.findElement(By.id("selectBox1")).sendKeys(orga);
+//                        try {
+//                            WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + orga + "')])[1]")));
+//                            item.click();
+//                        } catch (TimeoutException e) {
+//                            takeScreenshot(driver,"Login");
+//                            logger.info("⚠️ No dropdown item found for: {} (This may be data issue. Please check your users file.)", orga);
+//                        }
+//                        driver.findElement(By.id("proceedBtn")).click();
+//                        Thread.sleep(500);
+//
+//                    }
+//                    waitForLoaderToDisappear(driver);
+//
+//                    if (!selectBoxes.isEmpty() && dist != null) {
+//                        driver.findElement(By.id("selectBox1")).sendKeys(dist);
+//                        try {
+//                            WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + dist + "')])[1]")));
+//                            item.click();
+//                        } catch (TimeoutException e) {
+//                            takeScreenshot(driver,"Login");
+//                            logger.info("⚠️ No dropdown item found for: {} (This may be data issue. Please check your users file.)", dist);
+//                        }
+//
+//                        Event.robustClick(driver,By.id("proceedBtn"));
+//                        Thread.sleep(500);
+//
+//                    }
+//                    waitForLoaderToDisappear(driver);
+//                } catch (Exception e) {
+//                    takeScreenshot(driver,"Login");
+//                    throw new RuntimeException("Login failed for user: " + username, e);
+//                }
 
                 List<Map<String, Object>> screens = ExcelLoader.loadScreens(configPath);
 

@@ -1,5 +1,5 @@
 package org.example.ui.pages;
-
+import org.example.ui.Main;
 import org.example.ui.utilities.Event;
 import org.example.ui.utilities.LoaderWait;
 import org.example.ui.utilities.PostUploadValidator;
@@ -106,7 +106,6 @@ public abstract class basePage {
         waitForLoader();
     }
 
-    // FIX 2 & 3: Removed 'static' so it can access 'driver', 'wait', and 'waitForLoader()'
     public void navigateToScreen(String menuSearch, String screenId) {
         try {
             try {
@@ -194,61 +193,6 @@ public abstract class basePage {
         throw new RuntimeException("No screen found in config with testID: " + testId);
     }
 
-    // FIX: Removed 'static' so it can call non-static 'navigateToScreen()'
-    private void executeNodeJob(WebDriver driver,
-                                Map<String, String> scenarioData,
-                                ValidationResult result) throws Exception {
 
-        String originalWindow = driver.getWindowHandle();
-        ((JavascriptExecutor) driver).executeScript("window.open();");
 
-        for (String handle : driver.getWindowHandles()) {
-            if (!handle.equals(originalWindow)) {
-                driver.switchTo().window(handle);
-                break;
-            }
-        }
-
-        try {
-            driver.get(scenarioData.get("NodeExecutorUrl"));
-            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(20));
-
-            // Login
-            wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("a3")))
-                    .sendKeys(scenarioData.get("NodeUsername"));
-
-            driver.findElement(By.id("a4"))
-                    .sendKeys(scenarioData.get("NodePassword"));
-
-            driver.findElement(By.cssSelector("button[type='submit']")).click();
-
-            LoaderWait.waitForLoaderToDisappear(driver);
-
-            // FIX 4: Corrected Map.get() keys
-            navigateToScreen(
-                    scenarioData.get("NodeExecutorMenuSearch"),
-                    scenarioData.get("NodeExecutorScreenId")
-            );
-
-            // Enter Job Number
-            WebElement job = wait.until(ExpectedConditions.elementToBeClickable(
-                    By.id(scenarioData.get("JobNumberFieldId"))));
-
-            job.clear();
-            job.sendKeys(scenarioData.get("JobNumber"));
-
-            // Execute
-            Event.robustClick(driver, By.id(scenarioData.get("ExecuteButtonId")));
-
-            LoaderWait.waitForLoaderToDisappear(driver);
-            result.pass("Node Executor job executed.");
-
-        } catch (Exception e) {
-            result.fail("Node Executor failed: " + e.getMessage());
-            throw e;
-        } finally {
-            driver.close();
-            driver.switchTo().window(originalWindow);
-        }
-    }
 }
