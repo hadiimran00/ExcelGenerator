@@ -2,6 +2,7 @@ package org.example.ui.utilities;
 
 import org.example.ui.pages.DistProfilePage;
 import org.example.ui.pages.ProductPage;
+import org.example.ui.pages.basePage;
 import org.openqa.selenium.WebDriver;
 
 import java.util.Map;
@@ -34,7 +35,7 @@ public class DistProfileValidation {
        DistProfilePage page = new DistProfilePage(driver);
 
 
-        page.navigateToScreen(screen);
+        page.navigateToScreen(PostUploadValidator.str(screen, "menuSearch"),PostUploadValidator.str(screen, "validateScreenId"));
         page.searchDist(distCode);
         page.openDist(distCode);
         String actualValue= page.getAttributeValue(attributeScreenID);

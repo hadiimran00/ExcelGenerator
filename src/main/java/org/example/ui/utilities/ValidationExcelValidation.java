@@ -1,6 +1,7 @@
 package org.example.ui.utilities;
 
 import org.example.ui.pages.OrderBookingPage;
+import org.example.ui.pages.basePage;
 import org.openqa.selenium.WebDriver;
 
 import java.util.Map;
@@ -12,7 +13,8 @@ public class ValidationExcelValidation {
 
         OrderBookingPage page = new OrderBookingPage(driver);
 
-        page.navigateToScreen(screen);
+        page.navigateToScreen(PostUploadValidator.str(screen, "menuSearch"),PostUploadValidator.str(screen, "validateScreenId"));
+
 
         String actualMessage = page.orderBooking(ScenarioData);
 

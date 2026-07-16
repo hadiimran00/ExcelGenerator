@@ -1,6 +1,7 @@
 package org.example.ui.utilities;
 
 import org.example.ui.pages.ProductPage;
+import org.example.ui.pages.basePage;
 import org.openqa.selenium.WebDriver;
 
 import java.util.Map;
@@ -33,7 +34,7 @@ public class ProdEnrichValidation {
         ProductPage page = new ProductPage(driver);
 
 
-        page.navigateToScreen(screen);
+        page.navigateToScreen(PostUploadValidator.str(screen, "menuSearch"),PostUploadValidator.str(screen, "validateScreenId"));
         page.searchProduct(productCode);
         page.openProduct(productCode);
         String actualValue= page.getAttributeValue(attributeScreenID);

@@ -2,6 +2,7 @@ package org.example.ui.utilities;
 
 import org.apache.logging.log4j.Logger;
 import org.example.ui.pages.PurchasePricePage;
+import org.example.ui.pages.basePage;
 import org.openqa.selenium.WebDriver;
 
 import java.util.Map;
@@ -55,7 +56,7 @@ public class ProdPriceExcelValidation {
 
         PurchasePricePage page = new PurchasePricePage(driver);
 
-        page.navigateToScreen(screen);
+        page.navigateToScreen(PostUploadValidator.str(screen, "menuSearch"),PostUploadValidator.str(screen, "validateScreenId"));
 
         page.searchProduct(productCode);
         page.openProductPrice(productCode,"tab_1");
