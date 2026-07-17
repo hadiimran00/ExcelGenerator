@@ -25,11 +25,9 @@ public class FileManager {
     public static String getResourceFile(String fileName) {
         return new File(resourceFolder, fileName).getAbsolutePath();
     }
+
     public static void uploadFile(WebDriver driver, String screenName, String filePath) throws InterruptedException {
         waitForLoaderToDisappear(driver);
-        final String[] capturedMessage = { "" };
-
-
 
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
@@ -45,28 +43,8 @@ public class FileManager {
             return;
         }
 
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(30)).until(d -> {
-                try {
-                    List<WebElement> allNotes = d.findElements(By.xpath("//*[starts-with(@id, 'notify_text_')]"));
-
-                    for (WebElement note : allNotes) {
-                        String text = note.getText().trim();
-                        if (!text.isEmpty()) {
-                            capturedMessage[0] = text;
-                            return true;
-                        }
-                    }
-                } catch (StaleElementReferenceException e) {
-                    return false;
-                }
-                return false;
-            });
-        } catch (TimeoutException e) {
-            logger.error("⚠️ [TIMEOUT] No notification appeared.", e);
-        }
-
-        String finalMsg = capturedMessage[0];
+        // Using Reusable ToastHandler
+        String finalMsg = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
 
         if (finalMsg.toLowerCase().contains("successful") || finalMsg.toLowerCase().contains("success")) {
             recordUploadSuccess(screenName, ScreenshotService.getBase64Screenshot(driver));
@@ -129,19 +107,11 @@ public class FileManager {
             }
         }
 
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(10)).until(d ->
-                    (!d.findElements(By.id("notify_text_success")).isEmpty() && !d.findElements(By.id("notify_text_success")).get(0).getText().trim().isEmpty())
-                            || (!d.findElements(By.id("notify_text_error")).isEmpty() && !d.findElements(By.id("notify_text_error")).get(0).getText().trim().isEmpty())
-            );
-        } catch (TimeoutException ignored) {}
+        // Using Reusable ToastHandler (handles notify_text_success and notify_text_error gracefully via start-with id selection)
+        String finalMsg = ToastHandles.waitForNotification(driver, Duration.ofSeconds(10));
 
-        List<WebElement> successMsgList = driver.findElements(By.id("notify_text_success"));
-
-        if (!successMsgList.isEmpty() && successMsgList.get(0).getText().contains("File downloaded successfully")) {
-            WebElement successMsg = successMsgList.get(0);
-            String text = successMsg.getText();
-            logger.info("✅ Success: {}", text);
+        if (finalMsg.toLowerCase().contains("file downloaded successfully") || finalMsg.toLowerCase().contains("success")) {
+            logger.info("✅ Success: {}", finalMsg);
 
             File downloadDir = new File(System.getProperty("user.dir"), "DownloadedExcels");
             File[] files = downloadDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx") || name.toLowerCase().endsWith(".csv"));
@@ -158,12 +128,9 @@ public class FileManager {
             }
         } else {
             String base64Image = ScreenshotService.getBase64Screenshot(driver);
-            List<WebElement> errorMsgList = driver.findElements(By.id("notify_text_error"));
-
-            if (!errorMsgList.isEmpty() && errorMsgList.get(0).isDisplayed()) {
-                String errorText = errorMsgList.get(0).getText();
-                logger.info("❌ Download Failed! {}", errorText);
-                recordDownloadFailure(screenName, errorText, base64Image);
+            if (!finalMsg.isEmpty()) {
+                logger.info("❌ Download Failed! {}", finalMsg);
+                recordDownloadFailure(screenName, finalMsg, base64Image);
             } else {
                 logger.info("❌ Download Failed! Could not find notification message.");
                 recordDownloadFailure(screenName, "Could not find notification message.", base64Image);
@@ -183,24 +150,21 @@ public class FileManager {
             }
         }
     }
-    public static String getLatestDownloadedFile(String downloadDir) {
 
+    public static String getLatestDownloadedFile(String downloadDir) {
         File folder = new File(downloadDir);
 
         File latestFile = Arrays.stream(
                         Objects.requireNonNull(folder.listFiles((dir, name) ->
                                 name.endsWith(".xlsx") || name.endsWith(".xls"))))
                 .max(Comparator.comparingLong(File::lastModified))
-                .orElseThrow(() ->
-                        new RuntimeException("No downloaded Excel found."));
+                .orElseThrow(() -> new RuntimeException("No downloaded Excel found."));
 
         return latestFile.getAbsolutePath();
     }
-    public static void uploadFileSilent(WebDriver driver, String filePath) throws InterruptedException {
-//to be used by test data cleanup
-        waitForLoaderToDisappear(driver);
 
-        final String[] capturedMessage = { "" };
+    public static void uploadFileSilent(WebDriver driver, String filePath) throws InterruptedException {
+        waitForLoaderToDisappear(driver);
 
         try {
             WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
@@ -219,31 +183,13 @@ public class FileManager {
             throw e;
         }
 
-        try {
-            new WebDriverWait(driver, Duration.ofSeconds(30)).until(d -> {
-                try {
-                    List<WebElement> notes =
-                            d.findElements(By.xpath("//*[starts-with(@id,'notify_text_')]"));
+        // Using Reusable ToastHandler
+        String finalMsg = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
 
-                    for (WebElement note : notes) {
-                        String text = note.getText().trim();
-                        if (!text.isEmpty()) {
-                            capturedMessage[0] = text;
-                            return true;
-                        }
-                    }
-                } catch (StaleElementReferenceException ignored) {
-                }
-                return false;
-            });
-        } catch (TimeoutException ignored) {
-        }
+        if (!finalMsg.isEmpty()) {
+            logger.info("🧹 Cleanup upload result: {}", finalMsg);
 
-        if (!capturedMessage[0].isEmpty()) {
-            logger.info("🧹 Cleanup upload result: {}", capturedMessage[0]);
-
-            if (capturedMessage[0].toLowerCase().contains("file downloaded")
-                    || capturedMessage[0].toLowerCase().contains("error")) {
+            if (finalMsg.toLowerCase().contains("file downloaded") || finalMsg.toLowerCase().contains("error")) {
                 handleErrorFile("Cleanup");
             }
         }

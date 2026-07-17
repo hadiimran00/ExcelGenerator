@@ -53,47 +53,18 @@ public class UIValidator {
                     ExpectedConditions.visibilityOfElementLocated(By.cssSelector(".dx-empty-message"))
             ));
 
-            logger.info("🖱 Clicking on row to open record...");
+            logger.info("鼠标 Clicking on row to open record...");
             Event.robustClick(driver, By.cssSelector(".dx-data-row td"));
             LoaderWait.waitForLoaderToDisappear(driver);
 
-            // Wait for existing toasts/notifications to clear before triggering the update
+            // Wait for existing toasts/notifications to clear
             wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//*[contains(@class, 'dx-toast-message')]")));
 
-            logger.info("🖱 Clicking Update button...");
+            logger.info("鼠标 Clicking Update button...");
             Event.robustClick(driver, By.id("updateBtn"));
 
-            // Polling block using the reliable FileManager strategy
-            final String[] capturedMessage = { "" };
-            try {
-                new WebDriverWait(driver, Duration.ofSeconds(30)).until(d -> {
-                    try {
-                        // Handle intermediate 'Yes' confirmation dialog if it gets in the way
-                        List<WebElement> yesButtons = d.findElements(By.id("yes"));
-                        if (!yesButtons.isEmpty() && yesButtons.get(0).isDisplayed()) {
-                            Event.robustClick(d, By.id("yes"));
-                            logger.info("👍 Confirmation dialog handled.");
-                        }
-
-                        // Collect target notification text using the specific notify_text_ locator pattern
-                        List<WebElement> allNotes = d.findElements(By.xpath("//*[starts-with(@id, 'notify_text_')]"));
-                        for (WebElement note : allNotes) {
-                            String text = note.getText().trim();
-                            if (!text.isEmpty()) {
-                                capturedMessage[0] = text;
-                                return true;
-                            }
-                        }
-                    } catch (StaleElementReferenceException e) {
-                        return false;
-                    }
-                    return false;
-                });
-            } catch (TimeoutException e) {
-                logger.error("⚠️ [TIMEOUT] No notification appeared after clicking Update.", e);
-            }
-
-            String finalMsg = capturedMessage[0];
+            // Polling using the new ToastHandler (dismisses 'yes' button if it appears)
+            String finalMsg = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30), By.id("yes"));
 
             if (finalMsg.toLowerCase().contains("successful") || finalMsg.toLowerCase().contains("success")) {
                 result.pass("Record " + searchValue + " Found in Grid and Updated successfully: " + finalMsg);
@@ -125,15 +96,10 @@ public class UIValidator {
         }
     }
 
-    private static boolean isValueInColumn(
-            WebDriver driver,
-            String searchColumn,
-            String searchValue) {
-
-        String xpath =
-                "//tr[contains(@class,'dx-data-row')]"
-                        + "//td[contains(@id,'_" + searchColumn + "') "
-                        + "and @title='" + searchValue + "']";
+    private static boolean isValueInColumn(WebDriver driver, String searchColumn, String searchValue) {
+        String xpath = "//tr[contains(@class,'dx-data-row')]"
+                + "//td[contains(@id,'_" + searchColumn + "') "
+                + "and @title='" + searchValue + "']";
 
         return !driver.findElements(By.xpath(xpath)).isEmpty();
     }

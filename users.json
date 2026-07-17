@@ -30,6 +30,8 @@
   },
   {
     "username": "kpo_bangla",
+    "nodeUsername": "demo",
+    "nodePassword": "123456",
     "password": "Cent@123",
     "url": "https://dcodecnr1dev1.unilever.com/ngui",
     "resourcesFolder": "ResourcesBD",
