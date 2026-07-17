@@ -139,7 +139,15 @@ public class PostUploadValidator {
                         scenarioData,
                         result
                 );
-                break;
+                break;}
+                case "PROD_DIST_PRICE":{ // for PRICE MASTER APPROVAL EXCEL
+                        ProdPriceApprovalExcelValidation.validate(
+                                driver,
+                                testId,validationsSheet,
+                                scenarioData,
+                                result
+                        );
+                        break;
 
 
             }
@@ -229,7 +237,8 @@ public class PostUploadValidator {
             // Click hamburger if menu is collapsed
             try {
                 wait.until(ExpectedConditions
-                        .elementToBeClickable(By.id("menurollin"))).click();
+                        .elementToBeClickable(By.id("menurollin")));
+                Event.robustClick(driver, By.id("menurollin"));
             } catch (NoSuchElementException e) {
                 driver.findElement(
                         By.cssSelector("input[placeholder='Search Here']"));
@@ -247,8 +256,8 @@ public class PostUploadValidator {
 
             // Click the menu item
             wait.until(ExpectedConditions
-                    .elementToBeClickable(By.id(menuItemId))).click();
-
+                    .elementToBeClickable(By.id(menuItemId)));
+            Event.robustClick(driver,By.id(menuItemId));
             LoaderWait.waitForLoaderToDisappear(driver);
 
         } catch (Exception e) {

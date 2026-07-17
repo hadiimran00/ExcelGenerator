@@ -2,6 +2,7 @@ package org.example.ui.utilities;
 
 import org.example.ui.pages.ProductPage;
 import org.example.ui.pages.basePage;
+import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 
 import java.util.Map;
@@ -38,7 +39,7 @@ public class ProdEnrichValidation {
         page.searchProduct(productCode);
         page.openProduct(productCode);
         String actualValue= page.getAttributeValue(attributeScreenID);
-
+        page.click(By.id("update"));
 
 
         if(expectedValue.equals(actualValue)){
