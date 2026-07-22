@@ -271,9 +271,6 @@ public class Main {
                             case "UPLOAD_ONLY":
                                 FileManager.uploadFile(driver, screenName, templatePath);
                              TestSummary.appendValidation(PostUploadValidator.run(driver,validations.get(testID), testID, templatePath, downloadDir, validateMode,scenarioData));
-
-
-
                                 TestDataCleanup(scenarioData, driver);
                                 break;
 
@@ -395,6 +392,43 @@ public class Main {
                                 TestSummary.appendValidation(locusResult);
                                 break;
                             }
+                            case "STOCK_RECON":
+                                ValidationResult result = new ValidationResult("Stock Reconciliation [" + testID + "]");
+
+                                try {
+                                    // 1. Trigger template download
+                                    FileManager.downloadExcel(driver, screenName, stringParams);
+
+                                    // 2. Fetch file path safely (prevents NullPointerException on new File())
+                                    String downloadedFilePath = FileManager.getLatestDownloadedFile(downloadDir);
+
+                                    if (downloadedFilePath == null || downloadedFilePath.isBlank()) {
+                                        result.fail("Stock Reconciliation download failed for screen [" + screenName + "]: No downloaded file path returned.");
+                                    } else {
+                                        File downloadedFile = new File(downloadedFilePath);
+
+                                        if (!downloadedFile.exists() || !downloadedFile.isFile() || downloadedFile.length() == 0) {
+                                            result.fail("Stock Reconciliation download failed for screen [" + screenName + "]: File does not exist or is empty at path [" + downloadedFilePath + "].");
+                                        } else {
+                                            // 3. Execute with the matching 5-parameter streamlined signature
+                                            result = PhysicalStockReconciliationFlow.run(
+                                                    driver,
+                                                    downloadedFile,
+                                                    testID,
+                                                    scenarioData,
+                                                    downloadDir
+                                            );
+                                        }
+                                    }
+                                } catch (Exception e) {
+                                    logger.error("❌ Stock Reconciliation step failed for testID [{}]", testID, e);
+                                    result.fail("Stock Reconciliation Flow failed due to download exception: " + e.getMessage());
+                                }
+
+                                // Process or pass 'result' forward to your master execution log/collector
+                                // 4. Log validation outcomes and break execution safely
+                                TestSummary.appendValidation(result);
+                                break;
                             default:
                                 logger.info("❌ Unknown mode: {}", mode);
                         }

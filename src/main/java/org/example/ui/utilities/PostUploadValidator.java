@@ -1,9 +1,8 @@
 package org.example.ui.utilities;
 
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.By;
+import org.openqa.selenium.*;
 import org.openqa.selenium.NoSuchElementException;
-import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -224,47 +223,122 @@ public class PostUploadValidator {
     }
 
     // ─── helpers ─────────────────────────────────────────────────────────────
+    private static void navigateToMenuScreen(WebDriver driver, String menuSearchText, String menuItemId) {
+        logger.debug("[MenuNav] Starting navigation -> Search: '{}' | MenuItemId: '{}'", menuSearchText, menuItemId);
 
-    // 3. Updated method signature to accept menuSearchText instead of screenName
-    private static void navigateToMenuScreen(WebDriver driver,
-                                             String menuSearchText,
-                                             String menuItemId) {
+        // 1. CRITICAL: Clear any post-upload spinners/backdrops before touching the menu
+        LoaderWait.waitForLoaderToDisappear(driver);
+
+        var wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        var shortWait = new WebDriverWait(driver, Duration.ofSeconds(3));
+
+        By formContainerLocator = By.id("form");
+        By searchBoxLocator = By.cssSelector("#form input.filterinput");
+        By menuItemLocator = By.id(menuItemId);
+        By hamburgerLocator = By.id("menurollin");
+
         try {
-            // Open menu search box
-            var wait = new WebDriverWait(
-                    driver, Duration.ofSeconds(10));
-
-            // Click hamburger if menu is collapsed
+            // ------------------------------------------------------------------
+            // STEP 1: Hamburger / Visibility Check with JS Overlay Fallback
+            // ------------------------------------------------------------------
+            boolean isSearchVisible = false;
             try {
-                wait.until(ExpectedConditions
-                        .elementToBeClickable(By.id("menurollin")));
-                Event.robustClick(driver, By.id("menurollin"));
-            } catch (NoSuchElementException e) {
-                driver.findElement(
-                        By.cssSelector("input[placeholder='Search Here']"));
+                WebElement searchInput = driver.findElement(searchBoxLocator);
+                isSearchVisible = searchInput.isDisplayed();
+                logger.debug("[MenuNav] Search input display state: {}", isSearchVisible);
+            } catch (Exception ignored) {
+                logger.debug("[MenuNav] Search input not present in DOM yet.");
             }
 
-            // Type menu search text in menu search box
-            var searchBox = wait.until(ExpectedConditions
-                    .elementToBeClickable(By
-                            .cssSelector("input[placeholder='Search Here']")));
-            searchBox.clear();
+            if (!isSearchVisible) {
+                logger.debug("[MenuNav] Menu collapsed. Attempting to expand via hamburger [{}]...", hamburgerLocator);
 
-            // 4. Send the new search text parameter
+                try {
+                    // Try standard click via short 3s wait
+                    shortWait.until(ExpectedConditions.elementToBeClickable(hamburgerLocator));
+                    Event.robustClick(driver, hamburgerLocator);
+                } catch (TimeoutException te) {
+                    logger.warn("[MenuNav] Hamburger not clickable via UI wait (overlay active?). Forcing JS click on [{}]", hamburgerLocator);
+                    WebElement hamburger = driver.findElement(hamburgerLocator);
+                    ((JavascriptExecutor) driver).executeScript("arguments[0].click();", hamburger);
+                }
+
+                // Wait for search box container to expand
+                wait.until(ExpectedConditions.visibilityOfElementLocated(searchBoxLocator));
+                logger.debug("[MenuNav] Search box is now visible.");
+            }
+
+            // ------------------------------------------------------------------
+            // STEP 2: Focus & Type Search Text inside #form
+            // ------------------------------------------------------------------
+            WebElement searchBox = wait.until(ExpectedConditions.elementToBeClickable(searchBoxLocator));
+
+            try {
+                searchBox.click();
+            } catch (Exception e) {
+                logger.debug("[MenuNav] Direct click failed; clicking #form container to focus input.");
+                driver.findElement(formContainerLocator).click();
+            }
+
+            logger.debug("[MenuNav] Clearing input and typing search text: '{}'...", menuSearchText);
+            searchBox.sendKeys(Keys.chord(Keys.CONTROL, "a"), Keys.BACK_SPACE);
             searchBox.sendKeys(menuSearchText);
-            Thread.sleep(400);
 
-            // Click the menu item
-            wait.until(ExpectedConditions
-                    .elementToBeClickable(By.id(menuItemId)));
-            Event.robustClick(driver,By.id(menuItemId));
+            String typedValue = searchBox.getAttribute("value");
+            logger.debug("[MenuNav] DOM input value verified: '{}'", typedValue);
+
+            // ------------------------------------------------------------------
+            // STEP 3: Click Filtered Target Menu Item (Handles Angular Re-renders)
+            // ------------------------------------------------------------------
+            logger.debug("[MenuNav] Waiting for target menu item [{}]...", menuItemId);
+
+            boolean itemClicked = false;
+            for (int attempt = 1; attempt <= 3; attempt++) {
+                try {
+                    WebElement menuItem = wait.until(ExpectedConditions.elementToBeClickable(menuItemLocator));
+
+                    logger.debug("[MenuNav] Attempt {}/3 - Found menu item [{}]. Displayed: {}, Enabled: {}",
+                            attempt, menuItemId, menuItem.isDisplayed(), menuItem.isEnabled());
+
+                    Event.robustClick(driver, menuItemLocator);
+                    itemClicked = true;
+                    logger.debug("[MenuNav] Successfully clicked menu item [{}].", menuItemId);
+                    break;
+                } catch (StaleElementReferenceException e) {
+                    logger.warn("[MenuNav] Attempt {}/3 - Element went stale during Angular filter animation. Retrying...", attempt);
+                }
+            }
+
+            if (!itemClicked) {
+                throw new IllegalStateException("Failed to click menu item [" + menuItemId + "] after 3 retries.");
+            }
+
+            // ------------------------------------------------------------------
+            // STEP 4: Post-Navigation Loader Sync
+            // ------------------------------------------------------------------
+            logger.debug("[MenuNav] Waiting for target page loader...");
             LoaderWait.waitForLoaderToDisappear(driver);
+            logger.debug("[MenuNav] Navigation completed successfully for [{}]", menuItemId);
 
         } catch (Exception e) {
-            logger.info("Could not navigate to menu item: {}", menuItemId);
+            logger.error("[MenuNav-FAILURE] Navigation failed for MenuItemId: '{}' | SearchText: '{}'", menuItemId, menuSearchText);
+            try {
+                logger.error("[MenuNav-FAILURE] Page URL: {}", driver.getCurrentUrl());
+
+                boolean hamburgerExists = !driver.findElements(hamburgerLocator).isEmpty();
+                boolean formContainerExists = !driver.findElements(formContainerLocator).isEmpty();
+                boolean searchExists = !driver.findElements(searchBoxLocator).isEmpty();
+                boolean menuItemExists = !driver.findElements(menuItemLocator).isEmpty();
+
+                logger.error("[MenuNav-FAILURE] Element Status -> Hamburger Exists: {} | #form Container Exists: {} | Search Input Exists: {} | Target Item Exists: {}",
+                        hamburgerExists, formContainerExists, searchExists, menuItemExists);
+            } catch (Exception diagError) {
+                logger.error("[MenuNav-FAILURE] Could not log diagnostics: {}", diagError.getMessage());
+            }
+
+            throw new RuntimeException("Menu navigation failed for item: " + menuItemId, e);
         }
     }
-
     private static File latestFile(String dir) {
         File folder = new File(dir);
         File[] files = folder.listFiles((d, n) ->

@@ -5,6 +5,7 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.time.Duration;
 import java.util.*;
@@ -125,15 +126,18 @@ public class FileManager {
                 logger.info("❌ Downloaded File not found!");
                 String base64Image = ScreenshotService.getBase64Screenshot(driver);
                 recordDownloadFailure(screenName, "File not found in directory", base64Image);
+                throw new FileNotFoundException("Download reported success but no file was found.");
             }
         } else {
             String base64Image = ScreenshotService.getBase64Screenshot(driver);
             if (!finalMsg.isEmpty()) {
                 logger.info("❌ Download Failed! {}", finalMsg);
                 recordDownloadFailure(screenName, finalMsg, base64Image);
+                throw new IOException("Download failed: " + finalMsg);
             } else {
                 logger.info("❌ Download Failed! Could not find notification message.");
                 recordDownloadFailure(screenName, "Could not find notification message.", base64Image);
+                throw new IOException("Download failed: No notification received.");
             }
         }
     }
