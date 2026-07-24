@@ -51,12 +51,6 @@ src
 - Maven
 - Google Chrome
 
-### Clone the Repository
-
-```bash
-git clone https://github.com/<your-username>/<repository>.git
-```
-
 ### Install Dependencies
 
 ```bash
@@ -145,11 +139,8 @@ The framework generates execution artifacts including:
 - CI/CD integration
 - Cross-browser execution
 - Containerized execution
+- Code Refactoring and optimization
 
-## Contributing
 
-Contributions are welcome through pull requests. Please ensure new functionality includes appropriate tests and follows the project's coding conventions.
 
-## License
 
-Add the appropriate license before publishing the repository.
