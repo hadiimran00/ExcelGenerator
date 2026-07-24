@@ -24,7 +24,7 @@
     "resourcesFolder": "ResourcesPK",
     "configPath": "configPK.xlsx",
     "country": "Pakistan",
-    "execute": "NO",
+    "execute": "YES",
     "orga": "Unilever Pakistan Limited",
     "dist": "50250327-MULLER & PHIPPS (KORANGI - KARACHI)"
   },

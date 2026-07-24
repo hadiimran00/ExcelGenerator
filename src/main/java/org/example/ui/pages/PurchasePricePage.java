@@ -6,6 +6,8 @@ import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
+import java.time.Duration;
+
 public class PurchasePricePage extends basePage {
 
     public PurchasePricePage(WebDriver driver) {
@@ -38,13 +40,14 @@ public class PurchasePricePage extends basePage {
 
         // Scroll to the Price Code row
         By priceCodeRow = By.id("row_1_price_code");
-
         scrollTo(priceCodeRow);
 
         // Open the price details
         click(priceCodeRow);
 
-        click(By.id(tabid));
+        // Wait until the tab is clickable
+//        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+//        wait.until(ExpectedConditions.elementToBeClickable(By.id(tabid))).click();
 
         waitForLoader();
     }

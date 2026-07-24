@@ -1,14 +1,14 @@
 package org.example.ui.pages;
 
+import org.example.ui.utilities.GeneratedDataStore;
+import org.example.ui.utilities.ToastHandles;
 import org.openqa.selenium.By;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -18,9 +18,13 @@ public class OrderBookingPage extends basePage {
         super(driver);
     }
 
-
-
-
+    /**
+     * Executes the order booking flow.
+     * Uses ToastHandles utility to monitor validate and save notifications.
+     * On success, captures the generated order number from element ID "documentNo",
+     * updates testData map, and persists values via GeneratedDataStore.
+     * On error, returns the error message prefixed with "ERROR: ".
+     */
     public String orderBooking(Map<String, String> testData) {
 
         String[] parameters = {
@@ -57,58 +61,73 @@ public class OrderBookingPage extends basePage {
         // Save Row
         click(By.id("rowEditBtn_Save_0"));
 
-        // Validate
+        // ==========================================
+        // 1. VALIDATE ORDER
+        // ==========================================
         click(By.id("validateBtn"));
 
-        // Wait for either success or error
-//        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
-//
-//        wait.until(d ->
-//
-//                (!d.findElements(By.id("notify_text_success")).isEmpty()
-//                        && !d.findElements(By.id("notify_text_success")).get(0).getText().isBlank())
-//
-//                        ||
-//
-//                        (!d.findElements(By.id("notify_text_error")).isEmpty()
-//                                && !d.findElements(By.id("notify_text_error")).get(0).getText().isBlank())
-//        );
-//
-//        // Success
-//        List<WebElement> successList =
-//                driver.findElements(By.id("notify_text_success"));
-//
-//        if (!successList.isEmpty()
-//                && !successList.get(0).getText().isBlank()) {
-//
-//            return successList.get(0).getText().trim();
-//        }
-//
-//        // Error
-//        List<WebElement> errorList =
-//                driver.findElements(By.id("notify_text_error"));
-//
-//        if (!errorList.isEmpty()
-//                && !errorList.get(0).getText().isBlank()) {
-//
-//            return errorList.get(0).getText().trim();
-//        }
-//
-//        return "";
-        WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+        // Wait for notification toast via ToastHandles
+        String validateMessage = ToastHandles.waitForNotification(driver, Duration.ofSeconds(10));
 
-        WebElement error = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(
-                        By.id("notify_text_error"))
-        );
+        // Check for error notification
+        List<WebElement> errorList = driver.findElements(By.id("notify_text_error"));
+        if (!errorList.isEmpty() && !errorList.get(0).getText().isBlank()) {
+            String errorMessage = errorList.get(0).getText().trim();
+            System.err.println("❌ Order Booking Validation Error: " + errorMessage);
+            return errorMessage;
+        }
 
-        String errorMessage = error.getText().trim();
+        // ==========================================
+        // 2. SAVE ORDER
+        // ==========================================
+        click(By.id("saveBtn"));
 
-        System.out.println("Validation Error: " + errorMessage);
+        // Wait for notification toast via ToastHandles
+        String saveMessage = ToastHandles.waitForNotification(driver, Duration.ofSeconds(10));
 
-        return errorMessage;
+        // Check for error notification post-save
+        List<WebElement> saveErrorList = driver.findElements(By.id("notify_text_error"));
+        if (!saveErrorList.isEmpty() && !saveErrorList.get(0).getText().isBlank()) {
+            String errorMessage = saveErrorList.get(0).getText().trim();
+            System.err.println("❌ Order Booking Save Error: " + errorMessage);
+            return errorMessage;
+        }
+
+        // ==========================================
+        // 3. CAPTURE GENERATED ORDER NUMBER & PERSIST
+        // ==========================================
+        String orderNo = "";
+        try {
+            WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
+            WebElement docNoElement = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(By.id("documentNo"))
+            );
+
+            // Try value attribute first (input field), fallback to inner text
+            orderNo = docNoElement.getAttribute("value");
+            if (orderNo == null || orderNo.trim().isEmpty()) {
+                orderNo = docNoElement.getText().trim();
+            }
+
+            if (!orderNo.isEmpty()) {
+                // Update in-memory scenario data map
+                testData.put("orderNo", orderNo);
+                testData.put("orderNumber", orderNo);
+
+                // Store in GeneratedDataStore using testId
+                String testId = testData.get("testId");
+                if (testId != null && !testId.isEmpty()) {
+                    GeneratedDataStore.store(testId, "orderNo", orderNo);
+                    GeneratedDataStore.store(testId, "orderNumber", orderNo);
+                    GeneratedDataStore.store(testId, "documentNo", orderNo);
+                }
+
+                System.out.println("✅ Generated Order Number captured and stored: " + orderNo);
+            }
+        } catch (Exception e) {
+            System.err.println("⚠️ Could not locate generated documentNo element: " + e.getMessage());
+        }
+
+        return orderNo;
     }
-
-
-
-    }
+}

@@ -429,6 +429,16 @@ public class Main {
                                 // 4. Log validation outcomes and break execution safely
                                 TestSummary.appendValidation(result);
                                 break;
+//                            case "PARTIAL_RETURN_BUDGET": {
+//                                ValidationResult budgetResult = PartialReturnBudgetFlow.run(
+//                                        driver,
+//                                        scenarioData,
+//                                        downloadDir
+//                                );
+//
+//                                TestSummary.appendValidation(budgetResult);
+//                                break;
+//                            }
                             default:
                                 logger.info("❌ Unknown mode: {}", mode);
                         }

@@ -112,7 +112,7 @@ public class ExactExcelComparator {
 
             // Step 7: Success execution path
             String passMessage = String.format(
-                    "Uploaded Records=%d, Downloaded Records=%d, All Values Matched Successfully (Order-Independent).",
+                    "Uploaded Records=%d, Downloaded Records=%d, All Values Matched Successfully.",
                     uploadedRows.size(), downloadedRows.size());
             logger.info("✅ {}", passMessage);
             result.pass(passMessage);
