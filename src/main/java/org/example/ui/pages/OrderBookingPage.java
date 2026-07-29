@@ -1,6 +1,7 @@
 package org.example.ui.pages;
 
 import org.example.ui.utilities.GeneratedDataStore;
+import org.example.ui.utilities.ScreenshotService;
 import org.example.ui.utilities.ToastHandles;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -74,6 +75,7 @@ public class OrderBookingPage extends basePage {
         if (!errorList.isEmpty() && !errorList.get(0).getText().isBlank()) {
             String errorMessage = errorList.get(0).getText().trim();
             System.err.println("❌ Order Booking Validation Error: " + errorMessage);
+            ScreenshotService.takeScreenshot(driver, "Validation_OrderBooking");
             return errorMessage;
         }
 
@@ -90,6 +92,7 @@ public class OrderBookingPage extends basePage {
         if (!saveErrorList.isEmpty() && !saveErrorList.get(0).getText().isBlank()) {
             String errorMessage = saveErrorList.get(0).getText().trim();
             System.err.println("❌ Order Booking Save Error: " + errorMessage);
+            ScreenshotService.takeScreenshot(driver, "ERROR_OrderBooking");
             return errorMessage;
         }
 
@@ -126,6 +129,8 @@ public class OrderBookingPage extends basePage {
             }
         } catch (Exception e) {
             System.err.println("⚠️ Could not locate generated documentNo element: " + e.getMessage());
+            ScreenshotService.takeScreenshot(driver, "OrdeNO_NotFound");
+
         }
 
         return orderNo;

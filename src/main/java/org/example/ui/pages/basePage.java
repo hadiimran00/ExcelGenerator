@@ -30,7 +30,20 @@ public abstract class basePage {
     }
 
     public void click(By locator) {
-        Event.robustClick(driver, locator);
+        try {
+            Event.robustClick(driver, locator);
+        } catch (Exception e) {
+            System.out.println("First click failed. Retrying...");
+
+            try {
+                Event.robustClick(driver, locator);
+            } catch (Exception retryException) {
+                throw new RuntimeException(
+                        "Failed to click element after retry: " + locator,
+                        retryException
+                );
+            }
+        }
     }
 
     protected void type(By locator, String text) {

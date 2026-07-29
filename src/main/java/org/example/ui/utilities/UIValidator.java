@@ -69,6 +69,7 @@ public class UIValidator {
             if (finalMsg.toLowerCase().contains("successful") || finalMsg.toLowerCase().contains("success")) {
                 result.pass("Record " + searchValue + " Found in Grid and Updated successfully: " + finalMsg);
                 logger.info("✅ {}", finalMsg);
+                ScreenshotService.takeScreenshot(driver, "PJP_HQ");
             } else if (!finalMsg.isEmpty()) {
                 result.fail("Record " + searchValue + " Found but Update failed: " + finalMsg);
                 ScreenshotService.takeScreenshot(driver, "update_failed");
