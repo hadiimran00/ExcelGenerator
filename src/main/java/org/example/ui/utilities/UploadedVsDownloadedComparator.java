@@ -118,7 +118,7 @@ public class UploadedVsDownloadedComparator {
             }
 
             String failMessage = String.format(
-                    "%d uploaded record(s) not found in downloaded file. Likely column(s): %s. Example key: %s",
+                    "%d uploaded record(s) not found in downloaded file. Likely column(s): %s. Example key: %s ",
                     missingFromDownloaded.size(),
                     summarize(mismatchColumnCounts),
                     missingFromDownloaded.get(0));

@@ -57,6 +57,9 @@ public class Main {
         for (Map<String, String> user : users) {
             WebDriver driver = null;
             String username = null;
+            String country = null;
+            boolean testExecuted = false;
+
             try {
                 currentUser = user;
                 username = user.get("username");
@@ -65,7 +68,7 @@ public class Main {
                 String config = user.get("configPath");
                 String resourcesFolder = user.get("resourcesFolder");
                 String configPath = resourcesFolder + "\\" + config;
-                String country = user.get("country");
+                country = user.get("country");
                 String executeUser = user.get("execute");
                 String orga = user.get("orga");
                 String dist=user.get("dist");
@@ -128,50 +131,6 @@ public class Main {
                 loginPage loginPage = new loginPage(driver);
                 loginPage.login(username, password, orga, dist);
 
-//                try {
-//
-//                    driver.findElement(By.id("a3")).sendKeys(username);
-//                    driver.findElement(By.id("a4")).sendKeys(password);
-//                    driver.findElement(By.cssSelector("button[type='submit']")).click();
-//                    waitForLoaderToDisappear(driver);
-//
-//
-//                    List<WebElement> selectBoxes = driver.findElements(By.id("selectBox1"));
-//
-//                    if (!selectBoxes.isEmpty() && selectBoxes.get(0).isDisplayed() && orga != null) {
-//                        driver.findElement(By.id("selectBox1")).sendKeys(orga);
-//                        try {
-//                            WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + orga + "')])[1]")));
-//                            item.click();
-//                        } catch (TimeoutException e) {
-//                            takeScreenshot(driver,"Login");
-//                            logger.info("⚠️ No dropdown item found for: {} (This may be data issue. Please check your users file.)", orga);
-//                        }
-//                        driver.findElement(By.id("proceedBtn")).click();
-//                        Thread.sleep(500);
-//
-//                    }
-//                    waitForLoaderToDisappear(driver);
-//
-//                    if (!selectBoxes.isEmpty() && dist != null) {
-//                        driver.findElement(By.id("selectBox1")).sendKeys(dist);
-//                        try {
-//                            WebElement item = wait.until(ExpectedConditions.elementToBeClickable(By.xpath("(//div[@id='dropdown-content']//*[contains(text(), '" + dist + "')])[1]")));
-//                            item.click();
-//                        } catch (TimeoutException e) {
-//                            takeScreenshot(driver,"Login");
-//                            logger.info("⚠️ No dropdown item found for: {} (This may be data issue. Please check your users file.)", dist);
-//                        }
-//
-//                        Event.robustClick(driver,By.id("proceedBtn"));
-//                        Thread.sleep(500);
-//
-//                    }
-//                    waitForLoaderToDisappear(driver);
-//                } catch (Exception e) {
-//                    takeScreenshot(driver,"Login");
-//                    throw new RuntimeException("Login failed for user: " + username, e);
-//                }
 
                 List<Map<String, Object>> screens = ExcelLoader.loadScreens(configPath);
 
@@ -199,6 +158,7 @@ public class Main {
                                     Map.of()
                             );
                     if (execute.isBlank() || execute.equalsIgnoreCase("y")) {
+                        testExecuted = true;
                         @SuppressWarnings("unchecked")
                         Map<String, Object> params = (Map<String, Object>) screen.get("params");
                         @SuppressWarnings("unchecked")
@@ -450,19 +410,31 @@ public class Main {
                 }
 
                 // Write summary after each user
-                writeTestSummary(country);
-                resetTestCounter();
+//                writeTestSummary(country);
+//                resetTestCounter();
 
-            } catch (Exception e) {
+                } catch (Exception e) {
                 logger.info("💥 Unexpected error for user: {} | Message: {}", username, e.getMessage(), e);
                 if (driver != null) takeScreenshot(driver,username);
-            } finally {
-                if (driver != null) {
-                    try {
-                        driver.quit();
-                    } catch (Exception ignored) {
-                    }
+                } finally {
+                try {
+                if (country != null && testExecuted) {
+                    writeTestSummary(country);
+                    resetTestCounter();
                 }
+            } catch (Exception ex) {
+                logger.error("Unable to write summary", ex);
+            }
+
+                if (driver != null) {
+                    driver.quit();
+                }
+//                if (driver != null) {
+//                    try {
+//                        driver.quit();
+//                    } catch (Exception ignored) {
+//                    }
+//                }
             }
         } // end for loop
 

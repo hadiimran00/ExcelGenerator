@@ -35,7 +35,7 @@ public class UIValidator {
             searchBox.clear();
             searchBox.sendKeys(searchValue);
             logger.info("🔎 Typed search value [{}] into columnId [{}]", searchValue, columnId);
-
+            LoaderWait.waitForLoaderToDisappear(driver);
             waitForGridRows(driver, wait);
 
             boolean found = isValueInColumn(driver, searchColumn, searchValue);

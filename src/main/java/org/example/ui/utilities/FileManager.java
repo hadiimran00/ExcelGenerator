@@ -107,7 +107,7 @@ public class FileManager {
                 logger.info(ex.getMessage());
             }
         }
-
+        waitForLoaderToDisappear(driver);
         // Using Reusable ToastHandler (handles notify_text_success and notify_text_error gracefully via start-with id selection)
         String finalMsg = ToastHandles.waitForNotification(driver, Duration.ofSeconds(10));
 

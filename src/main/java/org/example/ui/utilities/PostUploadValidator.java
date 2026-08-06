@@ -159,8 +159,12 @@ public class PostUploadValidator {
                             break;
                         }
                         String compareColumns = scenarioData.get("CompareColumns");
-                        List<String> columns = Arrays.stream(compareColumns.split(","))
+
+                        List<String> columns = compareColumns == null
+                                ? Collections.emptyList()
+                                : Arrays.stream(compareColumns.split(","))
                                 .map(String::trim)
+                                .filter(s -> !s.isEmpty())
                                 .toList();
                         UploadedVsDownloadedComparator.compare(
                                 new File(uploadedFilePath),

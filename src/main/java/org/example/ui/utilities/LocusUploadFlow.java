@@ -130,14 +130,16 @@ public class LocusUploadFlow {
 
         String screenName = (String) transactionInquiryScreen.get("screenName");
         String screenId = (String) transactionInquiryScreen.get("screenId");
-
+        OrderDeliveryDatePage page = new OrderDeliveryDatePage(driver);
         navigateToScreen(driver, screenName, screenId);
-
+        waitForLoaderToDisappear(driver);
         String statusColumnId = scenarioData.get("StatusColumnId");
         String ginColumnId = scenarioData.get("GinColumnId");
         String expectedStatus = "Planning completed";
 
         logger.info("Applying Transaction Inquiry filters for order: {}", orderNumber);
+        page.selectDropdown(By.id("DDL__PDOTDOCMTYPEPARENT"), "Sales");
+        waitForLoaderToDisappear(driver);
         Event.robustClick(driver, By.id("gridFilterCheckbox"));
 
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
