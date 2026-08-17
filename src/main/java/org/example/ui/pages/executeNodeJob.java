@@ -30,7 +30,23 @@ public class executeNodeJob extends basePage {
 
         // 2. Configure a completely isolated, headless background browser
         ChromeOptions options = new ChromeOptions();
-    //    options.addArguments("--headless=new"); // Runs silently without popping up
+
+// Disable password manager
+        options.setExperimentalOption("prefs", Map.of(
+                "credentials_enable_service", false,
+                "profile.password_manager_enabled", false,
+                "profile.password_manager_leak_detection", false
+        ));
+
+        options.addArguments("--disable-save-password-bubble");
+        options.addArguments("--disable-features=PasswordManagerOnboarding");
+
+        options.addArguments("--window-size=1920,1080");
+        options.addArguments("--disable-gpu");
+        options.addArguments("--no-sandbox");
+        options.addArguments("--disable-dev-shm-usage");
+
+       options.addArguments("--headless=new"); // Runs silently without popping up
         options.addArguments("--window-size=1920,1080");
         options.addArguments("--disable-gpu");
         options.addArguments("--no-sandbox");

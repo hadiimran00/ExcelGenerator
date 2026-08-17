@@ -263,7 +263,7 @@ public class Main {
                                         headerScreen,
                                         detailScreen,
                                         scenarioData,
-                                        downloadDir
+                                            downloadDir
                                 );
 
                                 TestSummary.appendValidation(pjpResult);
