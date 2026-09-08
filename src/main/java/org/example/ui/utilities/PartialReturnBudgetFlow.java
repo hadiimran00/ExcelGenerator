@@ -408,31 +408,10 @@ public class PartialReturnBudgetFlow {
         transactionInquiryPage.navigateToScreen("BG - Transaction Inquiry", "DYL_BG1016");
         waitForLoaderToDisappear(driver);
 
-        logger.info("📌 Selecting Document Type: Sales");
-        sanPage.selectDropdown(By.id("DDL__PDOTDOCMTYPEPARENT"), "Sales");
-
-        logger.info("📌 Selecting PJP: {}", PJPNO);
-        sanPage.selectDropdown(By.id("DDL__EPJPPJPNODAILY"), PJPNO);
-
-        logger.info("📌 Entering document number: {}", orderNo);
-        Event.robustClick(driver, By.id("gridFilterCheckbox"));
-        WebElement documentNoFilter = wait.until(ExpectedConditions.elementToBeClickable(By.id("rowfilter_TXT__TCMMDOCNO")));
-        documentNoFilter.clear();
-        documentNoFilter.sendKeys(orderNo);
-        waitForLoaderToDisappear(driver);
-
-        logger.info("📌 Selecting outlet");
-        Event.robustClick(driver, By.id("row_1_document_no"));
-        waitForLoaderToDisappear(driver);
-
-        logger.info("📌 Entering promo code: {}", budgetPromoId);
-        Event.robustClick(driver, By.id("tab_4"));
-        Event.robustClick(driver, By.id("checkbox-1"));
-        WebElement promoTextbox = wait.until(ExpectedConditions.elementToBeClickable(
-                By.id("rowfilter_TXT__psch_schme_id")));
-        promoTextbox.clear();
-        promoTextbox.sendKeys(budgetPromoId);
-        waitForLoaderToDisappear(driver);
+        transactionInquiryPage.selectDocumentType("Sales");
+        transactionInquiryPage.selectPjp(pjpNo);
+        transactionInquiryPage.searchAndSelectDocument(orderNo);
+        transactionInquiryPage.searchPromotion(budgetPromoId);
 
         logger.info("📌 Verifying promotion search result");
 
