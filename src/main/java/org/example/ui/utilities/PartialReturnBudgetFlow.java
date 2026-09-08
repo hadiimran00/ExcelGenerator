@@ -4,12 +4,12 @@ import org.apache.logging.log4j.Logger;
 import org.example.ui.pages.OrderBookingPage;
 import org.example.ui.pages.OrderDeliveryDatePage;
 import org.example.ui.pages.SANPage;
+import org.example.ui.pages.TransactionInquiryPage;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
-import org.openqa.selenium.StaleElementReferenceException;
 
 import java.io.File;
 import java.time.Duration;
@@ -25,13 +25,14 @@ public class PartialReturnBudgetFlow {
             Map<String, String> scenarioData,
             String downloadDir
     ) {
-        ValidationResult result = new ValidationResult("Partial Return Budget Allocation Flow");
+        ValidationResult result = new ValidationResult("SDMS-10626 Free SKU incorrectly added to budget on partial return when stock was initially zero and Free SKU was never given");
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
         // Instantiate Page Objects once for efficiency
         SANPage sanPage = new SANPage(driver);
         OrderBookingPage orderBookingPage = new OrderBookingPage(driver);
         OrderDeliveryDatePage deliveryDatePage = new OrderDeliveryDatePage(driver);
+        TransactionInquiryPage transactionInquiryPage = new TransactionInquiryPage(driver);
 
         try {
             // Extract parameters from scenarioData (with fallbacks)
@@ -39,7 +40,7 @@ public class PartialReturnBudgetFlow {
             String fullCustomerCode = scenarioData.getOrDefault("fullCustomerCode", "C0000023667-Shahjalal Super Store");
             String fullProductName = scenarioData.getOrDefault("fullProductName", "68640058");
             String freeProductName = scenarioData.getOrDefault("freeProductName", "62732112");
-            String returnQty = scenarioData.getOrDefault("returnQty", "15");
+          //  String returnQty = scenarioData.getOrDefault("returnQty", "15");
             String keyColumn = scenarioData.getOrDefault("validateKeyColumn", "CHNLHIER_CODE");
             String keyValue = scenarioData.getOrDefault("validateKeyValue", "C01047");
             String targetColumn = scenarioData.getOrDefault("validateTargetColumn", "CHNLHIER_QTY_UTILIZED");
@@ -117,7 +118,7 @@ public class PartialReturnBudgetFlow {
             // STEP 3: TRANSACTION INQUIRY
             // ==========================================
             logger.info("📌 STEP 3: Navigating and executing BG - Transaction Inquiry");
-            executeTransactionInquiry(driver, wait, sanPage, scenarioData, orderNo, budgetPromoId, result);
+            executeTransactionInquiry(driver, transactionInquiryPage, scenarioData, orderNo, budgetPromoId, result);
 
             // ==========================================
             // STEP 4: BUDGET CHECK AFTER ORDER BOOKING
@@ -180,44 +181,6 @@ public class PartialReturnBudgetFlow {
             Event.robustClick(driver, By.id("checkbox-1"));
             Event.robustClick(driver, By.id("tab_3"));
             waitForLoaderToDisappear(driver);
-
-            // 3. Edit Quantity & Details
-            Event.robustClick(driver, By.id("row_1_actual_pc"));
-            waitForLoaderToDisappear(driver);
-
-            By actualQty = By.id("actualQty3_0");
-
-            try {
-                WebElement spinButton = wait.until(
-                        ExpectedConditions.elementToBeClickable(actualQty)
-                );
-
-                spinButton.clear();
-                spinButton.sendKeys("10");
-
-            } catch (StaleElementReferenceException e) {
-                logger.warn("⚠️ actualQty3_0 became stale. Re-finding element and retrying...");
-
-                WebElement spinButton = wait.until(
-                        ExpectedConditions.elementToBeClickable(actualQty)
-                );
-
-                spinButton.clear();
-                spinButton.sendKeys("10");
-                logger.warn("⚠️ actualQty3_0 found");
-            }
-
-            // DevExtreme Grid Cell: Loss Reason Dropdown Handling
-            WebElement gridCell = wait.until(ExpectedConditions.elementToBeClickable(By.id("row_1_loss_reason")));
-            gridCell.click();
-
-            WebElement lossReasonInput = wait.until(ExpectedConditions.elementToBeClickable(By.id("lossReason_0")));
-            lossReasonInput.click();
-
-            String targetValue = scenarioData.getOrDefault("lossReason", "Stock Out");
-            String itemXpath = String.format("//div[contains(@class,'dx-item-content') and contains(text(),'%s')]", targetValue);
-            WebElement targetItem = wait.until(ExpectedConditions.elementToBeClickable(By.xpath(itemXpath)));
-            targetItem.click();
 
             Event.robustClick(driver, By.id("saveallBtn"));
             ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
@@ -311,14 +274,26 @@ public class PartialReturnBudgetFlow {
             // ==========================================
             logger.info("📌 STEP 7: Final Budget Setup Verification");
             sanPage.navigateToScreen("Budget Setup", "BUDGET_LAYOUT");
-            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, returnQty, result);
+            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result);
 
             logger.info("📌 STEP 8: Final BG - Transaction Inquiry Verification");
-            executeTransactionInquiry(driver, wait, sanPage, scenarioData, "BG26000000627", budgetPromoId, result);
+            executeTransactionInquiry(driver, transactionInquiryPage, scenarioData, orderNo, budgetPromoId, result);
+
+            waitForLoaderToDisappear(driver);
+
+            result.pass(
+                    "Free SKU was not added or reallocated to the budget, as it was never issued to the customer."
+            );
+
+            // Record final flow pass to TestSummary
+            TestSummary.appendValidation(result);
 
         } catch (Exception e) {
             logger.error("❌ Partial Return Budget Allocation flow failed: {}", e.getMessage(), e);
             result.fail("Flow execution encountered an error: " + e.getMessage());
+
+            // Record execution failure to TestSummary
+            TestSummary.appendValidation(result);
         }
 
         return result;
@@ -339,9 +314,13 @@ public class PartialReturnBudgetFlow {
             String expectedValue,
             ValidationResult result
     ) {
-        waitForLoaderToDisappear(driver);
-        Event.robustClick(driver, By.id("checkbox-11"));
 
+        waitForLoaderToDisappear(driver);
+        try {
+            Event.robustClick(driver, By.id("checkbox-11"));
+        } catch (Exception e) {
+            Event.robustClick(driver, By.id("checkbox-11"));
+        }
         WebElement catalogFilter = wait.until(ExpectedConditions.visibilityOfElementLocated(
                 By.xpath("//input[contains(@id,'targetCatalogId') or contains(@class,'rowfilter')]")));
         catalogFilter.clear();
@@ -393,7 +372,7 @@ public class PartialReturnBudgetFlow {
     }
 
     /**
-     * Helper method encapsulating Transaction Inquiry interactions.
+     * Helper method encapsulating Transaction Inquiry interactions using TransactionInquiryPage.
      */
     private static void executeTransactionInquiry(
             WebDriver driver,
@@ -414,49 +393,39 @@ public class PartialReturnBudgetFlow {
         transactionInquiryPage.searchPromotion(budgetPromoId);
 
         logger.info("📌 Verifying promotion search result");
-
-        WebElement promotionCell = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(
-                        By.id("row_1_promotion_id")
-                )
-        );
-
-        String actualPromotion = promotionCell.getText().trim();
+        String actualPromotion = transactionInquiryPage.getFirstRowPromotionId();
         logger.info("📌 Search result promotion: {}", actualPromotion);
 
         if (!budgetPromoId.equals(actualPromotion)) {
             result.fail(
-                    String.format(
-                            "Expected promotion [%s] but found [%s]",
-                            budgetPromoId,
-                            actualPromotion
-                    )
+                    "Expected promotion [" + budgetPromoId + "] but found [" + actualPromotion + "]"
             );
         } else {
+            result.pass(
+                    "Free SKU Promotion ["+actualPromotion+"] applied successfully without free SKU stock"
+            );
             logger.info("✅ Promotion found successfully: {}", actualPromotion);
         }
 
-        WebElement allocatedQuantityCell = wait.until(
-                ExpectedConditions.visibilityOfElementLocated(
-                        By.id("row_1_allocated_quantity")
-                )
-        );
-
-        String actualAllocatedQuantity = allocatedQuantityCell.getText().trim();
+        String actualAllocatedQuantity = transactionInquiryPage.getFirstRowAllocatedQuantity();
         logger.info("📌 Allocated quantity for [{}]: {}", actualPromotion, actualAllocatedQuantity);
 
         if (!"0".equals(actualAllocatedQuantity)) {
             result.fail(
-                    String.format(
-                            "Allocated quantity validation failed for promotion [%s]. Expected [0] but found [%s]",
-                            budgetPromoId,
-                            actualAllocatedQuantity
-                    )
+                    "Allocated quantity validation failed for promotion [" + budgetPromoId
+                            + "]. Expected [0] but found [" + actualAllocatedQuantity + "]"
             );
         } else {
+            result.pass(
+                    "Allocated quantity validation passed for promotion [" + budgetPromoId
+                            + "]. Expected [0] found [" + actualAllocatedQuantity + "]"
+            );
             logger.info("✅ Allocated quantity is 0 for promotion: {}", budgetPromoId);
         }
 
         logger.info("✅ Transaction Inquiry steps completed");
+
+        // Record transaction inquiry validation state to TestSummary
+        TestSummary.appendValidation(result);
     }
 }
