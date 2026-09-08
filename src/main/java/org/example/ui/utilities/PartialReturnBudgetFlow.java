@@ -367,8 +367,16 @@ public class PartialReturnBudgetFlow {
         );
 
         if (!expectedValue.equals(actualQtyUtilized)) {
-            result.fail(String.format("Expected %s to be %s for code [%s] but found [%s]",
-                    targetColumn, expectedValue, keyValue, actualQtyUtilized));
+            result.fail(
+                    "Expected " + targetColumn + " to be " + expectedValue
+                            + " for code [" + keyValue + "] but found [" + actualQtyUtilized + "]"
+            );
+            logger.info(
+                    "Excel Validation Failed : {} is {} for {}",
+                    targetColumn,
+                    expectedValue,
+                    keyValue
+            );
         } else {
             logger.info("✅ Excel Validation Passed: {} is {} for {}", targetColumn, expectedValue, keyValue);
         }
