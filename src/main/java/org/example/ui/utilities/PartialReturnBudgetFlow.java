@@ -397,9 +397,11 @@ public class PartialReturnBudgetFlow {
      */
     private static void executeTransactionInquiry(
             WebDriver driver,
-            WebDriverWait wait,
-            SANPage sanPage,
-            Map<String, String> scenarioData, String orderNo, String budgetPromoId, ValidationResult result
+            TransactionInquiryPage transactionInquiryPage,
+            Map<String, String> scenarioData,
+            String orderNo,
+            String budgetPromoId,
+            ValidationResult result
     ) {
         String PJPNO = scenarioData.get("PJPNO");
 
