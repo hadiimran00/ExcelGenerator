@@ -403,7 +403,7 @@ public class PartialReturnBudgetFlow {
             String budgetPromoId,
             ValidationResult result
     ) {
-        String PJPNO = scenarioData.get("PJPNO");
+        String pjpNo = scenarioData.get("PJPNO");
 
         sanPage.navigateToScreen("BG - Transaction Inquiry", "DYL_BG1016");
         waitForLoaderToDisappear(driver);
