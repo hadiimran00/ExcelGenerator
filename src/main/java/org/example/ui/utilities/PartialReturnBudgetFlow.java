@@ -405,7 +405,7 @@ public class PartialReturnBudgetFlow {
     ) {
         String pjpNo = scenarioData.get("PJPNO");
 
-        sanPage.navigateToScreen("BG - Transaction Inquiry", "DYL_BG1016");
+        transactionInquiryPage.navigateToScreen("BG - Transaction Inquiry", "DYL_BG1016");
         waitForLoaderToDisappear(driver);
 
         logger.info("📌 Selecting Document Type: Sales");
