@@ -378,7 +378,17 @@ public class PartialReturnBudgetFlow {
                     keyValue
             );
         } else {
-            logger.info("✅ Excel Validation Passed: {} is {} for {}", targetColumn, expectedValue, keyValue);
+            result.pass(
+                    "Excel Validation Passed: " + targetColumn + " is " + expectedValue
+                            + " for " + keyValue
+            );
+
+            logger.info(
+                    "Excel Validation Passed: {} is {} for {}",
+                    targetColumn,
+                    expectedValue,
+                    keyValue
+            );
         }
     }
 
