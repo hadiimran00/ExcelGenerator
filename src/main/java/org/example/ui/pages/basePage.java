@@ -104,8 +104,21 @@ public abstract class basePage {
         WebElement field = wait.until(ExpectedConditions.elementToBeClickable(locator));
 
         field.click();
-        field.clear();
-        field.sendKeys(value);
+
+        // Ignore clear if element is read-only or doesn't support clearing
+        try {
+            field.clear();
+        } catch (org.openqa.selenium.InvalidElementStateException e) {
+            // Element is read-only or non-editable; ignore and continue
+        }
+        wait.until(ExpectedConditions.elementToBeClickable(locator));
+        Actions actions = new Actions(driver);
+        actions.click(field);
+        for (char ch : value.toCharArray()) {
+            actions.sendKeys(String.valueOf(ch)).pause(Duration.ofMillis(100));
+        }
+        actions.perform();
+
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
