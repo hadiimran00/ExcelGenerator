@@ -1,10 +1,9 @@
 package org.example.ui.pages;
+
 import org.example.ui.Main;
 import org.example.ui.utilities.Event;
-import org.example.ui.utilities.LoaderWait;
-import org.example.ui.utilities.PostUploadValidator;
-import org.example.ui.utilities.ValidationResult;
 import org.openqa.selenium.*;
+import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.*;
 
 import java.io.File;
@@ -14,6 +13,8 @@ import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
 
+
+import static org.example.ui.utilities.LoaderWait.waitForLoaderToDisappear;
 import static org.example.ui.utilities.PostUploadValidator.str;
 
 public abstract class basePage {
@@ -99,19 +100,63 @@ public abstract class basePage {
         }
     }
 
+//    public void selectDropdown(By locator, String value) {
+//        waitForLoader();
+//        WebElement field = wait.until(ExpectedConditions.elementToBeClickable(locator));
+//
+//        field.click();
+//
+//        // Ignore clear if element is read-only or doesn't support clearing
+//        try {
+//            field.clear();
+//        } catch (org.openqa.selenium.InvalidElementStateException e) {
+//            // Element is read-only or non-editable; ignore and continue
+//        }
+//        wait.until(ExpectedConditions.elementToBeClickable(locator));
+//        Actions actions = new Actions(driver);
+//        actions.click(field);
+//        for (char ch : value.toCharArray()) {
+//            actions.sendKeys(String.valueOf(ch)).pause(Duration.ofMillis(100));
+//        }
+//        actions.perform();
+//
+//        try {
+//            Thread.sleep(500);
+//        } catch (InterruptedException e) {
+//            Thread.currentThread().interrupt();
+//        }
+//        waitForLoader();
+//        wait.until(ExpectedConditions.elementToBeClickable(
+//                By.xpath("(//div[@id='dropdown-content']//*[contains(text(),'" + value + "')])[1]")
+//        )).click();
+//
+//        waitForLoader();
+//    }
+
     public void selectDropdown(By locator, String value) {
         waitForLoader();
+
+        // 1. Wait for and locate the dropdown field
         WebElement field = wait.until(ExpectedConditions.elementToBeClickable(locator));
+        Event.robustClick(driver, locator);
 
-        field.click();
-
-        // Ignore clear if element is read-only or doesn't support clearing
+        // 2. Clear existing input if editable
         try {
             field.clear();
         } catch (org.openqa.selenium.InvalidElementStateException e) {
-            // Element is read-only or non-editable; ignore and continue
+            // Ignored if element is read-only or non-editable
         }
+
         wait.until(ExpectedConditions.elementToBeClickable(locator));
+
+        // 3. Ensure proper focus before typing
+        try {
+            ((JavascriptExecutor) driver).executeScript("arguments[0].focus();", field);
+        } catch (Exception e) {
+            // Non-critical focus fallback
+        }
+
+        // 4. Type character-by-character to trigger dynamic JS autocomplete/filtering
         Actions actions = new Actions(driver);
         actions.click(field);
         for (char ch : value.toCharArray()) {
@@ -119,19 +164,53 @@ public abstract class basePage {
         }
         actions.perform();
 
+        // 5. Debounce pause for network search / list rendering
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
+
         waitForLoader();
-        wait.until(ExpectedConditions.elementToBeClickable(
-                By.xpath("(//div[@id='dropdown-content']//*[contains(text(),'" + value + "')])[1]")
-        )).click();
+
+        // 6. Define primary and fallback locators
+        By primaryLocator = By.xpath(
+                "(//div[@id='dropdown-content']//*[contains(text(), " + escapeXPathValue(value) + ")])[1]"
+        );
+
+        By fallbackLocator = By.xpath(
+                "(//div[@id='dropdown-content']//*[" +
+                        "(contains(@class, 'dx-item-content') or contains(@class, 'dx-item') or not(contains(@class, 'dx-list-items')))" +
+                        " and contains(normalize-space(.), " + escapeXPathValue(value) + ")])[1]"
+        );
+
+        // 7. Try primary locator first using robustClick; if it fails/times out, execute fallback
+        try {
+            wait.until(ExpectedConditions.elementToBeClickable(primaryLocator));
+            Event.robustClick(driver, primaryLocator);
+        } catch (Exception e) {
+            // Fallback for DevExtreme elements or nested containers where text() fails
+            wait.until(ExpectedConditions.elementToBeClickable(fallbackLocator));
+            Event.robustClick(driver, fallbackLocator);
+        }
 
         waitForLoader();
     }
-
+    /**
+     * Escapes quotes in XPath string arguments safely.
+     */
+    private String escapeXPathValue(String value) {
+        if (!value.contains("'")) return "'" + value + "'";
+        if (!value.contains("\"")) return "\"" + value + "\"";
+        String[] parts = value.split("'", -1);
+        StringBuilder xpath = new StringBuilder("concat(");
+        for (int i = 0; i < parts.length; i++) {
+            if (i > 0) xpath.append(", \"'\", ");
+            xpath.append("'").append(parts[i]).append("'");
+        }
+        xpath.append(")");
+        return xpath.toString();
+    }
     public void navigateToScreen(String menuSearch, String screenId) {
         try {
             try {
