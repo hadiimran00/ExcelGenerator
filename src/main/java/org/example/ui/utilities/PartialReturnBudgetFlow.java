@@ -382,7 +382,7 @@ public class PartialReturnBudgetFlow {
             salesReturnQTY.sendKeys("1");
 
             // Select Return Reason
-            WebElement reasonDropdown = wait.until(ExpectedConditions.elementToBeClickable(By.id("reasonType")));
+        reasonDropdown = wait.until(ExpectedConditions.elementToBeClickable(By.id("reasonType")));
             reasonDropdown.click();
 
              targetReason = scenarioData.getOrDefault("SalesReturnReasonType", "No Cash");
