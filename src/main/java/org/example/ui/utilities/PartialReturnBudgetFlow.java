@@ -357,7 +357,8 @@ public class PartialReturnBudgetFlow {
             sanPage.navigateToScreen("Sales Return", "DYL_201801");
             sanPage.selectDropdown(By.id("pjpNo"), ginPjp);
             Event.robustClick(driver, By.id("gridFilterCheckbox"));
-            cmDocFilter = wait.until(ExpectedConditions.elementToBeClickable(By.id("rowfilter_tcmm_docno")));
+
+            WebElement cmDocFilter = wait.until(ExpectedConditions.elementToBeClickable(By.id("rowfilter_tcmm_docno")));
             cmDocFilter.clear();
             cmDocFilter.sendKeys(orderNo2);
             waitForLoaderToDisappear(driver);
