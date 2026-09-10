@@ -442,8 +442,8 @@ public class PartialReturnBudgetFlow {
               //  result.pass("Sales return created and picked successfully.");
                 logger.info("✅ Sales Return details save and picked successfully.");
             } else {
-                result.fail("Failed to create Sales return. Notification received: " + noti);
-                logger.error("❌ Sales return creation failed. Notification: {}", noti);
+                result.fail("Failed to pick Sales return. Notification received: " + noti);
+                logger.error("❌ Sales return picking failed. Notification: {}", noti);
             }
 
 
