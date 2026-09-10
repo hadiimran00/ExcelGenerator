@@ -355,6 +355,9 @@ public class PartialReturnBudgetFlow {
             // SALES RETURN
             // =========================================================================
             sanPage.navigateToScreen("Sales Return", "DYL_201801");
+            waitForLoaderToDisappear(driver);
+            Thread.sleep(500);
+
             sanPage.selectDropdown(By.id("pjpNo"), ginPjp);
             Event.robustClick(driver, By.id("gridFilterCheckbox"));
 
