@@ -385,9 +385,9 @@ public class PartialReturnBudgetFlow {
             WebElement reasonDropdown = wait.until(ExpectedConditions.elementToBeClickable(By.id("reasonType")));
             reasonDropdown.click();
 
-            String targetReason = scenarioData.getOrDefault("SalesReturnReasonType", "No Cash");
-            String reasonItemXpath = String.format("//div[contains(@class,'dx-item-content') and contains(text(),'%s')]", targetReason);
-            WebElement targetReasonItem = wait.until(ExpectedConditions.elementToBeClickable(By.xpath(reasonItemXpath)));
+             targetReason = scenarioData.getOrDefault("SalesReturnReasonType", "No Cash");
+             reasonItemXpath = String.format("//div[contains(@class,'dx-item-content') and contains(text(),'%s')]", targetReason);
+             targetReasonItem = wait.until(ExpectedConditions.elementToBeClickable(By.xpath(reasonItemXpath)));
             targetReasonItem.click();
 
             // Save and validate return transaction
