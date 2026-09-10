@@ -447,7 +447,7 @@ public class PartialReturnBudgetFlow {
             Event.robustClick(driver, By.id("gridFilterCheckbox"));
             cmDocFilter = wait.until(ExpectedConditions.elementToBeClickable(By.id("rowfilter_tcmm_docno")));
             cmDocFilter.clear();
-            cmDocFilter.sendKeys(orderNo2);
+            cmDocFilter.sendKeys(SalesReturnNo);
             waitForLoaderToDisappear(driver);
             Thread.sleep(500);
             Event.robustClick(driver, By.id("row_1_document_no."));
