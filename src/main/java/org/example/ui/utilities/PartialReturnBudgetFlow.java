@@ -415,7 +415,7 @@ public class PartialReturnBudgetFlow {
 
             // Approve SR Level 2
             Event.robustClick(driver, By.id("forward"));
-            commentsField2 = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("comments")));
+            WebElement commentsField2 = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("comments")));
             commentsField2.clear();
             commentsField2.sendKeys("Approved SR Step 2");
             Event.robustClick(driver, By.id("forwardPopUpSaveBtn"));
