@@ -23,7 +23,7 @@ public class PartialReturnBudgetFlow {
     private static final Logger logger = LoggerUtil.getLogger(PartialReturnBudgetFlow.class);
 
     /**
-     * Executes the main workflow for validating Partial Return Budget Allocation.
+     * Executes the workflow starting directly from the Sales Return section.
      */
     public static ValidationResult run(
             WebDriver driver,
@@ -348,6 +348,8 @@ public class PartialReturnBudgetFlow {
             cmDocFilter = wait.until(ExpectedConditions.elementToBeClickable(By.id("rowfilter_documentNo")));
             cmDocFilter.clear();
             cmDocFilter.sendKeys(orderNo2);
+            waitForLoaderToDisappear(driver);
+            Thread.sleep(1000);
             Event.robustClick(driver, By.id("row_1_checkbox_1"));
             Event.robustClick(driver, By.id("saveallBtn"));
             ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
@@ -363,15 +365,17 @@ public class PartialReturnBudgetFlow {
             sanPage.selectDropdown(By.id("pjpNo"), ginPjp);
             Event.robustClick(driver, By.id("gridFilterCheckbox"));
 
-            WebElement cmDocFilter = wait.until(ExpectedConditions.elementToBeClickable(By.id("rowfilter_tcmm_docno")));
+             cmDocFilter = wait.until(ExpectedConditions.elementToBeClickable(By.id("rowfilter_tcmm_docno")));
             cmDocFilter.clear();
             cmDocFilter.sendKeys(orderNo2);
             waitForLoaderToDisappear(driver);
             Thread.sleep(500);
+
             Event.robustClick(driver, By.id("row_1_document_no"));
             Event.robustClick(driver, By.id("saveBtn"));
+            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+            waitForLoaderToDisappear(driver);
             String SalesReturnNo = driver.findElement(By.id("documentNo")).getDomProperty("value");
-
             waitForLoaderToDisappear(driver);
             Event.robustClick(driver, By.id("tab_9"));
             waitForLoaderToDisappear(driver);
@@ -481,7 +485,6 @@ public class PartialReturnBudgetFlow {
             result.pass(
                     "Free SKU was not added or reallocated to the budget after Sales Return, as it was never issued to the customer."
             );
-
 
         } catch (Exception e) {
             // Log flow execution error and fail result
