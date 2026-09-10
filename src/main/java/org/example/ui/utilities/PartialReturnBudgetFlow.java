@@ -373,7 +373,7 @@ public class PartialReturnBudgetFlow {
 
             WebElement salesReturnQTY = wait.until(ExpectedConditions.elementToBeClickable(By.id("quantity3_0")));
             salesReturnQTY.clear();
-            salesReturnQTY.sendKeys("30");
+            salesReturnQTY.sendKeys("1");
 
             // Select Return Reason
             WebElement reasonDropdown = wait.until(ExpectedConditions.elementToBeClickable(By.id("reasonType")));
