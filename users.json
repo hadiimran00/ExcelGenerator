@@ -24,7 +24,7 @@
     "resourcesFolder": "ResourcesPK",
     "configPath": "configPK.xlsx",
     "country": "Pakistan",
-    "execute": "YES",
+    "execute": "NO",
     "orga": "Unilever Pakistan Limited",
     "dist": "50250327-MULLER & PHIPPS (KORANGI - KARACHI)",
     "nodeUsername": "dmpk",
@@ -39,7 +39,7 @@
     "resourcesFolder": "ResourcesBD",
     "configPath": "configBD.xlsx",
     "country": "Bangladesh",
-    "execute": "no",
+    "execute": "YES",
   "orga": "Bangladesh",
     "dist": "Atlantic"
   }

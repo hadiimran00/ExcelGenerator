@@ -11,10 +11,9 @@ public class StockReconciliationExcel {
 
     /**
      * Reads the target Excel file, finds the specified SKU and Qty columns,
-     * applies the adjustment (+/-), and overwrites the file.
+     * applies the adjustment (+/-) ONLY to the matching targetSku, and overwrites the file.
      */
-    public static void updateQuantity(File downloadedFile, String skuColumn, String qtyColumn, double adjustment) {
-     //   File file = new File(filePath);
+    public static void updateQuantity(File downloadedFile, String skuColumn, String qtyColumn, double adjustment, String targetSku) {
         logger.info("📄 Reading Excel file for modification: {}", downloadedFile.getName());
 
         try (FileInputStream fis = new FileInputStream(downloadedFile);
@@ -43,6 +42,8 @@ public class StockReconciliationExcel {
                 throw new RuntimeException("Could not map columns. SKU Col Index: " + skuColIdx + ", Qty Col Index: " + qtyColIdx);
             }
 
+            boolean skuFound = false;
+
             // Iterate through rows (skipping header) to update quantities
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
@@ -52,25 +53,44 @@ public class StockReconciliationExcel {
                 Cell qtyCell = row.getCell(qtyColIdx);
 
                 if (skuCell != null && qtyCell != null) {
-                    double currentQty = 0;
-                    if (qtyCell.getCellType() == CellType.NUMERIC) {
-                        currentQty = qtyCell.getNumericCellValue();
-                    } else if (qtyCell.getCellType() == CellType.STRING) {
-                        currentQty = Double.parseDouble(qtyCell.getStringCellValue().trim());
+                    // Read current SKU string safely regardless of cell type (Numeric/String)
+                    String currentSku = "";
+                    if (skuCell.getCellType() == CellType.STRING) {
+                        currentSku = skuCell.getStringCellValue().trim();
+                    } else if (skuCell.getCellType() == CellType.NUMERIC) {
+                        currentSku = String.valueOf((long) skuCell.getNumericCellValue());
                     }
 
-                    double newQty = currentQty + adjustment;
+                    // CHECK IF THIS ROW MATCHES THE TARGET SKU
+                    if (currentSku.equals(targetSku.trim())) {
+                        skuFound = true;
+                        double currentQty = 0;
+                        if (qtyCell.getCellType() == CellType.NUMERIC) {
+                            currentQty = qtyCell.getNumericCellValue();
+                        } else if (qtyCell.getCellType() == CellType.STRING) {
+                            currentQty = Double.parseDouble(qtyCell.getStringCellValue().trim());
+                        }
 
-                    // Preserve original cell formatting
-                    if (qtyCell.getCellType() == CellType.STRING) {
-                        qtyCell.setCellValue(String.valueOf((int) newQty));
-                    } else {
-                        qtyCell.setCellValue(newQty);
+                        double newQty = currentQty + adjustment;
+
+                        // Preserve original cell formatting type
+                        if (qtyCell.getCellType() == CellType.STRING) {
+                            qtyCell.setCellValue(String.valueOf((int) newQty));
+                        } else {
+                            qtyCell.setCellValue(newQty);
+                        }
+
+                        logger.info("✏️ SKU: [{}] | Original Qty: [{}] -> Updated Qty: [{}]",
+                                currentSku, currentQty, newQty);
+
+                        // Target found and updated, break out of the loop if you only expect 1 match
+                        break;
                     }
-
-                    logger.info("✏️ SKU: [{}] | Original Qty: [{}] -> Updated Qty: [{}]",
-                            skuCell.toString(), currentQty, newQty);
                 }
+            }
+
+            if (!skuFound) {
+                logger.warn("⚠️ Target SKU [{}] was not found in the Excel file.", targetSku);
             }
 
             // Force formula recalculation on save if formulas are used

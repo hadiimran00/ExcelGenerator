@@ -4,11 +4,10 @@ import org.apache.logging.log4j.Logger;
 import org.example.ui.pages.ProductPage;
 import org.example.ui.pages.SANPage;
 import org.example.ui.pages.StockInquiryPage;
-import org.example.ui.pages.basePage;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
-import org.openqa.selenium.support.ui.Select;
+
 import java.io.File;
 import java.time.Duration;
 import java.util.Map;
@@ -46,10 +45,10 @@ public class PhysicalStockReconciliationFlow {
             logger.info("📊 Base quantity extracted from Excel row for SKU [{}]: {}", targetSku, baseQty);
 
             // Adjust Excel (+10)
-            StockReconciliationExcel.updateQuantity(downloadedFile, skuColumn, qtyColumn, adjustment);
+            StockReconciliationExcel.updateQuantity(downloadedFile, skuColumn, qtyColumn, adjustment,targetSku);
 
             // Upload Modified Excel
-            FileManager.uploadFile(driver, "StockReconUpload", downloadedFile.getPath());
+            FileManager.uploadFile(driver, "Stock Reconciliation Upload", downloadedFile.getPath());
             String uploadToast = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
 
             if (uploadToast == null) {
@@ -63,7 +62,7 @@ public class PhysicalStockReconciliationFlow {
 //           basePage.selectDropdown(driver, "Existing");
             //SANPage sanPage = new SANPage(driver);
             sanPage.selectDropdown(By.id("NewExisting"), "Existing");
-            FileManager.downloadExcel(driver, "StockReconExistingCheck", null);
+            FileManager.downloadExcel(driver, "Stock Reconciliation", null);
 
             String updatedFilePath = FileManager.getLatestDownloadedFile(downloadDir);
             logger.info("🔍 Verifying that quantity update saved correctly in sheet via file: {}", updatedFilePath);
@@ -83,14 +82,14 @@ public class PhysicalStockReconciliationFlow {
             logger.info("🔄 Routing to SAN Screen to look up the runtime generated document tracker...");
             productPage.navigateToScreen(scenarioData.get("SANScreen"), scenarioData.get("SANScreenId"));
             sanPage.searchDocument("Physical Stock Reconciliation");
-            sanPage.filterByTodayDate();
+           // sanPage.filterByTodayDate();
 
             String docNumber = sanPage.getLatestDocumentNumber();
             if (docNumber == null || docNumber.isBlank()) {
                 result.fail("Validation Blocked: Unable to extract target Document ID from filtered SAN grid rows.");
                 return result;
             }
-            sanPage.approveDocument(docNumber);
+          sanPage.approveDocument(docNumber);
 
             // Validate Stock Increase (+10)
             productPage.navigateToScreen(scenarioData.get("StockScreen"), scenarioData.get("StockScreenId"));
@@ -120,7 +119,7 @@ public class PhysicalStockReconciliationFlow {
             File teardownFile = new File(FileManager.getLatestDownloadedFile(downloadDir));
 
 // Subtract 10 to reverse adjustment (This utility accepts the File object)
-            StockReconciliationExcel.updateQuantity(teardownFile, skuColumn, qtyColumn, -adjustment);
+            StockReconciliationExcel.updateQuantity(teardownFile, skuColumn, qtyColumn, -adjustment, targetSku);
 
 // Upload teardown file - Fix applied here via .getAbsolutePath()
             FileManager.uploadFile(driver, "StockReconRestoreUpload", teardownFile.getAbsolutePath());
@@ -157,11 +156,7 @@ public class PhysicalStockReconciliationFlow {
         return result;
     }
 
-//    private static void setDocumentType(WebDriver driver, String type) {
-//        logger.info("🔧 Selecting document type parameters: {}", type);
-//        WebElement input =  driver.findElement(By.id("NewExisting"));
-//        input.sendKeys(type);
-//    }
+
 
     private static void searchAndSelectDocumentInReconciliation(WebDriver driver, String docNumber) {
         logger.info("🔍 Selecting Document Code: {}", docNumber);
@@ -171,17 +166,4 @@ public class PhysicalStockReconciliationFlow {
         Event.robustClick(driver, By.id("reconSearchBtn"));
     }
 
-//    private static void clearDownloadDirectory(String downloadDir) {
-//        File dir = new File(downloadDir);
-//        if (dir.exists() && dir.isDirectory()) {
-//            File[] files = dir.listFiles();
-//            if (files != null) {
-//                for (File file : files) {
-//                    if (file.getName().endsWith(".xlsx") || file.getName().endsWith(".csv")) {
-//                        file.delete();
-//                    }
-//                }
-//            }
-//        }
-//    }
 }

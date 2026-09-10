@@ -51,6 +51,8 @@ public class ToastHandles {
             });
         } catch (TimeoutException e) {
             logger.warn("⚠️ [TIMEOUT] Toast notification did not appear within {} seconds.", timeout.toSeconds());
+            ScreenshotService.takeScreenshot(driver, "Toast notification did not appear");
+
         }
         return capturedMessage[0];
     }

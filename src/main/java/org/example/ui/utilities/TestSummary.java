@@ -187,8 +187,21 @@ public class TestSummary {
 //    }
 
     public static void appendValidation(ValidationResult result) {
-        if (screenResults.isEmpty() || result == null) return;
+        if (result == null) return;
 
+        // SAFAGUARD: If no download/upload event was logged prior, create a new standalone entry.
+        if (screenResults.isEmpty()) {
+            String cssClass = result.passed ? "success" : "failure";
+            String label = result.passed ? "<b>" + result.screenName + "</b>" : "<b>" + result.screenName + "</b>";
+            String details = result.passed
+                    ? "✅ " + escapeSeparator(String.join(", ", result.passes))
+                    : "❌ " + escapeSeparator(String.join(", ", result.failures));
+
+            screenResults.add(cssClass + "|" + label + " -> " + details + "|");
+            return;
+        }
+
+        // UNCHANGED: Existing logic for appending to previous upload/download entries
         int lastIdx = screenResults.size() - 1;
         String[] parts = screenResults.get(lastIdx).split("\\|", 3);
 
@@ -197,9 +210,7 @@ public class TestSummary {
             String message = parts[1];
             String base64 = parts.length == 3 ? "|" + parts[2] : "";
 
-            // Append validation status text
             if (result.passed) {
-                //     message += "<br><span style='color:#2f855a;'><b>✅ Validation Passed</b></span>";
                 message += "<br><span style='color:#2f855a;'><b>✅</b> "
                         + escapeSeparator(String.join(", ", result.passes))
                         + "</span>";
@@ -208,7 +219,6 @@ public class TestSummary {
                 message += "<br><span style='color:#e53e3e;'><b>❌</b> "
                         + escapeSeparator(String.join(", ", result.failures))
                         + "</span>";
-                // Flip row to red failure block and adjust counter if upload was marked as success
                 if ("success".equals(status)) {
                     status = "failure";
                     uploadSuccess--;
@@ -232,4 +242,5 @@ public class TestSummary {
         if (text == null) return "";
         return text.replace("|", "&#124;");
     }
+
 }
