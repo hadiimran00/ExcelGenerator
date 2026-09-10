@@ -418,6 +418,8 @@ public class PartialReturnBudgetFlow {
             commentsField2 = wait.until(ExpectedConditions.visibilityOfElementLocated(By.id("comments")));
             commentsField2.clear();
             commentsField2.sendKeys("Approved SR Step 2");
+            Event.robustClick(driver, By.id("forwardPopUpSaveBtn"));
+            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
 
             // =========================================================================
             // PICK SALES RETURN
