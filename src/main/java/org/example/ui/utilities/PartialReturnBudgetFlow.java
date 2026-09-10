@@ -422,6 +422,7 @@ public class PartialReturnBudgetFlow {
             // =========================================================================
             // PICK SALES RETURN
             // =========================================================================
+            logger.info("📌 STEP: Picking Sales Return for Order: {}", orderNo2);
             sanPage.navigateToScreen("Sales Return", "SALESRETURN-STATUSCHANGE");
            waitForLoaderToDisappear(driver);
            Thread.sleep(1000);
