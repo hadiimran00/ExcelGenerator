@@ -398,7 +398,7 @@ public class PartialReturnBudgetFlow {
             waitForLoaderToDisappear(driver);
 
             Event.robustClick(driver, By.id("saveBtn"));
-            String noti = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+            noti = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
             waitForLoaderToDisappear(driver);
 
             logger.info("Notification received after saving: {}", noti);
