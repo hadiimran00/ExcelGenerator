@@ -354,6 +354,7 @@ public class PartialReturnBudgetFlow {
             // =========================================================================
             // SALES RETURN
             // =========================================================================
+            logger.info("📌 STEP: Initiating Sales Return for Order: {}", orderNo2);
             sanPage.navigateToScreen("Sales Return", "DYL_201801");
             waitForLoaderToDisappear(driver);
             Thread.sleep(500);
