@@ -352,7 +352,7 @@ public class PartialReturnBudgetFlow {
             ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
 
             // =========================================================================
-            // SALES RETURN
+            // SALES RETURN (EXECUTION STARTS HERE)
             // =========================================================================
             logger.info("📌 STEP: Initiating Sales Return for Order: {}", orderNo2);
             sanPage.navigateToScreen("Sales Return", "DYL_201801");
