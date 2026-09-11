@@ -2,6 +2,7 @@ package org.example.ui.pages;
 
 import org.example.ui.Main;
 import org.example.ui.utilities.Event;
+import org.example.ui.utilities.ScreenshotService;
 import org.openqa.selenium.*;
 import org.openqa.selenium.interactions.Actions;
 import org.openqa.selenium.support.ui.*;
@@ -136,65 +137,120 @@ public abstract class basePage {
     public void selectDropdown(By locator, String value) {
         waitForLoader();
 
-        // 1. Wait for and locate the dropdown field
-        WebElement field = wait.until(ExpectedConditions.elementToBeClickable(locator));
-        Event.robustClick(driver, locator);
+        // 1. Locate element
+        WebElement field = wait.until(ExpectedConditions.presenceOfElementLocated(locator));
 
-        // 2. Clear existing input if editable
+        // 2. Open the DevExtreme combobox properly by clicking its parent container if closed
+        JavascriptExecutor js = (JavascriptExecutor) driver;
         try {
-            field.clear();
-        } catch (org.openqa.selenium.InvalidElementStateException e) {
-            // Ignored if element is read-only or non-editable
-        }
-
-        wait.until(ExpectedConditions.elementToBeClickable(locator));
-
-        // 3. Ensure proper focus before typing
-        try {
-            ((JavascriptExecutor) driver).executeScript("arguments[0].focus();", field);
+            String isExpanded = field.getAttribute("aria-expanded");
+            if ("false".equals(isExpanded)) {
+                // Click parent container to trigger DevExtreme dropdown open event
+                WebElement parentContainer = field.findElement(By.xpath("./ancestor::div[contains(@class,'dx-dropdowneditor') or contains(@class,'dx-texteditor')]"));
+                parentContainer.click();
+            }
         } catch (Exception e) {
-            // Non-critical focus fallback
+            field.click();
         }
 
-        // 4. Type character-by-character to trigger dynamic JS autocomplete/filtering
-        Actions actions = new Actions(driver);
-        actions.click(field);
+        // 3. Focus field and clear using keyboard backspaces (DevExtreme handles backspace better than clear())
+        js.executeScript("arguments[0].focus();", field);
+        try {
+            field.sendKeys(Keys.CONTROL + "a");
+            field.sendKeys(Keys.BACK_SPACE);
+        } catch (Exception ignored) {}
+
+        // 4. Type character-by-character directly into field
         for (char ch : value.toCharArray()) {
-            actions.sendKeys(String.valueOf(ch)).pause(Duration.ofMillis(100));
+            field.sendKeys(String.valueOf(ch));
+            try {
+                Thread.sleep(50);
+            } catch (InterruptedException e) {
+                Thread.currentThread().interrupt();
+            }
         }
-        actions.perform();
 
-        // 5. Debounce pause for network search / list rendering
+        // 5. Dispatch native input/keyup events so DevExtreme filters the list overlay
+        js.executeScript(
+                "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));" +
+                        "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));" +
+                        "arguments[0].dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));",
+                field
+        );
+
         try {
             Thread.sleep(500);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
         }
-
         waitForLoader();
 
-        // 6. Define primary and fallback locators
-        By primaryLocator = By.xpath(
-                "(//div[@id='dropdown-content']//*[contains(text(), " + escapeXPathValue(value) + ")])[1]"
+        // 6. Primary locator: matching item content inside #dropdown-content
+        By primaryDropdownContent = By.xpath(
+                "(//div[@id='dropdown-content']//*[contains(@class,'dx-item-content') and contains(text(),'" + value + "')])[1]"
         );
 
-        By fallbackLocator = By.xpath(
-                "(//div[@id='dropdown-content']//*[" +
-                        "(contains(@class, 'dx-item-content') or contains(@class, 'dx-item') or not(contains(@class, 'dx-list-items')))" +
-                        " and contains(normalize-space(.), " + escapeXPathValue(value) + ")])[1]"
+        // Fallback locator: searching all DevExtreme overlay containers
+        By fallbackDropdownContent = By.xpath(
+                "(//*[contains(@class,'dx-overlay-content') or contains(@class,'dx-dropdowneditor-overlay') or @id='dropdown-content']" +
+                        "//*[contains(@class,'dx-item-content') or contains(@class,'dx-list-item-content')][contains(normalize-space(.),'" + value + "')])[1]"
         );
 
-        // 7. Try primary locator first using robustClick; if it fails/times out, execute fallback
+        // Fallback first option
+        By firstOptionLocator = By.cssSelector("#dropdown-content > div > div:nth-child(1)");
+
+        // 7. Select option from popup
         try {
-            wait.until(ExpectedConditions.elementToBeClickable(primaryLocator));
-            Event.robustClick(driver, primaryLocator);
-        } catch (Exception e) {
-            // Fallback for DevExtreme elements or nested containers where text() fails
-            wait.until(ExpectedConditions.elementToBeClickable(fallbackLocator));
-            Event.robustClick(driver, fallbackLocator);
+            wait.until(ExpectedConditions.elementToBeClickable(primaryDropdownContent));
+            Event.robustClick(driver, primaryDropdownContent);
+        } catch (Exception e1) {
+            System.out.println("Primary locator failed for '" + value + "'. Trying fallback...");
+            try {
+                wait.until(ExpectedConditions.elementToBeClickable(fallbackDropdownContent));
+                Event.robustClick(driver, fallbackDropdownContent);
+            } catch (Exception e2) {
+                System.out.println("Fallback locator failed. Attempting first option...");
+                try {
+                     wait.until(ExpectedConditions.visibilityOfElementLocated(firstOptionLocator));
+                    Event.robustClick(driver, firstOptionLocator);
+                } catch (Exception e3) {
+                    System.out.println("First option selection failed. Pressing ENTER key...");
+                    field.sendKeys(Keys.ENTER);
+                }
+            }
         }
 
         waitForLoader();
+    }
+// ---------- helpers ----------
+
+    private boolean isFocused(WebElement field) {
+        try {
+            return (Boolean) ((JavascriptExecutor) driver)
+                    .executeScript("return document.activeElement === arguments[0];", field);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    private void ensureDropdownIsOpen(WebElement field) {
+        if ("true".equals(field.getAttribute("aria-expanded"))) {
+            return;
+        }
+
+        try {
+            Event.robustClick(driver, By.xpath(
+                    "//*[@id='" + field.getAttribute("id") + "']" +
+                            "/ancestor::div[contains(@class,'dx-dropdowneditor')][1]//div[contains(@class,'dx-dropdowneditor-icon')]"));
+        } catch (Exception ignored) {
+            // fall through to arrow-down fallback below
+        }
+        waitForLoader();
+
+        if (!"true".equals(field.getAttribute("aria-expanded"))) {
+            field.sendKeys(Keys.ARROW_DOWN);
+            waitForLoader();
+        }
     }
     /**
      * Escapes quotes in XPath string arguments safely.
