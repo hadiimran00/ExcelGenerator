@@ -56,6 +56,7 @@ public class PartialReturnBudgetFlow {
             String businessEntity = scenarioData.get("businessEntity");
             String docType = scenarioData.get("docType");
             String ginPjp = scenarioData.get("ginPjp");
+            String targetReason = scenarioData.get("returnReasonType");
 
             String BudgetTabID = scenarioData.get("BudgetTabID");  //PROMO ALLOCATION TAB ID
             requireScenarioValue(scenarioData, "budgetPromoId", budgetPromoId);
@@ -69,6 +70,7 @@ public class PartialReturnBudgetFlow {
             requireScenarioValue(scenarioData, "docType", docType);
             requireScenarioValue(scenarioData, "ginPjp", ginPjp);
             requireScenarioValue(scenarioData, "BudgetTabID", BudgetTabID);
+            requireScenarioValue(scenarioData, "returnReasonType", targetReason);
             // Instantiate Page Objects once for efficient UI navigation
             SANPage sanPage = new SANPage(driver);
             OrderBookingPage orderBookingPage = new OrderBookingPage(driver);
@@ -314,7 +316,7 @@ public class PartialReturnBudgetFlow {
             WebElement reasonDropdown = wait.until(ExpectedConditions.elementToBeClickable(By.id("reasonType")));
             reasonDropdown.click();
 
-            String targetReason = scenarioData.getOrDefault("returnReasonType", "Expired");
+           // String targetReason = scenarioData.get("returnReasonType");
             String reasonItemXpath = String.format("//div[contains(@class,'dx-item-content') and contains(text(),'%s')]", targetReason);
             WebElement targetReasonItem = wait.until(ExpectedConditions.elementToBeClickable(By.xpath(reasonItemXpath)));
             targetReasonItem.click();
@@ -388,6 +390,9 @@ public class PartialReturnBudgetFlow {
 
             Event.robustClick(driver, By.xpath("//td[@id='row_1_document_no' or @id='row_1_order_number_' or text()='" + orderNo2 + "']"));
             waitForLoaderToDisappear(driver);
+            Event.robustClick(driver,By.id("saveBtn"));
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
+
             String SalesReturnNo = driver.findElement(By.id("documentNo")).getDomProperty("value");
             waitForLoaderToDisappear(driver);
             Event.robustClick(driver, By.id("tab_9"));
@@ -402,7 +407,7 @@ public class PartialReturnBudgetFlow {
         reasonDropdown = wait.until(ExpectedConditions.elementToBeClickable(By.id("reasonType")));
             reasonDropdown.click();
 
-             targetReason = scenarioData.getOrDefault("SalesReturnReasonType", "No Cash");
+             targetReason = scenarioData.get("SalesReturnReasonType");
              reasonItemXpath = String.format("//div[contains(@class,'dx-item-content') and contains(text(),'%s')]", targetReason);
              targetReasonItem = wait.until(ExpectedConditions.elementToBeClickable(By.xpath(reasonItemXpath)));
             targetReasonItem.click();

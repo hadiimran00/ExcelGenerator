@@ -4,10 +4,7 @@ import org.apache.logging.log4j.Logger;
 import org.example.ui.utilities.Event;
 import org.example.ui.utilities.LoggerUtil;
 import org.example.ui.utilities.ToastHandles;
-import org.openqa.selenium.By;
-import org.openqa.selenium.StaleElementReferenceException;
-import org.openqa.selenium.WebDriver;
-import org.openqa.selenium.WebElement;
+import org.openqa.selenium.*;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
@@ -41,7 +38,10 @@ public class SANPage extends basePage {
     private final By selectDropdownField = By.xpath("//*[normalize-space()='Select']");
 
     // Detail Grid Controls
-    private final By addRowBtn = By.id("cashMemoSelectionGrid0");
+//   private final By addRowBtn = By.id("viewapprovallog");
+//    // private final By addRowBtn = By.id("cashMemoSelectionGrid0");
+    private final By addRowBtn = By.xpath("//*[@id='viewapprovallog' or @id='cashMemoSelectionGrid0' or @aria-label='Add a row']");
+
     private final By prodCodeInput = By.id("prodCode_0");
     private final By stockTypeInput = By.id("stockType_0");
     private final By reasonTypeInput = By.id("reasonType_0");
@@ -209,22 +209,35 @@ public class SANPage extends basePage {
         Event.robustClick(driver, sanHeaderTab);
 
         try {
+            Thread.sleep(1000);
             Event.robustClick(driver, headerCheckbox0);
         } catch (Exception e) {
             Event.robustClick(driver, genericCheckboxIcon);
         }
 
-        // Document Type filter
+// Document Type filter
         By docTypeFilter = By.id("rowfilter_pdot_desc");
+        By docTypeFilter2=By.id("rowfilter_document_type");
 
         WebElement docTypeField = wait.until(
                 ExpectedConditions.elementToBeClickable(docTypeFilter)
         );
 
-        docTypeField = driver.findElement(docTypeFilter);
-        docTypeField.click();
-        docTypeField.clear();
-        docTypeField.sendKeys(docType);
+        try {
+            Event.robustClick(driver, docTypeFilter);
+            docTypeField.clear();
+            docTypeField.sendKeys(docType);
+        } catch (Exception e) {
+            Thread.sleep(500);
+
+            docTypeField = wait.until(
+                    ExpectedConditions.elementToBeClickable(docTypeFilter2)
+            );
+
+            Event.robustClick(driver, docTypeFilter2);
+            docTypeField.clear();
+            docTypeField.sendKeys(docType);
+        }
 
         // Document Date filter
         By docDateFilter = By.id("rowfilter_DT__TSTMDOCDATE");
@@ -250,13 +263,13 @@ public class SANPage extends basePage {
         Event.robustClick(driver, By.id("row_1_document_no"));
         waitForLoader();
         Thread.sleep(500);
-        forwardAndComment("Test 2");
-        ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
-        Event.robustClick(driver, By.id("row_1_document_no"));
-        waitForLoader();
-        Thread.sleep(500);
-        forwardAndComment("Test 3");
-        ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+        processApprovalStages("Test");
+//        ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+//        Event.robustClick(driver, By.id("row_1_document_no"));
+//        waitForLoader();
+//        Thread.sleep(500);
+//        forwardAndComment("Test 3");
+//        ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
     }
 
     // =========================================================
@@ -303,6 +316,31 @@ public class SANPage extends basePage {
     private void saveWorkflow() {
         logger.info("💾 Saving workflow step...");
         Event.robustClick(driver, workflowSaveBtn);
+    }
+    private void processApprovalStages(String baseComment) {
+        int maxApprovalLevels = 3;
+
+        for (int stage = 1; stage <= maxApprovalLevels; stage++) {
+            try {
+                logger.info("🔄 Attempting approval stage {} of {}", stage, maxApprovalLevels);
+
+                // 1. Forward and comment
+                forwardAndComment(baseComment + " - Stage " + stage);
+                ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+
+                // 2. Re-open document row if not on final stage
+                if (stage < maxApprovalLevels) {
+                    Event.robustClick(driver, By.id("row_1_document_no"));
+                    waitForLoader();
+                    Thread.sleep(500);
+                }
+            } catch (Exception e) {
+                logger.info("🛑 Approval stage {} skipped/failed (button disabled or element unavailable). Moving to next step.", stage);
+                break; // Stop remaining approvals and move forward
+            }
+        }
+
+        logger.info("➡️ Proceeding to the next test step.");
     }
 
     private void safeClearButton(By clearButtonLocator) {

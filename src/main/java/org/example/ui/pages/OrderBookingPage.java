@@ -72,7 +72,7 @@ public class OrderBookingPage extends basePage {
             // Select Product
             selectDropdown(
                     By.id("product"),
-                    scenarioData.get("Product Code")
+                    scenarioData.get("productCode")
             );
 
             // Enter Quantity

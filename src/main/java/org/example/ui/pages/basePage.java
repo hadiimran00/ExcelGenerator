@@ -267,6 +267,19 @@ public abstract class basePage {
         xpath.append(")");
         return xpath.toString();
     }
+    /**
+     * Throws immediately with a clear message if a required scenario value
+     * is missing, instead of letting a null propagate into a UI action
+     * (e.g. sendKeys) several steps later where the error is confusing.
+     */
+    public static void requireScenarioValue(Map<String, String> scenarioData, String key, String value) {
+        if (value == null || value.isBlank()) {
+            throw new IllegalStateException(
+                    "ScenarioData is missing required key '" + key + "'. " +
+                            "Check the 'ScenarioData' sheet in the Excel config for this test row. " +
+                            "Available keys: " + scenarioData.keySet());
+        }
+    }
     public void navigateToScreen(String menuSearch, String screenId) {
         try {
             try {
