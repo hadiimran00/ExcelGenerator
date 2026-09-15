@@ -15,6 +15,7 @@ import java.io.File;
 import java.time.Duration;
 import java.util.Map;
 
+import static org.example.ui.pages.basePage.requireScenarioValue;
 import static org.example.ui.utilities.LoaderWait.waitForLoaderToDisappear;
 
 public class PartialReturnBudgetFlow {
@@ -39,25 +40,41 @@ public class PartialReturnBudgetFlow {
         // Explicit wait instance for Selenium actions
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(15));
 
-        // Instantiate Page Objects once for efficient UI navigation
-        SANPage sanPage = new SANPage(driver);
-        OrderBookingPage orderBookingPage = new OrderBookingPage(driver);
-        OrderDeliveryDatePage deliveryDatePage = new OrderDeliveryDatePage(driver);
-        TransactionInquiryPage transactionInquiryPage = new TransactionInquiryPage(driver);
 
         try {
             // Extract required test parameters from scenarioData (with robust defaults)
-            String budgetPromoId = scenarioData.getOrDefault("budgetPromoId", "JC06-0000952");
-            String fullCustomerCode = scenarioData.getOrDefault("fullCustomerCode", "C0000023667-Shahjalal Super Store");
-            String fullProductName = scenarioData.getOrDefault("fullProductName", "68640058");
-            String freeProductName = scenarioData.getOrDefault("freeProductName", "62732112");
-            String keyColumn = scenarioData.getOrDefault("validateKeyColumn", "CHNLHIER_CODE");
-            String keyValue = scenarioData.getOrDefault("validateKeyValue", "C01047");
-            String targetColumn = scenarioData.getOrDefault("validateTargetColumn", "CHNLHIER_QTY_UTILIZED");
+           System.out.println(scenarioData + "aaaaaa");
+            logger.info(scenarioData + "aaaaaa");
+            String budgetPromoId = scenarioData.get("budgetPromoId");
+            String fullCustomerCode = scenarioData.get("fullCustomerCode");
+            String fullProductName = scenarioData.get("productCode");
+            String freeProductName = scenarioData.get("freeProductName");
+            String keyColumn = scenarioData.get("validateKeyColumn");
+            String keyValue = scenarioData.get("validateKeyValue");
+            String targetColumn = scenarioData.get("validateTargetColumn");
 
-            String businessEntity = scenarioData.getOrDefault("businessEntity", "C0000000038-Sound Stock W/H");
-            String docType = scenarioData.getOrDefault("docType", "Stock Adjustment Admin");
-            String ginPjp = scenarioData.getOrDefault("ginPjp", "0000000362");
+            String businessEntity = scenarioData.get("businessEntity");
+            String docType = scenarioData.get("docType");
+            String ginPjp = scenarioData.get("ginPjp");
+
+            String BudgetTabID = scenarioData.get("BudgetTabID");  //PROMO ALLOCATION TAB ID
+            requireScenarioValue(scenarioData, "budgetPromoId", budgetPromoId);
+            requireScenarioValue(scenarioData, "fullCustomerCode", fullCustomerCode);
+            requireScenarioValue(scenarioData, "productCode", fullProductName);
+            requireScenarioValue(scenarioData, "freeProductName", freeProductName);
+            requireScenarioValue(scenarioData, "validateKeyColumn", keyColumn);
+            requireScenarioValue(scenarioData, "validateKeyValue", keyValue);
+            requireScenarioValue(scenarioData, "validateTargetColumn", targetColumn);
+            requireScenarioValue(scenarioData, "businessEntity", businessEntity);
+            requireScenarioValue(scenarioData, "docType", docType);
+            requireScenarioValue(scenarioData, "ginPjp", ginPjp);
+            requireScenarioValue(scenarioData, "BudgetTabID", BudgetTabID);
+            // Instantiate Page Objects once for efficient UI navigation
+            SANPage sanPage = new SANPage(driver);
+            OrderBookingPage orderBookingPage = new OrderBookingPage(driver);
+            OrderDeliveryDatePage deliveryDatePage = new OrderDeliveryDatePage(driver);
+            TransactionInquiryPage transactionInquiryPage = new TransactionInquiryPage(driver);
+
 
             // =========================================================================
             // PRE-REQUISITE : REMOVING INITIAL STOCK (STOCK ADJUSTMENT SAN)
@@ -94,7 +111,7 @@ public class PartialReturnBudgetFlow {
             waitForLoaderToDisappear(driver);
 
             // Export Excel report and check initial utilization is 0
-            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result);
+            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result, BudgetTabID);
 
             // =========================================================================
             // STEP 2: ORDER BOOKING
@@ -127,7 +144,7 @@ public class PartialReturnBudgetFlow {
             sanPage.navigateToScreen("Delivery Date Change", "DYL_201080");
             waitForLoaderToDisappear(driver);
             deliveryDatePage.processDeliveryDateForOrder(orderPJP, orderNo);
-            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
             waitForLoaderToDisappear(driver);
             logger.info("✅ Delivery Date Updated Successfully for Order No: {}", orderNo);
 
@@ -135,7 +152,7 @@ public class PartialReturnBudgetFlow {
             sanPage.navigateToScreen("Delivery Date Change", "DYL_201080");
             waitForLoaderToDisappear(driver);
             deliveryDatePage.processDeliveryDateForOrder(orderPJP, orderNo2);
-            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
             waitForLoaderToDisappear(driver);
             logger.info("✅ Delivery Date Updated Successfully for Order No: {}", orderNo2);
 
@@ -150,7 +167,7 @@ public class PartialReturnBudgetFlow {
             // =========================================================================
             logger.info("📌 STEP 4: Exporting Budget Setup Post Order Booking for Catalog: {}", budgetPromoId);
             sanPage.navigateToScreen("Budget Setup", "BUDGET_LAYOUT");
-            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result);
+            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result,BudgetTabID);
 
             // =========================================================================
             // STEP 5: RE-INSERT STOCK VIA SAN
@@ -216,7 +233,7 @@ public class PartialReturnBudgetFlow {
             waitForLoaderToDisappear(driver);
 
             Event.robustClick(driver, By.id("saveallBtn"));
-            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
             waitForLoaderToDisappear(driver);
 
             // Process First Level GIN Approval
@@ -233,7 +250,7 @@ public class PartialReturnBudgetFlow {
             commentsField.clear();
             commentsField.sendKeys("Approved GIN Step 1");
             Event.robustClick(driver, By.id("forwardPopUpSaveBtn"));
-            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
 
             // Process Second Level GIN Approval
             Event.robustClick(driver, By.id("row_1_gin_no."));
@@ -244,7 +261,7 @@ public class PartialReturnBudgetFlow {
             commentsField2.clear();
             commentsField2.sendKeys("Approved GIN Step 2");
             Event.robustClick(driver, By.id("forwardPopUpSaveBtn"));
-            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
             logger.info("✅ GIN Creation and Approvals Completed Successfully.");
 
             // =========================================================================
@@ -273,12 +290,12 @@ public class PartialReturnBudgetFlow {
             waitForLoaderToDisappear(driver);
 
             Event.robustClick(driver, By.id("saveBtn"));
-            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
             waitForLoaderToDisappear(driver);
 
             String FreshSalesReturnNo = driver.findElement(By.id("documentNo")).getDomProperty("value");
 
-            logger.info("Fresh Sales Return Created successfully: {}", FreshSalesReturnNo);
+            logger.info("Fresh Sales Return Header Created successfully: {}", FreshSalesReturnNo);
 
             Event.robustClick(driver, By.id("tab_9"));
             waitForLoaderToDisappear(driver);
@@ -304,29 +321,28 @@ public class PartialReturnBudgetFlow {
 
             // Save and validate return transaction
             Event.robustClick(driver, By.id("rowEditBtn_Save_0"));
-            waitForLoaderToDisappear(driver);
             Event.robustClick(driver, By.id("validationBtn"));
-            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
-            waitForLoaderToDisappear(driver);
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);            waitForLoaderToDisappear(driver);
             Event.robustClick(driver, By.id("saveBtn"));
-            String noti = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
-            waitForLoaderToDisappear(driver);
-
-            logger.info("Notification received after saving: {}", noti);
-            if (noti != null && noti.toLowerCase().contains("success")) {
-                result.pass("Partial Fresh return created successfully.");
-                logger.info("✅ Fresh Sales Return details updated successfully.");
-            } else {
-                result.fail("Failed to create Partial Fresh return. Notification received: " + noti);
-                logger.error("❌ Partial Fresh return creation failed. Notification: {}", noti);
-            }
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
+//            String noti = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+//            waitForLoaderToDisappear(driver);
+//
+//            logger.info("Notification received after saving: {}", noti);
+//            if (noti != null && noti.toLowerCase().contains("success")) {
+//                result.pass("Partial Fresh return created successfully.");
+//                logger.info("✅ Fresh Sales Return details updated successfully.");
+//            } else {
+//                result.fail("Failed to create Partial Fresh return. Notification received: " + noti);
+//                logger.error("❌ Partial Fresh return creation failed. Notification: {}", noti);
+//            }
 
             // =========================================================================
             // STEP 7 & 8: BUDGET CHECK & TRANSACTION INQUIRY
             // =========================================================================
             logger.info("📌 STEP 7: Final Budget Setup Verification");
             sanPage.navigateToScreen("Budget Setup", "BUDGET_LAYOUT");
-            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result);
+            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result, BudgetTabID);
 
             logger.info("📌 STEP 8: Final BG - Transaction Inquiry Verification");
             executeTransactionInquiry(driver, transactionInquiryPage, scenarioData, FreshSalesReturnNo, budgetPromoId, "Fresh Sales Return", result);
@@ -352,8 +368,7 @@ public class PartialReturnBudgetFlow {
             Thread.sleep(1000);
             Event.robustClick(driver, By.id("row_1_checkbox_1"));
             Event.robustClick(driver, By.id("saveallBtn"));
-            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
-
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
             // =========================================================================
             // SALES RETURN (EXECUTION STARTS HERE)
             // =========================================================================
@@ -371,9 +386,7 @@ public class PartialReturnBudgetFlow {
             waitForLoaderToDisappear(driver);
             Thread.sleep(500);
 
-            Event.robustClick(driver, By.id("row_1_document_no"));
-            Event.robustClick(driver, By.id("saveBtn"));
-            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+            Event.robustClick(driver, By.xpath("//td[@id='row_1_document_no' or @id='row_1_order_number_' or text()='" + orderNo2 + "']"));
             waitForLoaderToDisappear(driver);
             String SalesReturnNo = driver.findElement(By.id("documentNo")).getDomProperty("value");
             waitForLoaderToDisappear(driver);
@@ -398,21 +411,21 @@ public class PartialReturnBudgetFlow {
             Event.robustClick(driver, By.id("rowEditBtn_Save_0"));
             waitForLoaderToDisappear(driver);
             Event.robustClick(driver, By.id("validationBtn"));
-            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
-            waitForLoaderToDisappear(driver);
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);            waitForLoaderToDisappear(driver);
 
             Event.robustClick(driver, By.id("saveBtn"));
-            noti = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
-            waitForLoaderToDisappear(driver);
-
-            logger.info("Notification received after saving: {}", noti);
-            if (noti != null && noti.toLowerCase().contains("success")) {
-                result.pass("Sales return created successfully.");
-                logger.info("✅ Sales Return details updated successfully.");
-            } else {
-                result.fail("Failed to create Sales return. Notification received: " + noti);
-                logger.error("❌ Sales return creation failed. Notification: {}", noti);
-            }
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
+//            noti = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
+//            waitForLoaderToDisappear(driver);
+//
+//            logger.info("Notification received after saving: {}", noti);
+//            if (noti != null && noti.toLowerCase().contains("success")) {
+//                result.pass("Sales return created successfully.");
+//                logger.info("✅ Sales Return details updated successfully.");
+//            } else {
+//                result.fail("Failed to create Sales return. Notification received: " + noti);
+//                logger.error("❌ Sales return creation failed. Notification: {}", noti);
+//            }
 
             // Approve SR Level 1
             Event.robustClick(driver, By.id("forward"));
@@ -420,8 +433,7 @@ public class PartialReturnBudgetFlow {
             commentsField.clear();
             commentsField.sendKeys("Approved SR Step 1");
             Event.robustClick(driver, By.id("forwardPopUpSaveBtn"));
-            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
-
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
             waitForLoaderToDisappear(driver);
 
             // Approve SR Level 2
@@ -430,8 +442,7 @@ public class PartialReturnBudgetFlow {
             commentsField2.clear();
             commentsField2.sendKeys("Approved SR Step 2");
             Event.robustClick(driver, By.id("forwardPopUpSaveBtn"));
-            ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
-
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
             // =========================================================================
             // PICK SALES RETURN
             // =========================================================================
@@ -458,15 +469,7 @@ public class PartialReturnBudgetFlow {
             Event.robustClick(driver, By.id("tab_2"));
             Event.robustClick(driver, By.id("validation"));
             Event.robustClick(driver, By.id("savesalePick"));
-            noti = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
-
-            logger.info("Notification received after saving: {}", noti);
-            if (noti != null && noti.toLowerCase().contains("success")) {
-                logger.info("✅ Sales Return details saved and picked successfully.");
-            } else {
-                result.fail("Failed to pick Sales return. Notification received: " + noti);
-                logger.error("❌ Sales return picking failed. Notification: {}", noti);
-            }
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
 
 
             // =========================================================================
@@ -474,7 +477,7 @@ public class PartialReturnBudgetFlow {
             // =========================================================================
             logger.info("📌 STEP 9: Final Budget Setup Verification");
             sanPage.navigateToScreen("Budget Setup", "BUDGET_LAYOUT");
-            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result);
+            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result, BudgetTabID);
 
             logger.info("📌 STEP 9: Final BG - Transaction Inquiry Verification");
             executeTransactionInquiry(driver, transactionInquiryPage, scenarioData, SalesReturnNo, budgetPromoId, "Sales Return", result);
@@ -508,8 +511,8 @@ public class PartialReturnBudgetFlow {
             String keyValue,
             String targetColumn,
             String expectedValue,
-            ValidationResult result
-    ) {
+            ValidationResult result,
+            String budgetTabID) {
         waitForLoaderToDisappear(driver);
 
         // Click grid filter checkbox
@@ -527,11 +530,13 @@ public class PartialReturnBudgetFlow {
         waitForLoaderToDisappear(driver);
 
         // Open Bulk Promo Allocation and export file
-        Event.robustClick(driver, By.xpath("(//td[contains(@id,'row_1_code')])[1]"));
+        Event.robustClick(driver, By.xpath(
+                "//*[@id='row_1_budget_code' or @id='row_1_code']"
+        ));
         waitForLoaderToDisappear(driver);
         Event.robustClick(driver, By.xpath("//span[text()='Bulk Promo Allocation']"));
         waitForLoaderToDisappear(driver);
-        Event.robustClick(driver, By.id("tab_group_2"));
+        Event.robustClick(driver, By.id(budgetTabID));
         waitForLoaderToDisappear(driver);
         Event.robustClick(driver, By.xpath("//button[contains(text(),'Export to Excel')]"));
         waitForLoaderToDisappear(driver);
