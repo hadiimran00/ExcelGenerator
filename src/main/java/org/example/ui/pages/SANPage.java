@@ -12,6 +12,8 @@ import java.text.SimpleDateFormat;
 import java.time.Duration;
 import java.util.Date;
 
+import static org.example.ui.utilities.LoaderWait.waitForLoaderToDisappear;
+
 public class SANPage extends basePage {
     private static final Logger logger = LoggerUtil.getLogger(SANPage.class);
     private final WebDriverWait wait;
@@ -122,21 +124,27 @@ public class SANPage extends basePage {
             Thread.sleep(1000);
             Event.robustClick(driver, sanDetailTab);
 
-            logger.info("[2] Clicking Add Row button...");
-            try {
-                Event.robustClick(driver, addRowBtn);
-            } catch (Exception e) {
-                Event.robustClick(driver, sanDetailTab);
-                Thread.sleep(1000);
-                Event.robustClick(driver, addRowBtn);
-            }
+            int maxRetries = 3;
+            for (int attempt = 1; attempt <= maxRetries; attempt++) {
+                try {
+                    logger.info("[2] Clicking Add Row button...");
+                    Event.robustClick(driver, addRowBtn);
 
-            logger.info("[3] Selecting Product: [{}]", product);
-            try {
-                selectDropdown(prodCodeInput, product);
-            } catch (Exception e) {
-                Thread.sleep(1000);
-                selectDropdown(prodCodeInput, product);
+                    logger.info("[3] Selecting Product: [{}]", product);
+                    waitForLoader();
+                    selectDropdown(prodCodeInput, product);
+
+                    break; // Success
+                } catch (Exception e) {
+                    logger.warn("Attempt {} failed: {}", attempt, e.getMessage());
+
+                    if (attempt == maxRetries) {
+                        throw e;
+                    }
+
+                    Event.robustClick(driver, sanDetailTab);
+                    Thread.sleep(1000);
+                }
             }
 
             logger.info("[4] Selecting Stock Type: [{}]", stockType);
@@ -207,23 +215,25 @@ public class SANPage extends basePage {
     public void executeApprovalSteps(String docType) throws InterruptedException {
 
         Event.robustClick(driver, sanHeaderTab);
+        waitForLoaderToDisappear(driver);
 
         try {
-            Thread.sleep(1000);
             Event.robustClick(driver, headerCheckbox0);
         } catch (Exception e) {
             Event.robustClick(driver, genericCheckboxIcon);
         }
+        waitForLoaderToDisappear(driver);
 
 // Document Type filter
         By docTypeFilter = By.id("rowfilter_pdot_desc");
         By docTypeFilter2=By.id("rowfilter_document_type");
 
-        WebElement docTypeField = wait.until(
-                ExpectedConditions.elementToBeClickable(docTypeFilter)
-        );
+        WebElement docTypeField;
 
         try {
+            docTypeField = wait.until(
+                    ExpectedConditions.elementToBeClickable(docTypeFilter)
+            );
             Event.robustClick(driver, docTypeFilter);
             docTypeField.clear();
             docTypeField.sendKeys(docType);

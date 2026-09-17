@@ -194,8 +194,8 @@ public class TestSummary {
             String cssClass = result.passed ? "success" : "failure";
             String label = result.passed ? "<b>" + result.screenName + "</b>" : "<b>" + result.screenName + "</b>";
             String details = result.passed
-                    ? "✅ " + escapeSeparator(String.join(", ", result.passes))
-                    : "❌ " + escapeSeparator(String.join(", ", result.failures));
+                    ? "✅ " + formatAsBulletList(result.passes)
+                    : "❌ " + formatAsBulletList(result.failures);
 
             screenResults.add(cssClass + "|" + label + " -> " + details + "|");
             return;
@@ -212,12 +212,12 @@ public class TestSummary {
 
             if (result.passed) {
                 message += "<br><span style='color:#2f855a;'><b>✅</b> "
-                        + escapeSeparator(String.join(", ", result.passes))
+                        + formatAsBulletList(result.passes)
                         + "</span>";
 
             } else {
                 message += "<br><span style='color:#e53e3e;'><b>❌</b> "
-                        + escapeSeparator(String.join(", ", result.failures))
+                        + formatAsBulletList(result.failures)
                         + "</span>";
                 if ("success".equals(status)) {
                     status = "failure";
@@ -241,6 +241,19 @@ public class TestSummary {
     private static String escapeSeparator(String text) {
         if (text == null) return "";
         return text.replace("|", "&#124;");
+    }
+
+    // Renders validation details as an HTML bullet list instead of one long comma-joined line.
+    // Repeats are kept intentionally: the same validation can legitimately pass/fail at multiple steps.
+    private static String formatAsBulletList(List<String> items) {
+        if (items == null || items.isEmpty()) return "";
+
+        StringBuilder sb = new StringBuilder("<ul style='margin:4px 0; padding-left:18px;'>");
+        for (String item : items) {
+            sb.append("<li>").append(escapeSeparator(item)).append("</li>");
+        }
+        sb.append("</ul>");
+        return sb.toString();
     }
 
 }

@@ -47,6 +47,9 @@ public class loginPage extends basePage {
                 waitForLoader();
             }
 
+            // Re-query: the organization step re-renders a fresh selectBox1 for the distributor step.
+            selectBoxes = driver.findElements(By.id("selectBox1"));
+
             // Select Distributor if provided
             if (!selectBoxes.isEmpty() && dist != null) {
                 type(By.id("selectBox1"), dist);

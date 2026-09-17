@@ -1,12 +1,12 @@
 [
   {
-    "username": "kpo_ph",
+    "username": "AUTO_PH2",
     "password": "Cent@123",
-    "url": "https://dcodecnr2dev1.unilever.com/ngui",
+    "url": "https://dcodecnr2dev3.unilever.com/ngui",
     "resourcesFolder": "ResourcesPH",
     "configPath": "configPH.xlsx",
     "country": "Philippines",
-    "execute": "NO"
+    "execute": "yes"
   },
   {
     "username": "kpo_SLV",
@@ -39,7 +39,7 @@
     "resourcesFolder": "ResourcesBD",
     "configPath": "configBD.xlsx",
     "country": "Bangladesh",
-    "execute": "YES",
+    "execute": "yes",
   "orga": "Bangladesh",
     "dist": "Atlantic"
   }

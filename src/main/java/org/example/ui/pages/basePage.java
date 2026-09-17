@@ -282,11 +282,19 @@ public abstract class basePage {
     }
     public void navigateToScreen(String menuSearch, String screenId) {
         try {
-            try {
-                Event.robustClick(driver, By.id("menurollin"));
-            } catch (NoSuchElementException e) {
-                wait.until(ExpectedConditions.visibilityOfElementLocated(
-                        By.cssSelector("input[placeholder='Search Here']")));
+            // Only expand the menu if the search box isn't already visible - menurollin is a toggle,
+            // so clicking it while the menu is already open collapses it instead of opening it.
+            boolean searchBoxAlreadyVisible = !driver.findElements(
+                    By.cssSelector("input[placeholder='Search Here']")).isEmpty()
+                    && driver.findElement(By.cssSelector("input[placeholder='Search Here']")).isDisplayed();
+
+            if (!searchBoxAlreadyVisible) {
+                try {
+                    Event.robustClick(driver, By.id("menurollin"));
+                } catch (NoSuchElementException e) {
+                    wait.until(ExpectedConditions.visibilityOfElementLocated(
+                            By.cssSelector("input[placeholder='Search Here']")));
+                }
             }
 
             WebElement searchBox = wait.until(
