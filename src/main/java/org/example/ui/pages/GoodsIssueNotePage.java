@@ -60,6 +60,39 @@ public class GoodsIssueNotePage extends basePage {
         waitForLoader();
     }
 
+    public void submitGinWithEditing(String actualQty3, String lossReason, ValidationResult result) {
+        Event.robustClick(driver, tab3);
+        waitForLoader();
+
+        Event.robustClick(driver, actualQtyCsCell);
+        waitForLoader();
+        type(actualQty1Field, "0");
+        waitForLoader();
+
+        Event.robustClick(driver, actualQtyPcCell);
+        waitForLoader();
+        type(actualQty3Field, actualQty3);
+        waitForLoader();
+
+     
+        Event.robustClick(driver, lossReasonCell);
+        waitForLoader();
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until(d -> {
+            try {
+                return find(lossReasonDropdown).getAttribute("aria-disabled") == null
+                        || "false".equals(find(lossReasonDropdown).getAttribute("aria-disabled"));
+            } catch (Exception e) {
+                return false;
+            }
+        });
+        selectDropdown(lossReasonDropdown, lossReason);
+        waitForLoader();
+
+        Event.robustClick(driver, saveAllBtn);
+        ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
+        waitForLoader();
+    }
+
     public String getFirstRowGinNoAndOpen() {
         click(tab1);
         waitForLoader();
