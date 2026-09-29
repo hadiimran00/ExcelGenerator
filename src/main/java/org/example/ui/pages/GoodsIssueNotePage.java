@@ -25,6 +25,14 @@ public class GoodsIssueNotePage extends basePage {
     private final By saveAllBtn = By.id("saveallBtn");
     private final By firstRowGinNo = By.id("row_1_gin_no.");
 
+
+    private final By actualQtyCsCell = By.id("row_1_actual_cs");
+    private final By actualQty1Field = By.id("actualQty1_0");
+    private final By actualQtyPcCell = By.id("row_1_actual_pc");
+    private final By actualQty3Field = By.id("actualQty3_0");
+    private final By lossReasonCell = By.id("row_1_loss_reason");
+    private final By lossReasonDropdown = By.id("lossReason_0");
+
     private final By forwardBtn = By.id("forward");
     private final By commentsInput = By.id("comments");
     private final By forwardPopUpSaveBtn = By.id("forwardPopUpSaveBtn");
