@@ -31,7 +31,7 @@ public class DriverFactory {
     }
     public static String getDownloadDirectory(Properties properties) {
         String relativeDownloadDir = properties.getProperty("downloadedExcels", "DownloadedExcels");
-        return Paths.get(System.getProperty("user.dir"), relativeDownloadDir).toAbsolutePath().toString();
+        return CountryPaths.dir(relativeDownloadDir).getAbsolutePath();
     }
 
     public static WebDriver createDriver(Properties properties, String downloadDir) {

@@ -19,7 +19,7 @@ public class ScreenshotService {
     private static final Logger logger = LoggerUtil.getLogger(ScreenshotService.class);
 
     public static void takeScreenshot(WebDriver driver, String ScreenName) {
-        File screenshotsDir = new File("screenshots");
+        File screenshotsDir = CountryPaths.screenshotDir();
         if (!screenshotsDir.exists()) {
             screenshotsDir.mkdirs();
         }

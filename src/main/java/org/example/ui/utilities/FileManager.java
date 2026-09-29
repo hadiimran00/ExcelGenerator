@@ -116,8 +116,8 @@ public class FileManager {
         if (finalMsg.toLowerCase().contains("file downloaded successfully") || finalMsg.toLowerCase().contains("success")) {
             logger.info("✅ Success: {}", finalMsg);
 
-            File downloadDir = new File(System.getProperty("user.dir"), "DownloadedExcels");
-            File[] files = downloadDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx") || name.toLowerCase().endsWith(".csv"));
+            File downloadDir = CountryPaths.downloadDir();
+            File[] files = downloadDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx") ||name.toLowerCase().endsWith(".csv"));
             File latestFile = Arrays.stream(files).max(Comparator.comparingLong(File::lastModified)).orElse(null);
 
             if (latestFile != null && latestFile.length() > 0) {
@@ -145,7 +145,7 @@ public class FileManager {
     }
 
     private static void handleErrorFile(String screenName) {
-        File downloadDir = new File(System.getProperty("user.dir"), "DownloadedExcels");
+        File downloadDir = CountryPaths.downloadDir();
         File[] files = downloadDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx"));
 
         if (files != null && files.length > 0) {
