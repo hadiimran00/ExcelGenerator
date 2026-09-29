@@ -107,8 +107,10 @@ public class FileManager {
                 logger.info(ex.getMessage());
             }
         }
-        waitForLoaderToDisappear(driver);
-        // Using Reusable ToastHandler (handles notify_text_success and notify_text_error gracefully via start-with id selection)
+        // Start watching for the toast immediately after the click, not after a separate loader-wait -
+        // DevExtreme toasts auto-dismiss on their own after a few seconds, and if the backend responds
+        // quickly the toast can fire and fully disappear while we're still waiting on the loader, so
+        // waitForNotification's own polling never catches it. It isn't blocked by an active loader anyway.
         String finalMsg = ToastHandles.waitForNotification(driver, Duration.ofSeconds(10));
 
         if (finalMsg.toLowerCase().contains("file downloaded successfully") || finalMsg.toLowerCase().contains("success")) {

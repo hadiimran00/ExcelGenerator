@@ -197,7 +197,7 @@ public class TestSummary {
                     ? "✅ " + formatAsBulletList(result.passes)
                     : "❌ " + formatAsBulletList(result.failures);
 
-            screenResults.add(cssClass + "|" + label + " -> " + details + "|");
+            screenResults.add(cssClass + "|" + label + " -> " + details + "|" + result.screenshotBase64);
             return;
         }
 
@@ -208,7 +208,8 @@ public class TestSummary {
         if (parts.length >= 2) {
             String status = parts[0];
             String message = parts[1];
-            String base64 = parts.length == 3 ? "|" + parts[2] : "";
+            String existingBase64 = parts.length == 3 ? parts[2] : "";
+            String base64 = !result.screenshotBase64.isEmpty() ? result.screenshotBase64 : existingBase64;
 
             if (result.passed) {
                 message += "<br><span style='color:#2f855a;'><b>✅</b> "
@@ -225,7 +226,7 @@ public class TestSummary {
                     uploadFailure++;
                 }
             }
-            screenResults.set(lastIdx, status + "|" + message + base64);
+            screenResults.set(lastIdx, status + "|" + message + "|" + base64);
         }
     }
 

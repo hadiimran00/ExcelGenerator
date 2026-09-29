@@ -170,6 +170,12 @@ public class ModeExecutionHandler {
                 break;
             }
 
+            case "COUPON_ORDER_EDIT_API": {
+                ValidationResult couponResult = CouponOrderEditFlow.run(driver, scenarioData, downloadDir);
+                TestSummary.appendValidation(couponResult);
+                break;
+            }
+
             default:
                 logger.warn("❌ Unknown mode: {}", mode);
         }

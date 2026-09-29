@@ -1,6 +1,7 @@
 package org.example.ui.pages;
 
 import org.example.ui.Main;
+import org.example.ui.utilities.DriverFactory;
 import org.example.ui.utilities.Event;
 import org.example.ui.utilities.LoaderWait;
 import org.example.ui.utilities.ValidationResult;
@@ -13,6 +14,7 @@ import org.openqa.selenium.support.ui.WebDriverWait;
 import java.net.URI;
 import java.time.Duration;
 import java.util.Map;
+import java.util.Properties;
 
 public class executeNodeJob extends basePage {
 
@@ -37,17 +39,32 @@ public class executeNodeJob extends basePage {
 
         options.addArguments("--disable-save-password-bubble");
         options.addArguments("--disable-features=PasswordManagerOnboarding");
-        options.addArguments("--headless=new");
-        options.addArguments("--window-size=1920,1080");
-        options.addArguments("--disable-gpu");
         options.addArguments("--no-sandbox");
         options.addArguments("--disable-dev-shm-usage");
+
+        // Match the main test browser's config (DriverFactory) so this window behaves the same way -
+        // same headless flag, same zoom. Note: headless mode was previously confirmed to break this
+        // isolated login page entirely (even a generous 20s wait for the field timed out) - if that
+        // was environment-specific, this makes it easy to re-test; if it fails again in headless,
+        // that's real evidence, not a timing artifact.
+        Properties properties = DriverFactory.loadProperties();
+        boolean isHeadless = Boolean.parseBoolean(properties.getProperty("selenium.headless", "false"));
+        if (isHeadless) {
+            options.addArguments("--headless=new", "--window-size=1920,1080", "--disable-gpu");
+        }
+        String zoom = properties.getProperty("zoom", "100");
+        options.addArguments("--force-device-scale-factor=0." + zoom);
 
         WebDriver tempDriver = null;
 
         try {
             // 3. Initialize background WebDriver session
             tempDriver = new ChromeDriver(options);
+            if (isHeadless) {
+                tempDriver.manage().window().setSize(new Dimension(1920, 1080));
+            } else {
+                tempDriver.manage().window().maximize();
+            }
             tempDriver.manage().timeouts().implicitlyWait(Duration.ofSeconds(5));
             WebDriverWait tempWait = new WebDriverWait(tempDriver, Duration.ofSeconds(20));
 
@@ -57,6 +74,12 @@ public class executeNodeJob extends basePage {
             // 5. Retrieve node credentials safely via UserConfig getters
             String nodeUser = Main.currentUser.getNodeUsername();
             String nodePass = Main.currentUser.getNodePassword();
+
+            // A cold, headless, isolated session can take longer to render the login page than
+            // basePage's hardcoded 10s default wait allows - every other step in this flow already
+            // uses tempWait's more generous 20s for exactly this reason, so wait for the username
+            // field with that same timeout before calling login(), which finds it near-instantly.
+            tempWait.until(ExpectedConditions.visibilityOfElementLocated(By.id("a3")));
 
             // 6. Bind loginPage helper to isolated browser
             loginPage tempLoginPage = new loginPage(tempDriver);

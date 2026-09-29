@@ -75,7 +75,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>org.example.ui.Main</mainClass> <!-- updated to your Spring Boot class -->
+                            <mainClass>org.example.api.ReleaseValidator</mainClass> <!-- updated to your Spring Boot class -->
                         </manifest>
                     </archive>
                 </configuration>

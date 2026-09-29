@@ -74,7 +74,7 @@ public class GoodsIssueNotePage extends basePage {
         type(actualQty3Field, actualQty3);
         waitForLoader();
 
-     
+
         Event.robustClick(driver, lossReasonCell);
         waitForLoader();
         new WebDriverWait(driver, Duration.ofSeconds(30)).until(d -> {

@@ -563,11 +563,20 @@ public class Main {
             }
 
             executedAny = true;
-            executeSingleScreen(driver, screen, screens, resourcesFolder, downloadDir);
+            try {
+                executeSingleScreen(driver, screen, screens, resourcesFolder, downloadDir);
+            } catch (Exception e) {
+                logger.error("💥 Screen [{}] failed unexpectedly - continuing with remaining screens. Message: {}",
+                        screenName, e.getMessage(), e);
+                ValidationResult failureResult = new ValidationResult(screenName);
+                failureResult.fail("Screen execution failed unexpectedly: " + e.getMessage(), driver);
+                TestSummary.appendValidation(failureResult);
+            }
         }
 
         return executedAny;
     }
+
 
     private static void executeSingleScreen(WebDriver driver, Map<String, Object> screen, List<Map<String, Object>> screens, String resourcesFolder, String downloadDir) throws Exception {
         String screenName = (String) screen.get("screenName");
@@ -644,6 +653,7 @@ public class Main {
         driver.get(user.getUrl());
         loginPage loginPage = new loginPage(driver);
         loginPage.login(user.getUsername(), user.getPassword(), user.getOrga(), user.getDist());
+        AuthTokenCapture.captureAndStore(driver);
     }
 
     private static void cleanupUserSession(WebDriver driver, String country, boolean testExecuted) {

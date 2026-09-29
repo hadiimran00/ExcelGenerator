@@ -145,8 +145,14 @@ public abstract class basePage {
         try {
             String isExpanded = field.getAttribute("aria-expanded");
             if ("false".equals(isExpanded)) {
-                // Click parent container to trigger DevExtreme dropdown open event
-                WebElement parentContainer = field.findElement(By.xpath("./ancestor::div[contains(@class,'dx-dropdowneditor') or contains(@class,'dx-texteditor')]"));
+                // Click the actual dx-dropdowneditor widget root to trigger DevExtreme's open event.
+                // Must match the class as a whole token - contains(@class,'dx-texteditor') alone would
+                // wrongly stop at the immediate inner wrapper (class="dx-texteditor-input-container",
+                // which contains that substring) instead of the interactive root a few levels up,
+                // silently clicking a div with no open-popup handler bound to it.
+                WebElement parentContainer = field.findElement(By.xpath(
+                        "./ancestor::div[contains(concat(' ', normalize-space(@class), ' '), ' dx-dropdowneditor ')" +
+                                " or contains(concat(' ', normalize-space(@class), ' '), ' dx-texteditor ')][1]"));
                 parentContainer.click();
             }
         } catch (Exception e) {
@@ -170,10 +176,12 @@ public abstract class basePage {
             }
         }
 
-        // 5. Dispatch native input/keyup events so DevExtreme filters the list overlay
+        // 5. Dispatch native input/keyup events so DevExtreme filters the list overlay.
+        // Deliberately NOT dispatching a synthetic 'change' event here: DevExtreme treats it as a
+        // value-commit/blur signal on this widget and immediately collapses the popup we just opened,
+        // before we get a chance to click an option out of it.
         js.executeScript(
                 "arguments[0].dispatchEvent(new Event('input', { bubbles: true }));" +
-                        "arguments[0].dispatchEvent(new Event('change', { bubbles: true }));" +
                         "arguments[0].dispatchEvent(new KeyboardEvent('keyup', { bubbles: true }));",
                 field
         );
@@ -216,6 +224,14 @@ public abstract class basePage {
                 } catch (Exception e3) {
                     System.out.println("First option selection failed. Pressing ENTER key...");
                     field.sendKeys(Keys.ENTER);
+                    waitForLoader();
+
+                    String selectedValue = field.getAttribute("value");
+                    if (selectedValue == null || selectedValue.isBlank()) {
+                        throw new RuntimeException(
+                                "selectDropdown: no option was selected for locator [" + locator +
+                                        "] with value [" + value + "] even after the last-resort ENTER fallback.");
+                    }
                 }
             }
         }
