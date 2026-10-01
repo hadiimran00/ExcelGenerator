@@ -93,18 +93,16 @@ public class ToastHandles {
             if (result != null) {
                 result.fail(errorMsg);
             }
-            throw new AssertionError(errorMsg);
+            throw new RuntimeException(errorMsg);
         }
 
         if (actualToast.toLowerCase().contains(expectedMessageSubstring.toLowerCase())) {
             String passMsg = String.format("Toast Validation Passed! Expected text: '%s' | Actual Toast: '%s'",
                     expectedMessageSubstring, actualToast);
 
+            // Logged but not added to the report - a routine "save/forward succeeded" toast on
+            // every step would otherwise drown out the meaningful validations in the report.
             logger.info("✅ " + passMsg);
-
-            if (result != null) {
-                result.pass(passMsg);
-            }
         } else {
             String errorMsg = String.format("Validation Failed! Toast message did not contain '%s'. Actual Toast: '%s'",
                     expectedMessageSubstring, actualToast);
@@ -115,7 +113,7 @@ public class ToastHandles {
             if (result != null) {
                 result.fail(errorMsg);
             }
-            throw new AssertionError(errorMsg);
+            throw new RuntimeException(errorMsg);
         }
 
         return actualToast;
