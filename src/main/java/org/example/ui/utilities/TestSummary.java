@@ -192,12 +192,20 @@ public class TestSummary {
         // SAFAGUARD: If no download/upload event was logged prior, create a new standalone entry.
         if (screenResults.isEmpty()) {
             String cssClass = result.passed ? "success" : "failure";
-            String label = result.passed ? "<b>" + result.screenName + "</b>" : "<b>" + result.screenName + "</b>";
-            String details = result.passed
-                    ? "✅ " + formatAsBulletList(result.passes)
-                    : "❌ " + formatAsBulletList(result.failures);
+            String label = "<b>" + result.screenName + "</b>";
+            StringBuilder details = new StringBuilder();
+            // A multi-checkpoint flow (e.g. CouponOrderEditFlow validating two promos at five
+            // checkpoints) accumulates passes AND failures independently - show both, not just
+            // whichever the overall pass/fail flag happens to pick.
+            if (!result.passes.isEmpty()) {
+                details.append("✅ ").append(formatAsBulletList(result.passes));
+            }
+            if (!result.failures.isEmpty()) {
+                if (details.length() > 0) details.append("<br>");
+                details.append("❌ ").append(formatAsBulletList(result.failures));
+            }
 
-            screenResults.add(cssClass + "|" + label + " -> " + details + "|");
+            screenResults.add(cssClass + "|" + label + " -> " + details + "|" + result.screenshotBase64);
             return;
         }
 
@@ -208,14 +216,17 @@ public class TestSummary {
         if (parts.length >= 2) {
             String status = parts[0];
             String message = parts[1];
-            String base64 = parts.length == 3 ? "|" + parts[2] : "";
+            String existingBase64 = parts.length == 3 ? parts[2] : "";
+            String base64 = !result.screenshotBase64.isEmpty() ? result.screenshotBase64 : existingBase64;
 
-            if (result.passed) {
+            // Same as above: render both passes and failures whenever present, instead of
+            // whichever one the overall result.passed flag happens to select.
+            if (!result.passes.isEmpty()) {
                 message += "<br><span style='color:#2f855a;'><b>✅</b> "
                         + formatAsBulletList(result.passes)
                         + "</span>";
-
-            } else {
+            }
+            if (!result.failures.isEmpty()) {
                 message += "<br><span style='color:#e53e3e;'><b>❌</b> "
                         + formatAsBulletList(result.failures)
                         + "</span>";
@@ -225,8 +236,27 @@ public class TestSummary {
                     uploadFailure++;
                 }
             }
-            screenResults.set(lastIdx, status + "|" + message + base64);
+            screenResults.set(lastIdx, status + "|" + message + "|" + base64);
         }
+    }
+
+    // Appends per-row errors read from the app's generated error Excel onto the most recently
+    // recorded screen entry, so the report shows *why* an upload failed, not just that it did.
+    public static void appendErrorDetails(List<String> errorRows) {
+        if (errorRows == null || errorRows.isEmpty() || screenResults.isEmpty()) return;
+
+        int lastIdx = screenResults.size() - 1;
+        String[] parts = screenResults.get(lastIdx).split("\\|", 3);
+        if (parts.length < 2) return;
+
+        String status = parts[0];
+        String message = parts[1];
+        String base64 = parts.length == 3 ? parts[2] : "";
+
+        message += "<br><span style='color:#e53e3e;'><b>📄 Excel Row Errors:</b>"
+                + formatAsBulletList(errorRows) + "</span>";
+
+        screenResults.set(lastIdx, status + "|" + message + "|" + base64);
     }
 
     public static void resetTestCounter() {
