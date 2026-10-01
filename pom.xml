@@ -75,7 +75,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>org.example.ui.Main</mainClass> <!-- updated to your Spring Boot class -->
+                            <mainClass>org.example.ui.Main</mainClass>
                         </manifest>
                     </archive>
                 </configuration>
