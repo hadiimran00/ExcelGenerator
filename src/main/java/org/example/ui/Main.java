@@ -481,6 +481,7 @@ public class Main {
     private static final Logger logger = LoggerUtil.getLogger(Main.class);
     private static String resourceFolder;
     public static UserConfig currentUser;
+    private static String runTimestamp;
 
     public static void setResourceFolder(String folder) {
         resourceFolder = folder;
@@ -491,7 +492,11 @@ public class Main {
     }
 
     public static void main(String[] args) throws Exception {
-        DirectoryCleaner.cleanFolders();
+        // Segregates DownloadedExcels/Screenshots by run instead of wiping the previous run's
+        // files - every run gets its own timestamped subfolder per country, so history is kept.
+        runTimestamp = java.time.LocalDateTime.now()
+                .format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd_HH-mm-ss"));
+        RetentionCleaner.cleanOldRuns(DriverFactory.loadProperties());
         clearSummaryFile();
 
         try (PrintWriter writer = new PrintWriter("summary.txt")) {
@@ -526,7 +531,13 @@ public class Main {
         try {
             currentUser = user;
             Properties props = DriverFactory.loadProperties();
-            String downloadDir = DriverFactory.getDownloadDirectory(props);
+            String downloadDir = DriverFactory.getDownloadDirectory(props, user.getCountry(), runTimestamp);
+            new File(downloadDir).mkdirs(); // Chrome's download.default_directory pref requires the folder to already exist
+            FileManager.setDownloadDir(downloadDir);
+
+            String screenshotDir = Paths.get(System.getProperty("user.dir"), "Screenshots", user.getCountry(), runTimestamp).toAbsolutePath().toString();
+            new File(screenshotDir).mkdirs();
+            ScreenshotService.setScreenshotDir(screenshotDir);
 
             // Initializing driver via Factory
             driver = DriverFactory.createDriver(props, downloadDir);
@@ -563,11 +574,20 @@ public class Main {
             }
 
             executedAny = true;
-            executeSingleScreen(driver, screen, screens, resourcesFolder, downloadDir);
+            try {
+                executeSingleScreen(driver, screen, screens, resourcesFolder, downloadDir);
+            } catch (Exception e) {
+                logger.error("💥 Screen [{}] failed unexpectedly - continuing with remaining screens. Message: {}",
+                        screenName, e.getMessage(), e);
+                ValidationResult failureResult = new ValidationResult(screenName);
+                failureResult.fail("Screen execution failed unexpectedly: " + e.getMessage(), driver);
+                TestSummary.appendValidation(failureResult);
+            }
         }
 
         return executedAny;
     }
+
 
     private static void executeSingleScreen(WebDriver driver, Map<String, Object> screen, List<Map<String, Object>> screens, String resourcesFolder, String downloadDir) throws Exception {
         String screenName = (String) screen.get("screenName");
@@ -644,6 +664,7 @@ public class Main {
         driver.get(user.getUrl());
         loginPage loginPage = new loginPage(driver);
         loginPage.login(user.getUsername(), user.getPassword(), user.getOrga(), user.getDist());
+        AuthTokenCapture.captureAndStore(driver);
     }
 
     private static void cleanupUserSession(WebDriver driver, String country, boolean testExecuted) {
