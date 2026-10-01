@@ -18,9 +18,14 @@ import static org.example.ui.utilities.TestSummary.*;
 public class FileManager {
     private static final Logger logger = LoggerUtil.getLogger(FileManager.class);
     private static String resourceFolder;
+    private static String downloadDir = new File(System.getProperty("user.dir"), "DownloadedExcels").getAbsolutePath();
 
     public static void setResourceFolder(String folder) {
         resourceFolder = folder;
+    }
+
+    public static void setDownloadDir(String dir) {
+        downloadDir = dir;
     }
 
     public static String getResourceFile(String fileName) {
@@ -107,15 +112,17 @@ public class FileManager {
                 logger.info(ex.getMessage());
             }
         }
-        waitForLoaderToDisappear(driver);
-        // Using Reusable ToastHandler (handles notify_text_success and notify_text_error gracefully via start-with id selection)
+        // Start watching for the toast immediately after the click, not after a separate loader-wait -
+        // DevExtreme toasts auto-dismiss on their own after a few seconds, and if the backend responds
+        // quickly the toast can fire and fully disappear while we're still waiting on the loader, so
+        // waitForNotification's own polling never catches it. It isn't blocked by an active loader anyway.
         String finalMsg = ToastHandles.waitForNotification(driver, Duration.ofSeconds(10));
 
         if (finalMsg.toLowerCase().contains("file downloaded successfully") || finalMsg.toLowerCase().contains("success")) {
             logger.info("✅ Success: {}", finalMsg);
 
-            File downloadDir = new File(System.getProperty("user.dir"), "DownloadedExcels");
-            File[] files = downloadDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx") || name.toLowerCase().endsWith(".csv"));
+            File downloadDirFile = new File(downloadDir);
+            File[] files = downloadDirFile.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx") || name.toLowerCase().endsWith(".csv"));
             File latestFile = Arrays.stream(files).max(Comparator.comparingLong(File::lastModified)).orElse(null);
 
             if (latestFile != null && latestFile.length() > 0) {
@@ -143,14 +150,14 @@ public class FileManager {
     }
 
     private static void handleErrorFile(String screenName) {
-        File downloadDir = new File(System.getProperty("user.dir"), "DownloadedExcels");
-        File[] files = downloadDir.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx"));
+        File downloadDirFile = new File(downloadDir);
+        File[] files = downloadDirFile.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx"));
 
         if (files != null && files.length > 0) {
             File latestFile = Arrays.stream(files).max(Comparator.comparingLong(File::lastModified)).orElse(null);
             if (latestFile != null && latestFile.length() > 0) {
                 logger.info("📂 Found error file: {}", latestFile.getName());
-                logExcelErrors(latestFile);
+                TestSummary.appendErrorDetails(logExcelErrors(latestFile));
             }
         }
     }

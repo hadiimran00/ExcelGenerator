@@ -17,9 +17,14 @@ import java.nio.file.Files;
 
 public class ScreenshotService {
     private static final Logger logger = LoggerUtil.getLogger(ScreenshotService.class);
+    private static String screenshotDir = "screenshots";
+
+    public static void setScreenshotDir(String dir) {
+        screenshotDir = dir;
+    }
 
     public static void takeScreenshot(WebDriver driver, String ScreenName) {
-        File screenshotsDir = new File("screenshots");
+        File screenshotsDir = new File(screenshotDir);
         if (!screenshotsDir.exists()) {
             screenshotsDir.mkdirs();
         }
