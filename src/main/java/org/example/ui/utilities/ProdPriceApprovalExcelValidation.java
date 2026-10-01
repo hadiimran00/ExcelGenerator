@@ -22,11 +22,11 @@ public class ProdPriceApprovalExcelValidation {
         System.out.println("==================================");
         // Product
         String productCode =
-                ScenarioData.get("Product Code");
+                ScenarioData.get("productCode");
 
         System.out.println("Product Code: " + productCode);
 
-        if (productCode.isBlank()) {
+        if (productCode == null || productCode.isBlank()) {
             result.fail(" Product Code not found.");
             return;
         }

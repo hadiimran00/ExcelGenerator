@@ -17,7 +17,7 @@ public class ProdEnrichValidation {
                                 Map<String, String> ScenarioData,
                                 ValidationResult result) {
 
-        String productCode = ScenarioData.get("Product Code");
+        String productCode = ScenarioData.get("productCode");
         String FieldToValidate = ScenarioData.get("FieldToValidate");
         String attributeScreenID = ScenarioData.get("attributeScreenID"); // Field ID on UI
         String expectedValue = GeneratedDataStore.get(testId, FieldToValidate);
