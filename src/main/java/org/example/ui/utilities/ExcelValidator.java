@@ -5,21 +5,28 @@ import org.apache.poi.ss.usermodel.*;
 
 import java.io.File;
 import java.io.FileInputStream;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ExcelValidator {
     private static final Logger logger = LoggerUtil.getLogger(ExcelValidator.class);
 
-    public static void logExcelErrors(File excelFile) {
+    // Reads the app's generated error-report Excel and returns one formatted string per
+    // failed row (e.g. "Row 2: Outlet does not exists on source distributor").
+    public static List<String> logExcelErrors(File excelFile) {
+        List<String> errors = new ArrayList<>();
         try (FileInputStream fis = new FileInputStream(excelFile);
              Workbook workbook = WorkbookFactory.create(fis)) {
 
             Sheet sheet = workbook.getSheetAt(0); // assuming first sheet
             int errorColIndex = -1;
 
-            // Find "Error Message" column index
+            // Find the "Error Message" column - header text/casing/spacing varies by screen
+            // (e.g. "Error Message" vs "ErrorMessage"), so normalize both sides before comparing.
             Row headerRow = sheet.getRow(0);
             for (Cell cell : headerRow) {
-                if ("ErrorMessage".equalsIgnoreCase(cell.getStringCellValue().trim())) {
+                String header = cell.toString().trim().replaceAll("\\s+", "").toLowerCase();
+                if ("errormessage".equals(header)) {
                     errorColIndex = cell.getColumnIndex();
                     break;
                 }
@@ -27,10 +34,10 @@ public class ExcelValidator {
 
             if (errorColIndex == -1) {
                 logger.warn("⚠️ No 'Error Message' column found in {}", excelFile.getName());
-                return;
+                return errors;
             }
 
-            // Print all error messages
+            // Collect all error messages
             logger.info("🔍 Excel Validation Errors:");
             for (int i = 1; i <= sheet.getLastRowNum(); i++) {
                 Row row = sheet.getRow(i);
@@ -40,6 +47,7 @@ public class ExcelValidator {
                         String errorMsg = errorCell.toString().trim();
                         if (!errorMsg.isEmpty()) {
                             logger.info("   ❌ Row {}: {}", i + 1, errorMsg);
+                            errors.add("Row " + (i + 1) + ": " + errorMsg);
                         }
                     }
                 }
@@ -48,6 +56,7 @@ public class ExcelValidator {
         } catch (Exception e) {
             logger.error("❌ Failed to read error Excel file: {}", e.getMessage(), e);
         }
+        return errors;
     }
 
     // --- REUSABLE LOOKUP & EXTRACTION METHODS ---
