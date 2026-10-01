@@ -233,7 +233,8 @@ public class LocusUploadFlow {
             JavascriptExecutor js = (JavascriptExecutor) driver;
             js.executeScript(
                     "var container = arguments[0].closest('.dx-scrollable-container');" +
-                            "if (container) { container.scrollLeft = container.scrollWidth; }"
+                            "if (container) { container.scrollLeft = container.scrollWidth; }",
+                    rowElement
             );
             Thread.sleep(400); // Wait briefly for DevExtreme to repaint virtual columns
         } catch (Exception e) {
