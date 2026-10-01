@@ -1,7 +1,6 @@
 package org.example.ui.utilities;
 
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.By;
 import org.openqa.selenium.JavascriptExecutor;
 import org.openqa.selenium.WebDriver;
@@ -63,47 +62,29 @@ public class validateCashmemo {
             }
 
             // ----- VALIDATION SECTION -----
+            // Read the message cell's actual (rendered) text once via getText(), which captures
+            // nested elements - a td[text()='...'] xpath only matches direct text-node children,
+            // so it silently fails to find a genuine success message wrapped in a nested span/div.
+            WebElement messageEl = wait.until(
+                    ExpectedConditions.visibilityOfElementLocated(
+                            By.xpath("(//td[@id='row_1_message' and normalize-space()!=''])[2]")
+                    )
+            );
+            ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", messageEl);
+            Thread.sleep(300);
+            Tmessage = messageEl.getText().trim();
 
-
-            WebElement message = null;
-            try {
-                message = wait.until(
-                        ExpectedConditions.visibilityOfElementLocated(
-                                By.xpath("//td[normalize-space(text())='Cashmemo created successfully']")
-                        )
-                );
-
-                ((JavascriptExecutor) driver).executeScript("arguments[0].scrollIntoView(true);", message);
-                Thread.sleep(300);
-
-                WebElement messageEl = wait.until(
-                        ExpectedConditions.visibilityOfElementLocated(
-                                By.xpath("(//td[@id='row_1_message' and normalize-space()!=''])[2]")
-                        )
-                );
-
-                Tmessage = messageEl.getText();
-
-
+            if (Tmessage.toLowerCase().contains("success")) {
                 WebElement cashmemoNoEl = wait.until(
                         ExpectedConditions.visibilityOfElementLocated(By.id("row_1_cashmemo_no_")));
                 String cashmemoNo = cashmemoNoEl.getText();
 
                 logger.info("✅ {} with Order No: {}", Tmessage, cashmemoNo);
-                result.pass(Tmessage + " Order No:" + cashmemoNo);
-                GeneratedDataStore.store(testId,"cashmemoNo",cashmemoNo);
-                System.out.println("Testid" + testId );
-
-            } catch (TimeoutException e) {
-                WebElement messageEl = wait.until(
-                        ExpectedConditions.visibilityOfElementLocated(
-                                By.xpath("(//td[@id='row_1_message' and normalize-space()!=''])[2]")
-                        )
-                );
-
-                Tmessage = messageEl.getText();
+                result.pass(Tmessage + " Order No:" + cashmemoNo, driver);
+                GeneratedDataStore.store(testId, "cashmemoNo", cashmemoNo);
+            } else {
                 logger.info("❌ Validation Failed: {}", Tmessage);
-                ScreenshotService.takeScreenshot(driver,"LMT Validation Failed");
+                result.fail("LMT validation failed for testId [" + testId + "]: " + Tmessage, driver);
             }
 
         } catch (Exception e) {
@@ -112,7 +93,7 @@ public class validateCashmemo {
                     e.getMessage(),
                     e);
 
-            ScreenshotService.takeScreenshot(driver,"LMT Error");
+            result.fail("Unexpected error during Cashmemo validation setup: " + e.getMessage(), driver);
         }
     }
 }

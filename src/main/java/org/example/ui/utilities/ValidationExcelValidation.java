@@ -24,13 +24,13 @@ public class ValidationExcelValidation {
             String actual = normalize(actualMessage);
 
             if (actual.equals(expected)) {
-                result.pass("Validation Message matched: " + actualMessage);
+                result.pass("Validation Message matched: " + actualMessage, driver);
             } else {
-                result.fail("Message mismatch. Expected=" + expectedMessage + " Actual=" + actualMessage);
+                result.fail("Message mismatch. Expected=" + expectedMessage + " Actual=" + actualMessage, driver);
             }
 
         } catch (Exception e) {
-            result.fail("Automation execution failed unexpectedly: " + e.getMessage());
+            result.fail("Automation execution failed unexpectedly: " + e.getMessage(), driver);
         } finally {
             System.out.println("===== ValidationExcelValidation =====");
             System.out.println("Passed : " + result.passed);
