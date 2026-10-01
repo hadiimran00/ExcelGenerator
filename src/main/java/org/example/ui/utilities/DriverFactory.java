@@ -5,12 +5,15 @@ import org.openqa.selenium.Dimension;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.openqa.selenium.logging.LogType;
+import org.openqa.selenium.logging.LoggingPreferences;
 
 import java.io.FileInputStream;
 import java.nio.file.Paths;
 import java.time.Duration;
 import java.util.HashMap;
 import java.util.Properties;
+import java.util.logging.Level;
 
 public class DriverFactory {
 
@@ -31,6 +34,16 @@ public class DriverFactory {
         return Paths.get(System.getProperty("user.dir"), relativeDownloadDir).toAbsolutePath().toString();
     }
 
+    // Namespaces downloads by country AND by run, so each run gets its own fresh folder
+    // instead of accumulating into (or needing to be cleaned from) a shared per-country folder.
+    public static String getDownloadDirectory(Properties properties, String country, String runTimestamp) {
+        String relativeDownloadDir = properties.getProperty("downloadedExcels", "DownloadedExcels");
+        if (country == null || country.isBlank()) {
+            return getDownloadDirectory(properties);
+        }
+        return Paths.get(System.getProperty("user.dir"), relativeDownloadDir, country, runTimestamp).toAbsolutePath().toString();
+    }
+
     public static WebDriver createDriver(Properties properties, String downloadDir) {
         WebDriverManager.chromedriver().setup();
 
@@ -39,6 +52,10 @@ public class DriverFactory {
         chromePrefs.put("download.default_directory", downloadDir);
         chromePrefs.put("profile.default_content_setting_values.automatic_downloads", 1);
         options.setExperimentalOption("prefs", chromePrefs);
+
+        LoggingPreferences logPrefs = new LoggingPreferences();
+        logPrefs.enable(LogType.PERFORMANCE, Level.ALL);
+        options.setCapability("goog:loggingPrefs", logPrefs);
 
         boolean isHeadless = Boolean.parseBoolean(properties.getProperty("selenium.headless", "false"));
         if (isHeadless) {
