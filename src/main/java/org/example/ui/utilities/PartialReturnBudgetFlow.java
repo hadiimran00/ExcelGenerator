@@ -3,6 +3,7 @@ package org.example.ui.utilities;
 import org.apache.logging.log4j.Logger;
 import org.example.ui.pages.*;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
@@ -146,11 +147,11 @@ public class PartialReturnBudgetFlow {
             exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result, budgetTabId);
             executeTransactionInquiry(driver, transactionInquiryPage, scenarioData, salesReturnNo, budgetPromoId, "Sales Return", result);
 
-            result.pass("Free SKU was not added or reallocated to the budget after Sales Return, as it was never issued to the customer.");
+            result.pass("Free SKU was not added or reallocated to the budget after Sales Return, as it was never issued to the customer.", driver);
 
         } catch (Exception e) {
             logger.error("❌ Partial Return Budget Allocation flow failed: {}", e.getMessage(), e);
-            result.fail("Flow execution encountered an error: " + e.getMessage());
+            result.fail("Flow execution encountered an error: " + e.getMessage(), driver);
         }
 
         return result;
@@ -238,7 +239,8 @@ public class PartialReturnBudgetFlow {
         if (!expectedValue.equals(actualQtyUtilized)) {
             result.fail(
                     " Excel Budget Validation Failed, Expected " + targetColumn + " to be " + expectedValue
-                            + " for code [" + keyValue + "] but found [" + actualQtyUtilized + "]"
+                            + " for code [" + keyValue + "] but found [" + actualQtyUtilized + "]",
+                    driver
             );
             logger.info(
                     " Excel Budget Validation Failed : {} is {} for {}",
@@ -249,7 +251,8 @@ public class PartialReturnBudgetFlow {
         } else {
             result.pass(
                     " Excel Budget Validation Passed: " + targetColumn + " is " + expectedValue
-                            + " for " + keyValue
+                            + " for " + keyValue,
+                    driver
             );
 
             logger.info(
@@ -287,16 +290,25 @@ public class PartialReturnBudgetFlow {
 
         // Verify promotion ID match
         logger.info("📌 Verifying promotion search result");
-        String actualPromotion = transactionInquiryPage.getFirstRowPromotionId();
+        String actualPromotion;
+        try {
+            actualPromotion = transactionInquiryPage.getFirstRowPromotionId();
+        } catch (TimeoutException e) {
+            result.fail(" Promotion [" + budgetPromoId + "] not found in Total Offering tab", driver);
+            logger.error("❌ Promotion [{}] not found in Total Offering tab", budgetPromoId);
+            return;
+        }
         logger.info("📌 Search result promotion: {}", actualPromotion);
 
         if (!budgetPromoId.equals(actualPromotion)) {
             result.fail(
-                    " Expected promotion [" + budgetPromoId + "] but found [" + actualPromotion + "]"
+                    " Expected promotion [" + budgetPromoId + "] but found [" + actualPromotion + "]",
+                    driver
             );
         } else {
             result.pass(
-                    " Free SKU Promotion [" + actualPromotion + "] appearing in Cashmemo Offering"
+                    " Free SKU Promotion [" + actualPromotion + "] appearing in Cashmemo Offering",
+                    driver
             );
             logger.info("✅ Promotion found successfully: {}", actualPromotion);
         }
@@ -308,12 +320,14 @@ public class PartialReturnBudgetFlow {
         if (!"0".equals(actualAllocatedQuantity)) {
             result.fail(
                     " Allocated quantity validation failed for promotion [" + budgetPromoId
-                            + "]. Expected [0] but found [" + actualAllocatedQuantity + "]"
+                            + "]. Expected [0] but found [" + actualAllocatedQuantity + "]",
+                    driver
             );
         } else {
             result.pass(
                     " Allocated quantity validation passed for promotion [" + budgetPromoId
-                            + "]. Expected [0] found [" + actualAllocatedQuantity + "]"
+                            + "]. Expected [0] found [" + actualAllocatedQuantity + "]",
+                    driver
             );
             logger.info("✅ Allocated quantity is 0 for promotion: {}", budgetPromoId);
         }
