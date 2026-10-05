@@ -3,10 +3,13 @@ package org.example.ui.utilities;
 import org.apache.logging.log4j.Logger;
 import org.example.ui.pages.*;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 
+import java.math.BigDecimal;
 import java.time.Duration;
 import java.time.LocalDate;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 import static org.example.ui.pages.basePage.requireScenarioValue;
@@ -55,11 +58,22 @@ public class CouponOrderEditFlow {
             // LOYALTYB2B: a second scheme attached alongside the coupon on both orders - validated
             // at the same five checkpoints, with its own expected discount amounts.
             String loyaltyPromoId = scenarioData.get("loyaltyPromoId");
-            String expectedDiscountAmountOrder2BookingLoyalty = scenarioData.get("expectedDiscountAmountOrder2BookingLoyalty");
-            String expectedDiscountAmountOrder1AfterEditLoyalty = scenarioData.get("expectedDiscountAmountOrder1AfterEditLoyalty");
-            String expectedDiscountAmountOrder2AfterGinLoyalty = scenarioData.get("expectedDiscountAmountOrder2AfterGinLoyalty");
-            String expectedDiscountAmountOrder1AfterSecondEditLoyalty = scenarioData.get("expectedDiscountAmountOrder1AfterSecondEditLoyalty");
-            String expectedDiscountAmountOrder2AfterSalesReturnLoyalty = scenarioData.get("expectedDiscountAmountOrder2AfterSalesReturnLoyalty");
+            // LOYALTYB2B is a flat amount, so one expected value covers every checkpoint before the
+            // return, and a second covers the Sales Return document.
+            String expectedDiscountAmountLoyalty = scenarioData.get("expectedDiscountAmountLoyalty");
+            String expectedDiscountAmountLoyaltyAfterSalesReturn = scenarioData.get("expectedDiscountAmountLoyaltyAfterSalesReturn");
+
+            // Current Promotion utilized budget per promo at each checkpoint. Optional: a promo/checkpoint
+            // without a key is skipped (budget is cumulative across orders, so these are set by hand).
+            // The coupon scales with each order's quantity, so unlike the flat loyalty promo it has
+            // its own expected budget change at every checkpoint.
+            String budgetCouponOrder2Booking = scenarioData.get("expectedUtilizedBudgetCouponOrder2Booking");
+            String budgetCouponOrder1AfterEdit = scenarioData.get("expectedUtilizedBudgetCouponOrder1AfterEdit");
+            String budgetCouponOrder2AfterGin = scenarioData.get("expectedUtilizedBudgetCouponOrder2AfterGin");
+            String budgetCouponOrder1AfterSecondEdit = scenarioData.get("expectedUtilizedBudgetCouponOrder1AfterSecondEdit");
+            String budgetCouponAfterSalesReturn = scenarioData.get("expectedUtilizedBudgetCouponAfterSalesReturn");
+            String budgetLoyalty = scenarioData.get("expectedUtilizedBudgetLoyalty");
+            String budgetLoyaltyAfterSalesReturn = scenarioData.get("expectedUtilizedBudgetLoyaltyAfterSalesReturn");
 
             // Page Instantiations
             OrderStockAllocationPage stockAllocationPage = new OrderStockAllocationPage(driver);
@@ -69,6 +83,15 @@ public class CouponOrderEditFlow {
             GoodsIssueNotePage ginPage = new GoodsIssueNotePage(driver);
             CashmemoStatusPage cashmemoStatusPage = new CashmemoStatusPage(driver);
             SalesReturnPage salesReturnPage = new SalesReturnPage(driver);
+            PromotionPage promotionPage = new PromotionPage(driver);
+
+            // Utilized budget is shared and cumulative, so read it before booking and check each
+            // checkpoint as a change from this baseline. A promo is only read when it has configured
+            // expectedUtilizedBudget* values.
+            Map<String, BigDecimal> budgetBaselines = readBudgetBaselines(driver, promotionPage,
+                    promoId, anyConfigured(budgetCouponOrder2Booking, budgetCouponOrder1AfterEdit, budgetCouponOrder2AfterGin,
+                            budgetCouponOrder1AfterSecondEdit, budgetCouponAfterSalesReturn),
+                    loyaltyPromoId, anyConfigured(budgetLoyalty, budgetLoyaltyAfterSalesReturn));
 
             // STEP 1: ORDER BOOKING (via API)
             String orderNo = OrderBookingApiClient.createOrder(driver, scenarioData, "First");
@@ -78,10 +101,13 @@ public class CouponOrderEditFlow {
 
             // STEP 2: TRANSACTION INQUIRY - VALIDATE DISCOUNT (order2, baseline before any edit)
             openTransactionInquiryFor(driver, transactionInquiryPage, pjpNo, orderNo2);
-            validatePromoDiscount(driver, transactionInquiryPage, "Order 2 - baseline right after booking (before any edit)",
+            String label2Booking = "Order 2 - baseline right after booking (before any edit)";
+            validatePromoDiscount(driver, transactionInquiryPage, label2Booking,
                     orderNo2, promoId, expectedDiscountAmountOrder2Booking, result);
-            validatePromoDiscount(driver, transactionInquiryPage, "Order 2 - baseline right after booking (before any edit)",
-                    orderNo2, loyaltyPromoId, expectedDiscountAmountOrder2BookingLoyalty, result);
+            validatePromoDiscount(driver, transactionInquiryPage, label2Booking,
+                    orderNo2, loyaltyPromoId, expectedDiscountAmountLoyalty, result);
+            validateBudgetUtilized(driver, promotionPage, budgetBaselines, label2Booking, promoId, budgetCouponOrder2Booking,
+                    loyaltyPromoId, budgetLoyalty, result);
 
             // STEP 3: DELIVERY DATE (both orders)
             updateDeliveryDate(driver, deliveryDatePage, result, orderPJP, orderNo);
@@ -101,10 +127,13 @@ public class CouponOrderEditFlow {
 
             // STEP 5: TRANSACTION INQUIRY - VALIDATE DISCOUNT (order1, after first edit)
             openTransactionInquiryFor(driver, transactionInquiryPage, pjpNo, orderNo);
-            validatePromoDiscount(driver, transactionInquiryPage, "Order 1 - after first edit (qty=" + scenarioData.get("editQuantityPCS") + ", before GIN)",
+            String label1FirstEdit = "Order 1 - after first edit (qty=" + scenarioData.get("editQuantityPCS") + ", before GIN)";
+            validatePromoDiscount(driver, transactionInquiryPage, label1FirstEdit,
                     orderNo, promoId, expectedDiscountAmountOrder1AfterEdit, result);
-            validatePromoDiscount(driver, transactionInquiryPage, "Order 1 - after first edit (qty=" + scenarioData.get("editQuantityPCS") + ", before GIN)",
-                    orderNo, loyaltyPromoId, expectedDiscountAmountOrder1AfterEditLoyalty, result);
+            validatePromoDiscount(driver, transactionInquiryPage, label1FirstEdit,
+                    orderNo, loyaltyPromoId, expectedDiscountAmountLoyalty, result);
+            validateBudgetUtilized(driver, promotionPage, budgetBaselines, label1FirstEdit, promoId, budgetCouponOrder1AfterEdit,
+                    loyaltyPromoId, budgetLoyalty, result);
 
             // STEP 6: TWO SEPARATE GINS - order1 saved as-is, order2 edited on tab_3 before saving
             String ginNo1 = createAndApproveGin(driver, ginPage, ginPjp, orderNo, null, null, result);
@@ -112,10 +141,13 @@ public class CouponOrderEditFlow {
 
             // STEP 7: TRANSACTION INQUIRY - VALIDATE DISCOUNT (order2, after its GIN-with-editing)
             openTransactionInquiryFor(driver, transactionInquiryPage, pjpNo, orderNo2);
-            validatePromoDiscount(driver, transactionInquiryPage, "Order 2 - after its GIN (quantity/loss-reason edited on tab_3)",
+            String label2Gin = "Order 2 - after GIN editing";
+            validatePromoDiscount(driver, transactionInquiryPage, label2Gin,
                     orderNo2, promoId, expectedDiscountAmountOrder2AfterGin, result);
-            validatePromoDiscount(driver, transactionInquiryPage, "Order 2 - after its GIN (quantity/loss-reason edited on tab_3)",
-                    orderNo2, loyaltyPromoId, expectedDiscountAmountOrder2AfterGinLoyalty, result);
+            validatePromoDiscount(driver, transactionInquiryPage, label2Gin,
+                    orderNo2, loyaltyPromoId, expectedDiscountAmountLoyalty, result);
+            validateBudgetUtilized(driver, promotionPage, budgetBaselines, label2Gin, promoId, budgetCouponOrder2AfterGin,
+                    loyaltyPromoId, budgetLoyalty, result);
 
             // STEP 8: EDIT FIRST ORDER AGAIN (after GIN approval) - a separate qty3, since goods
             // are already issued at this point.
@@ -125,10 +157,13 @@ public class CouponOrderEditFlow {
 
             // STEP 9: TRANSACTION INQUIRY - VALIDATE DISCOUNT (order1, after second edit)
             openTransactionInquiryFor(driver, transactionInquiryPage, pjpNo, orderNo);
-            validatePromoDiscount(driver, transactionInquiryPage, "Order 1 - after second edit (qty=" + scenarioData.get("editQuantityPCSpostGIN") + ", after GIN approval)",
+            String label1SecondEdit = "Order 1 - after second edit (qty=" + scenarioData.get("editQuantityPCSpostGIN") + ", after GIN approval)";
+            validatePromoDiscount(driver, transactionInquiryPage, label1SecondEdit,
                     orderNo, promoId, expectedDiscountAmountOrder1AfterSecondEdit, result);
-            validatePromoDiscount(driver, transactionInquiryPage, "Order 1 - after second edit (qty=" + scenarioData.get("editQuantityPCSpostGIN") + ", after GIN approval)",
-                    orderNo, loyaltyPromoId, expectedDiscountAmountOrder1AfterSecondEditLoyalty, result);
+            validatePromoDiscount(driver, transactionInquiryPage, label1SecondEdit,
+                    orderNo, loyaltyPromoId, expectedDiscountAmountLoyalty, result);
+            validateBudgetUtilized(driver, promotionPage, budgetBaselines, label1SecondEdit, promoId, budgetCouponOrder1AfterSecondEdit,
+                    loyaltyPromoId, budgetLoyalty, result);
 
             // STEP 10: DELIVER BOTH ORDERS (each against its own GIN)
             cashmemoStatusPage.navigateToScreen("Cashmemo Status", "CASHMEMO-STATUS");
@@ -152,10 +187,13 @@ public class CouponOrderEditFlow {
             // Document type here is "Sales Return", not "Sales", and the document searched is the
             // Sales Return number itself, not the original order number.
             openTransactionInquiryFor(driver, transactionInquiryPage, "Sales Return", pjpNo, salesReturnNo);
-            validatePromoDiscount(driver, transactionInquiryPage, "Order 2 - Sales Return",
+            String labelSalesReturn = "Order 2 - Sales Return";
+            validatePromoDiscount(driver, transactionInquiryPage, labelSalesReturn,
                     salesReturnNo, promoId, expectedDiscountAmountOrder2AfterSalesReturn, result);
-            validatePromoDiscount(driver, transactionInquiryPage, "Order 2 - Sales Return",
-                    salesReturnNo, loyaltyPromoId, expectedDiscountAmountOrder2AfterSalesReturnLoyalty, result);
+            validatePromoDiscount(driver, transactionInquiryPage, labelSalesReturn,
+                    salesReturnNo, loyaltyPromoId, expectedDiscountAmountLoyaltyAfterSalesReturn, result);
+            validateBudgetUtilized(driver, promotionPage, budgetBaselines, labelSalesReturn, promoId, budgetCouponAfterSalesReturn,
+                    loyaltyPromoId, budgetLoyaltyAfterSalesReturn, result);
 
             result.pass("Coupon2.0 order stock allocation, editing and discount validation flow completed successfully.", driver);
 
@@ -175,9 +213,7 @@ public class CouponOrderEditFlow {
                 "expectedDiscountAmountOrder2AfterGin", "expectedDiscountAmountOrder1AfterSecondEdit",
                 "expectedDiscountAmountOrder2AfterSalesReturn", "ginPjp",
                 "SalesReturnReasonType", "salesReturnQty3",
-                "loyaltyPromoId", "expectedDiscountAmountOrder2BookingLoyalty",
-                "expectedDiscountAmountOrder1AfterEditLoyalty", "expectedDiscountAmountOrder2AfterGinLoyalty",
-                "expectedDiscountAmountOrder1AfterSecondEditLoyalty", "expectedDiscountAmountOrder2AfterSalesReturnLoyalty"
+                "loyaltyPromoId", "expectedDiscountAmountLoyalty", "expectedDiscountAmountLoyaltyAfterSalesReturn"
         };
         for (String key : keys) {
             requireScenarioValue(data, key, data.get(key));
@@ -297,6 +333,164 @@ public class CouponOrderEditFlow {
             result.pass(checkpointLabel + ": Promotion " + promoId + " on document " + orderNo
                     + " shows the expected discount of " + expectedDiscountAmount + ".", driver);
             logger.info("âœ… Discount amount correct [{}]: {} for document {}", checkpointLabel, expectedDiscountAmount, orderNo);
+        }
+    }
+
+    /**
+     * Opens Current Promotion once and checks each promo's utilized budget against the expected amount
+     * configured in ScenarioData for this checkpoint. A promo with no configured amount is skipped.
+     * Amounts are compared as absolute values, so "PKR -66" and "66" match.
+     */
+    private static void validateBudgetUtilized(
+            WebDriver driver,
+            PromotionPage promotionPage,
+            Map<String, BigDecimal> budgetBaselines,
+            String checkpointLabel,
+            String couponPromoId,
+            String expectedCouponChange,
+            String loyaltyPromoId,
+            String expectedLoyaltyChange,
+            ValidationResult result
+    ) {
+        boolean checkCoupon = !isBlank(expectedCouponChange) && budgetBaselines.containsKey(couponPromoId);
+        boolean checkLoyalty = !isBlank(expectedLoyaltyChange) && budgetBaselines.containsKey(loyaltyPromoId);
+        if (!checkCoupon && !checkLoyalty) {
+            logger.warn("Current Promotion check skipped [{}]: no expectedUtilizedBudget* values configured or no baseline row", checkpointLabel);
+            return;
+        }
+
+        promotionPage.openSchemeGrid();
+
+        if (checkCoupon) {
+            checkUtilizedBudget(driver, promotionPage, checkpointLabel, couponPromoId,
+                    budgetBaselines.get(couponPromoId), expectedCouponChange, result);
+        }
+        if (checkLoyalty) {
+            checkUtilizedBudget(driver, promotionPage, checkpointLabel, loyaltyPromoId,
+                    budgetBaselines.get(loyaltyPromoId), expectedLoyaltyChange, result);
+        }
+    }
+
+    private static boolean isBlank(String value) {
+        return value == null || value.isBlank();
+    }
+
+    private static boolean anyConfigured(String... values) {
+        for (String value : values) {
+            if (!isBlank(value)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * Reads each configured promo's utilized budget on Current Promotion before any order is booked.
+     * A promo with no configured checks, or no row on the screen, is left out of the result and
+     * its budget checks are skipped later.
+     */
+    private static Map<String, BigDecimal> readBudgetBaselines(
+            WebDriver driver,
+            PromotionPage promotionPage,
+            String couponPromoId,
+            boolean couponConfigured,
+            String loyaltyPromoId,
+            boolean loyaltyConfigured
+    ) {
+        Map<String, BigDecimal> baselines = new LinkedHashMap<>();
+        if (!couponConfigured && !loyaltyConfigured) {
+            return baselines;
+        }
+
+        promotionPage.openSchemeGrid();
+
+        if (couponConfigured) {
+            readBaseline(promotionPage, couponPromoId, baselines);
+        }
+        if (loyaltyConfigured) {
+            readBaseline(promotionPage, loyaltyPromoId, baselines);
+        }
+        return baselines;
+    }
+
+    private static void readBaseline(PromotionPage promotionPage, String promoId, Map<String, BigDecimal> baselines) {
+        promotionPage.filterPromo(promoId);
+        try {
+            String text = promotionPage.getFirstRowAchievedValue();
+            BigDecimal amount = parseAchieved(text);
+            if (amount == null) {
+                logger.warn("Budget baseline for promo {} could not be read as an amount [{}]; its budget checks are skipped", promoId, text);
+                return;
+            }
+            baselines.put(promoId, amount);
+            logger.info("Budget baseline before booking: promo {} utilized {}", promoId, text);
+        } catch (TimeoutException e) {
+            logger.warn("Budget baseline: promo {} has no row on Current Promotion; its budget checks are skipped", promoId);
+        }
+    }
+
+    private static void checkUtilizedBudget(
+            WebDriver driver,
+            PromotionPage promotionPage,
+            String checkpointLabel,
+            String promoId,
+            BigDecimal baseline,
+            String expectedChange,
+            ValidationResult result
+    ) {
+        promotionPage.filterPromo(promoId);
+
+        String utilizedBudget;
+        try {
+            utilizedBudget = promotionPage.getFirstRowAchievedValue();
+        } catch (TimeoutException e) {
+            result.fail(checkpointLabel + ": Promotion " + promoId + " was not found on the Current Promotion screen.", driver);
+            logger.info("Budget row not found [{}]: promo {}", checkpointLabel, promoId);
+            return;
+        }
+
+        BigDecimal utilized = parseAchieved(utilizedBudget);
+        BigDecimal expected = parseAmount(expectedChange);
+
+        if (utilized == null || expected == null) {
+            result.fail(checkpointLabel + ": Promotion " + promoId + " utilized budget [" + utilizedBudget
+                    + "] or expected change [" + expectedChange + "] could not be read as an amount.", driver);
+            return;
+        }
+
+        BigDecimal actualChange = utilized.subtract(baseline);
+        String summary = "utilized budget went from " + baseline.toPlainString() + " to " + utilizedBudget
+                + " (change of " + actualChange.toPlainString() + ")";
+
+        if (actualChange.compareTo(expected) != 0) {
+            result.fail(checkpointLabel + ": Promotion " + promoId + " " + summary + ", but a change of "
+                    + expectedChange + " was expected.", driver);
+            logger.info("Utilized budget change mismatch [{}]: promo {} {} expected {}",
+                    checkpointLabel, promoId, summary, expectedChange);
+        } else {
+            result.pass(checkpointLabel + ": Promotion " + promoId + " " + summary + ", as expected.", driver);
+            logger.info("Utilized budget change matches [{}]: promo {} {}", checkpointLabel, promoId, summary);
+        }
+    }
+
+    // The grid leaves Achieved Value empty until a promo has been consumed, which means 0 used.
+    private static BigDecimal parseAchieved(String text) {
+        return isBlank(text) ? BigDecimal.ZERO : parseAmount(text);
+    }
+
+    // "PKR -66", "-66.00" and "66" all parse to 66 - sign and currency text differ between screens.
+    private static BigDecimal parseAmount(String text) {
+        if (text == null) {
+            return null;
+        }
+        String digits = text.replaceAll("[^0-9.]", "");
+        if (digits.isEmpty() || ".".equals(digits)) {
+            return null;
+        }
+        try {
+            return new BigDecimal(digits);
+        } catch (NumberFormatException e) {
+            return null;
         }
     }
 }
