@@ -4,9 +4,13 @@ import org.apache.logging.log4j.Logger;
 import org.example.ui.utilities.Event;
 import org.example.ui.utilities.LoggerUtil;
 import org.openqa.selenium.By;
+import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.ExpectedConditions;
+import org.openqa.selenium.support.ui.WebDriverWait;
+
+import java.time.Duration;
 
 import static org.example.ui.utilities.LoaderWait.waitForLoaderToDisappear;
 
@@ -21,7 +25,8 @@ public class PromotionPage extends basePage {
     private final By schemeButton = By.xpath("//button[normalize-space()='Scheme']");
     private final By gridFilterCheckbox = By.id("gridFilterCheckbox");
     private final By codeFilter = By.id("rowfilter_code");
-    private final By firstRowCode = By.id("row_1_code");
+    // PK labels the column "code", PH labels it "promo_code"
+    private final By firstRowCode = By.cssSelector("#row_1_code, #row_1_promo_code");
     private final By firstRowAchievedValue = By.id("row_1_achieved_value");
 
     public PromotionPage(WebDriver driver) {
@@ -51,9 +56,19 @@ public class PromotionPage extends basePage {
         wait.until(ExpectedConditions.textToBe(firstRowCode, promoId));
     }
 
-    /** Achieved (utilized) value of the first row; empty text when nothing has been consumed yet. */
+    /**
+     * Achieved (utilized) value of the first row. The grid can render the row before its value arrives,
+     * so wait briefly for a non-empty value; a promo that has consumed nothing stays empty, which is
+     * returned as empty text once the wait runs out.
+     */
     public String getFirstRowAchievedValue() {
-        WebElement cell = wait.until(ExpectedConditions.presenceOfElementLocated(firstRowAchievedValue));
-        return cell.getText().trim();
+        wait.until(ExpectedConditions.presenceOfElementLocated(firstRowAchievedValue));
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(5))
+                    .until(d -> !d.findElement(firstRowAchievedValue).getText().trim().isEmpty());
+        } catch (TimeoutException ignored) {
+            // nothing consumed yet
+        }
+        return driver.findElement(firstRowAchievedValue).getText().trim();
     }
 }
