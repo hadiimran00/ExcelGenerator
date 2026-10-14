@@ -7,6 +7,7 @@ import org.apache.logging.log4j.Logger;
 import org.openqa.selenium.Cookie;
 import org.openqa.selenium.WebDriver;
 
+import java.math.BigDecimal;
 import java.net.URI;
 import java.time.Instant;
 import java.util.LinkedHashMap;
@@ -49,7 +50,22 @@ public class OrderBookingApiClient {
         String bearerToken = GeneratedDataStore.getBearerToken();
         String sessionId = getSessionCookieValue(driver);
         String baseUrl = getBaseUrl(driver);
-        String payload = buildPayload(outlet, sellCat, section, daily, schemeCode, loyaltyPromoId, productCode, quantityPcs);
+        // Optional per-country overrides: the booking API wants entity codes where the UI dropdowns
+        // (which share the OUTLET/SELLCAT/SECTION keys) may need descriptive text, and the loyalty
+        // scheme code can differ from the loyaltyPromoId searched for on the screens. Defaults keep
+        // the original PK payload.
+        String apiOutlet = optional(scenarioData, "apiOutlet", outlet);
+        String apiSellCat = optional(scenarioData, "apiSellCat", sellCat);
+        String apiSection = optional(scenarioData, "apiSection", section);
+        String loyaltySchemeCode = optional(scenarioData, "LOYALTYB2BPROMO", loyaltyPromoId);
+        Map<String, Object> detailOverrides = new LinkedHashMap<>();
+        detailOverrides.put("principalCode", optional(scenarioData, "detailPrincipalCode", "1"));
+        detailOverrides.put("barCode", optional(scenarioData, "barCode", "6281006704732"));
+        detailOverrides.put("rate", new BigDecimal(optional(scenarioData, "rate", "128.3475")));
+        detailOverrides.put("retailRate", new BigDecimal(optional(scenarioData, "retailRate", "128.3475")));
+        detailOverrides.put("taxRate", new BigDecimal(optional(scenarioData, "taxRate", "0")));
+        String payload = buildPayload(apiOutlet, apiSellCat, apiSection, daily, schemeCode, loyaltySchemeCode,
+                productCode, quantityPcs, detailOverrides);
 
         logger.info("🔑 [{}] Using token (masked): {}...{} | SESSIONID (masked): {}...{} | all cookies: {} | base URL: {}",
                 label,
@@ -97,7 +113,8 @@ public class OrderBookingApiClient {
 
     private static String buildPayload(
             String outlet, String sellCat, String section, String daily,
-            String schemeCode, String loyaltyPromoId, String productCode, String quantityPcs) {
+            String schemeCode, String loyaltyPromoId, String productCode, String quantityPcs,
+            Map<String, Object> detailOverrides) {
         try {
             Map<String, Object> scheme = new LinkedHashMap<>();
             scheme.put("schemeCode", schemeCode);
@@ -112,17 +129,17 @@ public class OrderBookingApiClient {
             loyaltyScheme.put("schemeIdentifier", "COUPON");
 
             Map<String, Object> detail = new LinkedHashMap<>();
-            detail.put("principalCode", "1");
+            detail.put("principalCode", detailOverrides.get("principalCode"));
             detail.put("serialNo", "1");
             detail.put("productCode", productCode);
-            detail.put("barCode", "6281006704732");
+            detail.put("barCode", detailOverrides.get("barCode"));
             detail.put("batch", "1-1");
             detail.put("quantity1", 0);
             detail.put("quantity2", 0);
             detail.put("quantity3", Integer.parseInt(quantityPcs.trim()));
-            detail.put("rate", 128.3475);
-            detail.put("retailRate", 128.3475);
-            detail.put("taxRate", 0);
+            detail.put("rate", detailOverrides.get("rate"));
+            detail.put("retailRate", detailOverrides.get("retailRate"));
+            detail.put("taxRate", detailOverrides.get("taxRate"));
             detail.put("reason", "");
 
             Map<String, Object> body = new LinkedHashMap<>();
@@ -148,6 +165,11 @@ public class OrderBookingApiClient {
         } catch (Exception e) {
             throw new RuntimeException("Failed to build Order Booking API payload", e);
         }
+    }
+
+    private static String optional(Map<String, String> data, String key, String fallback) {
+        String value = data.get(key);
+        return value == null || value.isBlank() ? fallback : value.trim();
     }
 
     private static String getSessionCookieValue(WebDriver driver) {
