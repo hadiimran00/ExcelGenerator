@@ -193,15 +193,21 @@ public abstract class basePage {
         }
         waitForLoader();
 
-        // 6. Primary locator: matching item content inside #dropdown-content
+        // 6. Primary locator: matching item content inside #dropdown-content.
+        // Matching is case-insensitive (XPath 1.0 has no lower-case(), so both sides go through
+        // translate()): option text casing differs between countries, e.g. "Area close" vs "Area Close".
+        String lowerText = "translate(%s,'ABCDEFGHIJKLMNOPQRSTUVWXYZ','abcdefghijklmnopqrstuvwxyz')";
+        String lowerValue = value.toLowerCase();
         By primaryDropdownContent = By.xpath(
-                "(//div[@id='dropdown-content']//*[contains(@class,'dx-item-content') and contains(text(),'" + value + "')])[1]"
+                "(//div[@id='dropdown-content']//*[contains(@class,'dx-item-content') and contains("
+                        + String.format(lowerText, "text()") + ",'" + lowerValue + "')])[1]"
         );
 
         // Fallback locator: searching all DevExtreme overlay containers
         By fallbackDropdownContent = By.xpath(
                 "(//*[contains(@class,'dx-overlay-content') or contains(@class,'dx-dropdowneditor-overlay') or @id='dropdown-content']" +
-                        "//*[contains(@class,'dx-item-content') or contains(@class,'dx-list-item-content')][contains(normalize-space(.),'" + value + "')])[1]"
+                        "//*[contains(@class,'dx-item-content') or contains(@class,'dx-list-item-content')][contains("
+                        + String.format(lowerText, "normalize-space(.)") + ",'" + lowerValue + "')])[1]"
         );
 
         // Fallback first option
