@@ -96,8 +96,45 @@ public class CouponOrderEditFlow {
             // STEP 1: ORDER BOOKING (via API)
             String orderNo = OrderBookingApiClient.createOrder(driver, scenarioData, "First");
             String orderNo2 = OrderBookingApiClient.createOrder(driver, scenarioData, "Second");
+            String orderNo3 = OrderBookingApiClient.createOrder(driver, scenarioData, "Third");
+            // The fourth order is only booked when a below-slab quantity is configured.
+            String belowSlabQty = scenarioData.get("belowSlabQuantityPCS");
+            String orderNo4 = isBlank(belowSlabQty) ? null : OrderBookingApiClient.createOrder(driver, scenarioData, "Fourth");
             scenarioData.put("orderNo", orderNo);
             scenarioData.put("orderNo2", orderNo2);
+            scenarioData.put("orderNo3", orderNo3);
+
+            // Orders 3 and 4 exist only to exercise cancellation: both are cancelled before the first
+            // Current Promotion check, so neither shows up in any later discount or budget expectation.
+            OrderCancellationPage cancellationPage = new OrderCancellationPage(driver);
+            cancellationPage.navigateToScreen(OrderCancellationPage.SCREEN_NAME, OrderCancellationPage.SCREEN_ID);
+            waitForLoaderToDisappear(driver);
+            cancellationPage.cancelOrder(scenarioData, orderNo3, result);
+
+            if (orderNo4 != null) {
+                scenarioData.put("orderNo4", orderNo4);
+                // Order 4 is edited below the coupon's slab first: the slab coupon should drop off
+                // while the flat loyalty promo stays, and only then is it cancelled.
+                updateDeliveryDate(driver, deliveryDatePage, result, orderPJP, orderNo4);
+
+                stockAllocationPage.navigateToScreen("stock allocation", "DYL_201904");
+                waitForLoaderToDisappear(driver);
+                stockAllocationPage.unallocateOrder(pjpNo, orderNo4, result);
+
+                orderEditingPage.navigateToScreen("order editing", "ORDER_EDITING");
+                waitForLoaderToDisappear(driver);
+                orderEditingPage.editOrder(scenarioData, orderNo4, belowSlabQty, result);
+
+                openTransactionInquiryFor(driver, transactionInquiryPage, pjpNo, orderNo4);
+                String label4 = "Order 4 - edited to " + belowSlabQty + " PCS (below the coupon slab)";
+                validatePromoNotApplied(driver, transactionInquiryPage, label4, orderNo4, promoId, result);
+                validatePromoDiscount(driver, transactionInquiryPage, label4,
+                        orderNo4, loyaltyPromoId, expectedDiscountAmountLoyalty, result);
+
+                cancellationPage.navigateToScreen(OrderCancellationPage.SCREEN_NAME, OrderCancellationPage.SCREEN_ID);
+                waitForLoaderToDisappear(driver);
+                cancellationPage.cancelOrder(scenarioData, orderNo4, result);
+            }
 
             // STEP 2: TRANSACTION INQUIRY - VALIDATE DISCOUNT (order2, baseline before any edit)
             openTransactionInquiryFor(driver, transactionInquiryPage, pjpNo, orderNo2);
@@ -149,21 +186,48 @@ public class CouponOrderEditFlow {
             validateBudgetUtilized(driver, promotionPage, budgetBaselines, label2Gin, promoId, budgetCouponOrder2AfterGin,
                     loyaltyPromoId, budgetLoyalty, result);
 
-            // STEP 8: EDIT FIRST ORDER AGAIN (after GIN approval) - a separate qty3, since goods
-            // are already issued at this point.
-            orderEditingPage.navigateToScreen("order editing", "ORDER_EDITING");
-            waitForLoaderToDisappear(driver);
-            orderEditingPage.editOrder(scenarioData, orderNo, scenarioData.get("editQuantityPCSpostGIN"), result);
+            // STEP 8-9: AFTER GIN - order 1 is either edited again (PK) or, where Order Editing is not
+            // possible once goods are issued (PH, postGinAction=FRESH_SALES_RETURN), given a fresh
+            // sales return; either way its discount and budget are checked afterwards.
+            if ("FRESH_SALES_RETURN".equalsIgnoreCase(scenarioData.getOrDefault("postGinAction", ""))) {
+                FreshSalesReturnPage freshReturnPage = new FreshSalesReturnPage(driver);
+                freshReturnPage.navigateToScreen("Fresh Sales Return", "FRESH_SALES_RETURN");
+                waitForLoaderToDisappear(driver);
+                String freshReturnNo = freshReturnPage.createReturnHeader(ginPjp, orderNo, result);
+                requireScenarioValue(scenarioData, "freshReturnQty3", scenarioData.get("freshReturnQty3"));
+                String freshReason = freshReturnPage.enterReturnDetails(null,
+                        scenarioData.get("freshReturnQty3"), scenarioData.get("returnReasonType"));
+                freshReturnPage.validateAndSave(result);
 
-            // STEP 9: TRANSACTION INQUIRY - VALIDATE DISCOUNT (order1, after second edit)
-            openTransactionInquiryFor(driver, transactionInquiryPage, pjpNo, orderNo);
-            String label1SecondEdit = "Order 1 - after second edit (qty=" + scenarioData.get("editQuantityPCSpostGIN") + ", after GIN approval)";
-            validatePromoDiscount(driver, transactionInquiryPage, label1SecondEdit,
-                    orderNo, promoId, expectedDiscountAmountOrder1AfterSecondEdit, result);
-            validatePromoDiscount(driver, transactionInquiryPage, label1SecondEdit,
-                    orderNo, loyaltyPromoId, expectedDiscountAmountLoyalty, result);
-            validateBudgetUtilized(driver, promotionPage, budgetBaselines, label1SecondEdit, promoId, budgetCouponOrder1AfterSecondEdit,
-                    loyaltyPromoId, budgetLoyalty, result);
+                // Checked on the return document itself, not the original order.
+                openTransactionInquiryFor(driver, transactionInquiryPage, "Fresh Sales Return", pjpNo, freshReturnNo);
+                String labelFreshReturn = "Order 1 - fresh sales return (qty=" + scenarioData.get("freshReturnQty3")
+                        + ", reason=" + freshReason + ")";
+                validatePromoDiscount(driver, transactionInquiryPage, labelFreshReturn,
+                        freshReturnNo, promoId, scenarioData.get("expectedDiscountAmountOrder1AfterFreshReturn"), result);
+                validatePromoDiscount(driver, transactionInquiryPage, labelFreshReturn,
+                        freshReturnNo, loyaltyPromoId, scenarioData.get("expectedDiscountAmountLoyaltyAfterFreshReturn"), result);
+                validateBudgetUtilized(driver, promotionPage, budgetBaselines, labelFreshReturn, promoId,
+                        scenarioData.get("expectedUtilizedBudgetCouponAfterFreshReturn"),
+                        loyaltyPromoId, scenarioData.get("expectedUtilizedBudgetLoyaltyAfterFreshReturn"), result);
+            } else {
+                // STEP 8: EDIT FIRST ORDER AGAIN (after GIN approval) - a separate qty3, since goods
+                // are already issued at this point.
+                orderEditingPage.navigateToScreen("order editing", "ORDER_EDITING");
+                waitForLoaderToDisappear(driver);
+                orderEditingPage.editOrder(scenarioData, orderNo, scenarioData.get("editQuantityPCSpostGIN"), result);
+
+                // STEP 9: TRANSACTION INQUIRY - VALIDATE DISCOUNT (order1, after second edit)
+                openTransactionInquiryFor(driver, transactionInquiryPage, pjpNo, orderNo);
+                String label1SecondEdit = "Order 1 - after second edit (qty=" + scenarioData.get("editQuantityPCSpostGIN") + ", after GIN approval)";
+                validatePromoDiscount(driver, transactionInquiryPage, label1SecondEdit,
+                        orderNo, promoId, expectedDiscountAmountOrder1AfterSecondEdit, result);
+                validatePromoDiscount(driver, transactionInquiryPage, label1SecondEdit,
+                        orderNo, loyaltyPromoId, expectedDiscountAmountLoyalty, result);
+                validateBudgetUtilized(driver, promotionPage, budgetBaselines, label1SecondEdit, promoId, budgetCouponOrder1AfterSecondEdit,
+                        loyaltyPromoId, budgetLoyalty, result);
+
+            }
 
             // STEP 10: DELIVER BOTH ORDERS (each against its own GIN)
             cashmemoStatusPage.navigateToScreen("Cashmemo Status", "CASHMEMO-STATUS");
@@ -194,6 +258,16 @@ public class CouponOrderEditFlow {
                     salesReturnNo, loyaltyPromoId, expectedDiscountAmountLoyaltyAfterSalesReturn, result);
             validateBudgetUtilized(driver, promotionPage, budgetBaselines, labelSalesReturn, promoId, budgetCouponAfterSalesReturn,
                     loyaltyPromoId, budgetLoyaltyAfterSalesReturn, result);
+
+            // Optional final check, for scenarios that return every quantity they booked: both promos'
+            // utilized budgets should be back at the value read before the first booking.
+            if ("YES".equalsIgnoreCase(scenarioData.getOrDefault("verifyBudgetRestored", "")) && !budgetBaselines.isEmpty()) {
+                promotionPage.openSchemeGrid();
+                for (Map.Entry<String, BigDecimal> baseline : budgetBaselines.entrySet()) {
+                    checkUtilizedBudget(driver, promotionPage, "End of flow - all quantities returned",
+                            baseline.getKey(), baseline.getValue(), "0", result);
+                }
+            }
 
             result.pass("Coupon2.0 order stock allocation, editing and discount validation flow completed successfully.", driver);
 
@@ -333,6 +407,28 @@ public class CouponOrderEditFlow {
             result.pass(checkpointLabel + ": Promotion " + promoId + " on document " + orderNo
                     + " shows the expected discount of " + expectedDiscountAmount + ".", driver);
             logger.info("âœ… Discount amount correct [{}]: {} for document {}", checkpointLabel, expectedDiscountAmount, orderNo);
+        }
+    }
+
+    /**
+     * Filters the open document's Total Offering tab by promoId and expects NO row for it - used where a
+     * promo should have dropped off (e.g. the order's quantity fell below the slab).
+     */
+    private static void validatePromoNotApplied(
+            WebDriver driver,
+            TransactionInquiryPage transactionInquiryPage,
+            String checkpointLabel,
+            String orderNo,
+            String promoId,
+            ValidationResult result
+    ) {
+        transactionInquiryPage.filterPromotion(promoId);
+        if (transactionInquiryPage.isPromotionApplied(promoId, Duration.ofSeconds(10))) {
+            result.fail(checkpointLabel + ": Promotion " + promoId + " is still applied to document " + orderNo
+                    + " but was expected to drop off.", driver);
+        } else {
+            result.pass(checkpointLabel + ": Promotion " + promoId + " is not applied to document " + orderNo
+                    + ", as expected.", driver);
         }
     }
 

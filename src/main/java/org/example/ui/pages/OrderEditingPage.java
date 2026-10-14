@@ -71,9 +71,11 @@ public class OrderEditingPage extends basePage {
         waitForLoader();
 
         // "No Scheme" is an Order Editing reason code (siblings: "Order Change QTY",
-        // "Wrong Order /No Order", "Stock Already Avl.") - unrelated to the "reasonType"
-        // scenario key used by SAN/return flows for stock reason codes ("Sound CAT" etc).
-        String reasonType = "No Scheme";
+        // "Wrong Order /No Order", "Stock Already Avl.", "Credit Exceeded") - unrelated to the
+        // "reasonType" scenario key used by SAN/return flows for stock reason codes ("Sound CAT"
+        // etc). Overridable per country with the optional "orderEditReason" scenario key.
+        String configuredReason = scenarioData.get("orderEditReason");
+        String reasonType = configuredReason == null || configuredReason.isBlank() ? "No Scheme" : configuredReason.trim();
 
         // The DevExtreme grid re-renders this row after a quantity edit, which can invalidate
         // the reasonType element reference mid-selection; retry once past that transient failure.
