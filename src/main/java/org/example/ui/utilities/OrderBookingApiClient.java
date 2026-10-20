@@ -4,11 +4,9 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import io.restassured.RestAssured;
 import io.restassured.response.Response;
 import org.apache.logging.log4j.Logger;
-import org.openqa.selenium.Cookie;
 import org.openqa.selenium.WebDriver;
 
 import java.math.BigDecimal;
-import java.net.URI;
 import java.time.Instant;
 import java.util.LinkedHashMap;
 import java.util.List;
@@ -48,8 +46,8 @@ public class OrderBookingApiClient {
         requireScenarioValue(scenarioData, "QuantityPCS", quantityPcs);
 
         String bearerToken = GeneratedDataStore.getBearerToken();
-        String sessionId = getSessionCookieValue(driver);
-        String baseUrl = getBaseUrl(driver);
+        String sessionId = ApiSession.getSessionCookieValue(driver);
+        String baseUrl = ApiSession.getBaseUrl(driver);
         // Optional per-country overrides: the booking API wants entity codes where the UI dropdowns
         // (which share the OUTLET/SELLCAT/SECTION keys) may need descriptive text, and the loyalty
         // scheme code can differ from the loyaltyPromoId searched for on the screens. Defaults keep
@@ -170,18 +168,5 @@ public class OrderBookingApiClient {
     private static String optional(Map<String, String> data, String key, String fallback) {
         String value = data.get(key);
         return value == null || value.isBlank() ? fallback : value.trim();
-    }
-
-    private static String getSessionCookieValue(WebDriver driver) {
-        Cookie cookie = driver.manage().getCookieNamed("SESSIONID");
-        if (cookie == null) {
-            throw new RuntimeException("SESSIONID cookie not found in browser session.");
-        }
-        return cookie.getValue();
-    }
-
-    private static String getBaseUrl(WebDriver driver) {
-        URI uri = URI.create(driver.getCurrentUrl());
-        return uri.getScheme() + "://" + uri.getAuthority();
     }
 }
