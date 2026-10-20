@@ -71,7 +71,9 @@ public class StockReconciliationExcel {
                             currentQty = Double.parseDouble(qtyCell.getStringCellValue().trim());
                         }
 
-                        double newQty = currentQty + adjustment;
+                        // Decimal arithmetic so e.g. 3.2 - 2 is written as 1.2, not 1.2000000000000002
+                        double newQty = java.math.BigDecimal.valueOf(currentQty)
+                                .add(java.math.BigDecimal.valueOf(adjustment)).doubleValue();
 
                         // Preserve original cell formatting type
                         if (qtyCell.getCellType() == CellType.STRING) {

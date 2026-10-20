@@ -54,6 +54,13 @@ public class ExcelGen {
                     Cell cell = row.getCell(colIndex);
                     if (cell == null) {
                         cell = row.createCell(colIndex);
+                    } else {
+                        // Recreate the cell: app-exported files use inline strings, and setCellValue on those
+                        // keeps the old inline text next to the new value (the upload then reads "20262026")
+                        CellStyle style = cell.getCellStyle();
+                        row.removeCell(cell);
+                        cell = row.createCell(colIndex);
+                        cell.setCellStyle(style);
                     }
 
                     // Set value based on type
@@ -116,6 +123,30 @@ public class ExcelGen {
                             String formattedDate = date.toString(); // yyyy-MM-dd
                             generated = formattedDate;
                             cell.setCellValue(generated);
+                            GeneratedDataStore.store(testId, columnName, generated);
+                            break;
+                        case "YEAR":
+                            // length is a month offset (same as MONTH) so DEC + 1 also moves the year
+                            int yearOffset = (int) ruleConfig.getOrDefault("length", 0);
+                            generated = String.valueOf(LocalDate.now().plusMonths(yearOffset).getYear());
+                            cell.setCellValue(generated);
+                            GeneratedDataStore.store(testId, columnName, generated);
+                            break;
+                        case "MONTH":
+                            int monthOffset = (int) ruleConfig.getOrDefault("length", 0);
+                            // Two digits (01-12), as the app exports CAL_MTH
+                            generated = String.format("%02d", LocalDate.now().plusMonths(monthOffset).getMonthValue());
+                            cell.setCellValue(generated);
+                            GeneratedDataStore.store(testId, columnName, generated);
+                            break;
+                        case "YEAR_NUM":
+                        case "MONTH_NUM":
+                            // Same as YEAR / MONTH but written as a number, for uploads that reject text (PH target)
+                            int numOffset = (int) ruleConfig.getOrDefault("length", 0);
+                            LocalDate numDate = LocalDate.now().plusMonths(numOffset);
+                            int number = "YEAR_NUM".equals(type) ? numDate.getYear() : numDate.getMonthValue();
+                            cell.setCellValue(number);
+                            generated = String.valueOf(number);
                             GeneratedDataStore.store(testId, columnName, generated);
                             break;
                         case "COORDINATES":
