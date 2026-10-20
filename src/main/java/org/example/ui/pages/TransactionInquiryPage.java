@@ -68,6 +68,35 @@ public class TransactionInquiryPage extends basePage {
         waitForLoaderToDisappear(driver);
     }
 
+    /** Filters the document grid by document number and reads one column of its row (e.g. the gross amount). */
+    public String getDocumentColumnValue(String documentNo, String columnId) {
+        Event.robustClick(driver, gridFilterCheckbox);
+        WebElement documentNoElement = wait.until(ExpectedConditions.elementToBeClickable(docNoFilter));
+        documentNoElement.clear();
+        documentNoElement.sendKeys(documentNo);
+        waitForLoaderToDisappear(driver);
+
+        List<WebElement> cells = driver.findElements(By.id(columnId));
+        if (cells.isEmpty()) {
+            // Column id not known yet - log the row's cells so the right one can be configured
+            driver.findElements(By.cssSelector("td[id^='row_1_']"))
+                    .forEach(td -> logger.info("Transaction Inquiry cell {} = {}", td.getAttribute("id"), td.getAttribute("textContent").trim()));
+            throw new IllegalStateException("Column [" + columnId + "] not found for document " + documentNo);
+        }
+        // The grid scrolls sideways, and getText() is empty for columns off-screen
+        return cells.get(0).getAttribute("textContent").trim();
+    }
+
+    /** Another column of the row already filtered by getDocumentColumnValue (that call toggles the filter row). */
+    public String getFilteredRowColumnValue(String columnId) {
+        List<WebElement> cells = driver.findElements(By.id(columnId));
+        if (cells.isEmpty()) {
+            throw new IllegalStateException("Column [" + columnId + "] not found on the filtered row");
+        }
+        // The grid scrolls sideways, and getText() is empty for columns off-screen
+        return cells.get(0).getAttribute("textContent").trim();
+    }
+
     public void searchPromotion(String promoId) {
         openTotalOfferingTab();
         filterPromotion(promoId);

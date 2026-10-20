@@ -176,6 +176,12 @@ public class ModeExecutionHandler {
                 break;
             }
 
+            case "TARGET_SETUP": {
+                ValidationResult targetResult = TargetSetupFlow.run(driver, screenName, scenarioData, templatePath, rules, testID, screens, resourcesFolder, downloadDir);
+                TestSummary.appendValidation(targetResult);
+                break;
+            }
+
             default:
                 logger.warn("❌ Unknown mode: {}", mode);
         }
