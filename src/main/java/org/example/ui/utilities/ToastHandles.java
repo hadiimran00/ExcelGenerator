@@ -34,8 +34,13 @@ public class ToastHandles {
                         }
                     }
 
-                    // Scan for active toast/notification content
-                    List<WebElement> notes = d.findElements(By.xpath("//*[starts-with(@id, 'notify_text_')]"));
+                    // Scan for active toast/notification content: the app's notify_text_ messages, or the
+                    // DevExtreme toast some screens show instead (e.g. Sales Return Without Reference validate):
+                    // <div class="dx-toast-content"><div class="dx-toast-message" role="alert">Validation successfully</div></div>
+                    // One XPath for both: a separate lookup for the missing kind waits out the implicit wait
+                    // on every poll, and the short-lived toast is gone before it is checked.
+                    List<WebElement> notes = d.findElements(By.xpath("//*[starts-with(@id, 'notify_text_')]"
+                            + " | //div[contains(@class,'dx-toast-content')]//div[contains(@class,'dx-toast-message')]"));
                     for (WebElement note : notes) {
                         String text = note.getText().trim();
                         if (!text.isEmpty()) {
