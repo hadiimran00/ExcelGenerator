@@ -231,8 +231,8 @@ public class CouponOrderEditFlow {
 
             // STEP 10: DELIVER BOTH ORDERS (each against its own GIN)
             cashmemoStatusPage.navigateToScreen("Cashmemo Status", "CASHMEMO-STATUS");
-            cashmemoStatusPage.deliverOrder(ginPjp, ginNo1, orderNo, result);
-            cashmemoStatusPage.deliverOrder(ginPjp, ginNo2, orderNo2, result);
+            cashmemoStatusPage.deliverOrder(ginPjp, ginNo1, orderNo, scenarioData, result);
+            cashmemoStatusPage.deliverOrder(ginPjp, ginNo2, orderNo2, scenarioData, result);
 
             // STEP 11: SALES RETURN (order2 only)
             salesReturnPage.navigateToScreen("Sales Return", "DYL_201801");
