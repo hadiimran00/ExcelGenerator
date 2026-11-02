@@ -27,8 +27,8 @@ public class LocusUploadFlow {
             String downloadDir
     ) {
 
-        // screenName used if we have to bail before we even know which screen we're on
-        String screenName = (String) transactionInquiryScreen.getOrDefault("screenName", "Locus Upload Flow");
+        // Report under the Locus Upload screen's own name (its config row), so the result sits with its upload row
+        String screenName = (String) locusUploadScreen.getOrDefault("screenName", "Locus Upload");
         ValidationResult result = new ValidationResult(screenName);
 
         logger.info("=====================================================");

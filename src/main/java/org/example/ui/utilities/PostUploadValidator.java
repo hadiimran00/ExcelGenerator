@@ -29,6 +29,19 @@ public class PostUploadValidator {
                                        String testId,
                                        String uploadedFilePath,
                                        String downloadDir, String validateMode, Map<String, String> scenarioData) throws Exception {
+        return run(driver, validationsSheet, testId, uploadedFilePath, downloadDir, validateMode, scenarioData, null);
+    }
+
+    /**
+     * reportScreenName: the screen's name from the Screens sheet. The result is reported under it so the check
+     * joins that screen's upload/download row; without it the Validations-sheet screenName is used.
+     */
+    public static ValidationResult run(WebDriver driver,
+                                       Map<String, Object> validationsSheet,
+                                       String testId,
+                                       String uploadedFilePath,
+                                       String downloadDir, String validateMode, Map<String, String> scenarioData,
+                                       String reportScreenName) throws Exception {
        System.out.println(validationsSheet);
         // COMPARE mode doesn't require Validation sheet
         if (!"COMPARE".equals(validateMode)) {
@@ -47,7 +60,8 @@ public class PostUploadValidator {
         String columnId = str(validationsSheet, "columnId");
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(5));
 
-        ValidationResult result = new ValidationResult(screenName);
+        ValidationResult result = new ValidationResult(
+                reportScreenName != null && !reportScreenName.isBlank() ? reportScreenName : screenName);
         if (validationsSheet.isEmpty()) {
             logger.info("⏩ No validation configuration found. Skipping validation.");
             return null;
