@@ -5,6 +5,7 @@ import org.example.ui.utilities.ToastHandles;
 import org.example.ui.utilities.ValidationResult;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
@@ -91,11 +92,12 @@ public class GoodsIssueNotePage extends basePage {
         Event.robustClick(driver, saveAllBtn);
         ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
         waitForLoader();
-    }
+    }   
 
     public String getFirstRowGinNoAndOpen() {
         click(tab1);
         waitForLoader();
+
         String ginNo = find(firstRowGinNo).getText().trim();
         click(firstRowGinNo);
         waitForLoader();
@@ -104,6 +106,23 @@ public class GoodsIssueNotePage extends basePage {
 
     public void approveStep(String comment, ValidationResult result) {
         click(forwardBtn);
+        // The popup can re-render after opening and lose the typed comment ("Please add comments"): the popup
+        // stays open, so type the comment there once more and save again
+        ValidationResult firstTry = new ValidationResult(result.screenName);
+        try {
+            saveForwardPopup(comment, firstTry);
+            result.passes.addAll(firstTry.passes);
+        } catch (RuntimeException e) {
+            if (driver.findElements(commentsInput).stream().noneMatch(WebElement::isDisplayed)) {
+                throw e;
+            }
+            // The refused save's message is still up; wait it out so the check reads this save's message
+            ToastHandles.waitForNoNotification(driver, Duration.ofSeconds(15));
+            saveForwardPopup(comment, result);
+        }
+    }
+
+    private void saveForwardPopup(String comment, ValidationResult result) {
         type(commentsInput, comment);
         click(forwardPopUpSaveBtn);
         ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
