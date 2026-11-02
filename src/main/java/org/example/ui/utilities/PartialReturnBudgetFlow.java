@@ -64,12 +64,16 @@ public class PartialReturnBudgetFlow {
             sanPage.fillSANHeader(businessEntity, docType);
             if (sanPage.addSANDetailRowAndRemoveStock(freeProductName, scenarioData.getOrDefault("stockType", "01-Sound"), scenarioData.getOrDefault("reasonType", "Sound CAT"), scenarioData.getOrDefault("batch", "1-1"))) {
                 sanPage.executeApprovalSteps(docType);
+                result.pass("Free SKU " + freeProductName + " stock removed through SAN (" + docType + ", " + businessEntity + ")");
+            } else {
+                result.pass("Free SKU " + freeProductName + " had no stock to remove in " + businessEntity);
             }
 
             // STEP 1: INITIAL BUDGET EXPORT
             sanPage.navigateToScreen("Budget Setup", "BUDGET_LAYOUT");
             waitForLoaderToDisappear(driver);
-            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result, budgetTabId);
+            // Budget use adds up across runs, so the first export is the baseline the later checks must keep
+            String budgetBaseline = exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, null, result, budgetTabId);
 
             // STEP 2: ORDER BOOKING
             orderBookingPage.navigateToScreen("Order Booking", "ORDER_BOOKING");
@@ -86,15 +90,23 @@ public class PartialReturnBudgetFlow {
             // STEP 3: TRANSACTION INQUIRY
             executeTransactionInquiry(driver, transactionInquiryPage, scenarioData, orderNo, budgetPromoId, "Sales", result);
 
+            // STEP 3.5: THIRD ORDER, CANCELLED - the step 4 budget check covers it too
+            orderBookingPage.navigateToScreen("Order Booking", "ORDER_BOOKING");
+            String orderNo3 = createOrder(orderBookingPage, scenarioData, "Third");
+            OrderCancellationPage cancellationPage = new OrderCancellationPage(driver);
+            cancellationPage.navigateToScreen(OrderCancellationPage.SCREEN_NAME, OrderCancellationPage.SCREEN_ID);
+            cancellationPage.cancelOrder(scenarioData, orderNo3, result);
+
             // STEP 4: BUDGET CHECK
             sanPage.navigateToScreen("Budget Setup", "BUDGET_LAYOUT");
-            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result, budgetTabId);
+            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, budgetBaseline, result, budgetTabId);
 
             // STEP 5: RE-INSERT STOCK
             sanPage.navigateToScreen("Stock Adjustment SAN", "DYL_201045");
             sanPage.fillSANHeader(businessEntity, docType);
             sanPage.addSANDetailRow(freeProductName, scenarioData.getOrDefault("stockType", "01-Sound"), scenarioData.getOrDefault("reasonType", "Sound CAT"), scenarioData.getOrDefault("batch", "1-1"), "25", "25");
             sanPage.executeApprovalSteps(docType);
+            result.pass("Free SKU " + freeProductName + " stock added back through SAN: 25 / 25 (" + docType + ", " + businessEntity + ")");
 
             // STEP 6: GOODS ISSUE NOTE (GIN)
             ginPage.navigateToScreen("Goods Issue Note", "GOOD_ISSUE_NODE");
@@ -121,12 +133,12 @@ public class PartialReturnBudgetFlow {
 
             // STEP 7 & 8: BUDGET CHECK
             sanPage.navigateToScreen("Budget Setup", "BUDGET_LAYOUT");
-            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result, budgetTabId);
+            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, budgetBaseline, result, budgetTabId);
             executeTransactionInquiry(driver, transactionInquiryPage, scenarioData, freshSalesReturnNo, budgetPromoId, "Fresh Sales Return", result);
 
             // DELIVER ORDER
             cashmemoStatusPage.navigateToScreen("Cashmemo Status", "CASHMEMO-STATUS");
-            cashmemoStatusPage.deliverOrder(ginPjp, ginNo, orderNo2, result);
+            cashmemoStatusPage.deliverOrder(ginPjp, ginNo, orderNo2, scenarioData, result);
 
             // SALES RETURN
             salesReturnPage.navigateToScreen("Sales Return", "DYL_201801");
@@ -144,7 +156,7 @@ public class PartialReturnBudgetFlow {
 
             // STEP 9: FINAL BUDGET CHECK
             sanPage.navigateToScreen("Budget Setup", "BUDGET_LAYOUT");
-            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, "0", result, budgetTabId);
+            exportAndValidateBudget(driver, sanPage, wait, downloadDir, budgetPromoId, keyColumn, keyValue, targetColumn, budgetBaseline, result, budgetTabId);
             executeTransactionInquiry(driver, transactionInquiryPage, scenarioData, salesReturnNo, budgetPromoId, "Sales Return", result);
 
             result.pass("Free SKU was not added or reallocated to the budget after Sales Return, as it was never issued to the customer.", driver);
@@ -183,8 +195,9 @@ public class PartialReturnBudgetFlow {
 
     /**
      * Helper method to export Budget Setup data and validate cell values via Excel.
+     * A null expectedValue records the value as the baseline; returns the value read.
      */
-    private static void exportAndValidateBudget(
+    private static String exportAndValidateBudget(
             WebDriver driver,
             SANPage sanPage,
             WebDriverWait wait,
@@ -235,6 +248,13 @@ public class PartialReturnBudgetFlow {
                 targetColumn
         );
 
+        // No expected value: this export is the baseline the later checks compare against
+        if (expectedValue == null) {
+            result.pass(" Excel Budget baseline: " + targetColumn + " is " + actualQtyUtilized + " for " + keyValue, driver);
+            logger.info("Excel Budget baseline: {} is {} for {}", targetColumn, actualQtyUtilized, keyValue);
+            return actualQtyUtilized;
+        }
+
         // Assert cell value matches expected criteria
         if (!expectedValue.equals(actualQtyUtilized)) {
             result.fail(
@@ -243,8 +263,9 @@ public class PartialReturnBudgetFlow {
                     driver
             );
             logger.info(
-                    " Excel Budget Validation Failed : {} is {} for {}",
+                    " Excel Budget Validation Failed : {} is {} (expected {}) for {}",
                     targetColumn,
+                    actualQtyUtilized,
                     expectedValue,
                     keyValue
             );
@@ -262,6 +283,7 @@ public class PartialReturnBudgetFlow {
                     keyValue
             );
         }
+        return actualQtyUtilized;
     }
 
     /**
