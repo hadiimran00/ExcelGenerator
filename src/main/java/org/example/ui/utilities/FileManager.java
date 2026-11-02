@@ -53,17 +53,19 @@ public class FileManager {
         String finalMsg = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
 
         if (finalMsg.toLowerCase().contains("successful") || finalMsg.toLowerCase().contains("success")) {
-            recordUploadSuccess(screenName, ScreenshotService.getBase64Screenshot(driver));
+            recordUploadSuccess(screenName, ScreenshotService.getBase64Screenshot(driver),
+                    List.of("Upload toast: \"" + finalMsg + "\""));
             logger.info("✅ Success: {}", finalMsg);
         } else if (!finalMsg.isEmpty()) {
             String base64 = ScreenshotService.getBase64Screenshot(driver);
-            recordUploadFailure(screenName, finalMsg, base64);
+            recordUploadFailure(screenName, finalMsg, base64, List.of("Upload toast: \"" + finalMsg + "\""));
 
             if (finalMsg.toLowerCase().contains("file downloaded") || finalMsg.toLowerCase().contains("error")) {
                 handleErrorFile(screenName);
             }
         } else {
-            recordUploadFailure(screenName, "No notification detected", ScreenshotService.getBase64Screenshot(driver));
+            recordUploadFailure(screenName, "No notification detected", ScreenshotService.getBase64Screenshot(driver),
+                    List.of("Upload toast: none appeared within 30 seconds"));
         }
     }
 
@@ -102,6 +104,8 @@ public class FileManager {
         WebDriverWait wait = new WebDriverWait(driver, Duration.ofSeconds(10));
         wait.until(ExpectedConditions.invisibilityOfElementLocated(By.xpath("//*[contains(@class, 'dx-toast-message')]")));
 
+        // Only a file saved after this click belongs to this download
+        long clickedAt = System.currentTimeMillis();
         try {
             WebElement downloadBtn = driver.findElement(By.xpath("//button[contains(text(),'Download Excel')]"));
             downloadBtn.click();
@@ -121,32 +125,57 @@ public class FileManager {
         if (finalMsg.toLowerCase().contains("file downloaded successfully") || finalMsg.toLowerCase().contains("success")) {
             logger.info("✅ Success: {}", finalMsg);
 
-            File downloadDirFile = new File(downloadDir);
-            File[] files = downloadDirFile.listFiles((dir, name) -> name.toLowerCase().endsWith(".xlsx") || name.toLowerCase().endsWith(".csv"));
-            File latestFile = Arrays.stream(files).max(Comparator.comparingLong(File::lastModified)).orElse(null);
+            // The toast shows before Chrome finishes saving: wait for the new file instead of checking the folder once
+            File latestFile = waitForNewDownload(downloadDir, clickedAt, Duration.ofSeconds(30));
 
-            if (latestFile != null && latestFile.length() > 0) {
+            String toastCheck = "Download toast: \"" + finalMsg + "\"";
+            if (latestFile != null) {
                 logger.info("📂 Found file: {}", latestFile.getName());
                 String base64Image = ScreenshotService.getBase64Screenshot(driver);
-                recordDownloadSuccess(screenName, base64Image);
+                recordDownloadSuccess(screenName, base64Image,
+                        List.of(toastCheck, "File found in directory: " + latestFile.getName()));
             } else {
                 logger.info("❌ Downloaded File not found!");
                 String base64Image = ScreenshotService.getBase64Screenshot(driver);
-                recordDownloadFailure(screenName, "File not found in directory", base64Image);
+                recordDownloadFailure(screenName, "File not found in directory", base64Image,
+                        List.of(toastCheck), List.of("File not found in directory within 30 seconds"));
                 throw new FileNotFoundException("Download reported success but no file was found.");
             }
         } else {
             String base64Image = ScreenshotService.getBase64Screenshot(driver);
             if (!finalMsg.isEmpty()) {
                 logger.info("❌ Download Failed! {}", finalMsg);
-                recordDownloadFailure(screenName, finalMsg, base64Image);
+                recordDownloadFailure(screenName, finalMsg, base64Image,
+                        List.of(), List.of("Download toast: \"" + finalMsg + "\""));
                 throw new IOException("Download failed: " + finalMsg);
             } else {
                 logger.info("❌ Download Failed! Could not find notification message.");
-                recordDownloadFailure(screenName, "Could not find notification message.", base64Image);
+                recordDownloadFailure(screenName, "Could not find notification message.", base64Image,
+                        List.of(), List.of("Download toast: none appeared within 10 seconds"));
                 throw new IOException("Download failed: No notification received.");
             }
         }
+    }
+
+    // Newest .xlsx/.csv saved after the download click. Chrome writes "<name>.crdownload" and renames it when done,
+    // so a file with its final extension is complete. Null if none arrives within the timeout.
+    private static File waitForNewDownload(String downloadDir, long clickedAt, Duration timeout) throws InterruptedException {
+        long deadline = System.currentTimeMillis() + timeout.toMillis();
+        // 1 s slack: file timestamps can be rounded down to the second
+        long after = clickedAt - 1000;
+        while (System.currentTimeMillis() < deadline) {
+            File[] files = new File(downloadDir).listFiles((dir, name) ->
+                    name.toLowerCase().endsWith(".xlsx") || name.toLowerCase().endsWith(".csv"));
+            if (files != null) {
+                File newest = Arrays.stream(files)
+                        .filter(f -> f.lastModified() >= after && f.length() > 0)
+                        .max(Comparator.comparingLong(File::lastModified))
+                        .orElse(null);
+                if (newest != null) return newest;
+            }
+            Thread.sleep(500);
+        }
+        return null;
     }
 
     private static void handleErrorFile(String screenName) {
