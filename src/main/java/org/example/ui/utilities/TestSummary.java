@@ -36,28 +36,59 @@ public class TestSummary {
     static String ExcelTestSummary = ReportsFolderName + "/ExcelTestSummary_" + DateTime + ".html";
 
     private static final List<String> screenResults = new ArrayList<>();
+    // Each row's passed/failed tests, kept beside the row so a later validation adds to the same totals
+    private static final List<ValidationResult> rowTests = new ArrayList<>();
+    // Where a row's test list is rendered once all its tests are known
+    private static final String TESTS_PLACEHOLDER = "{{tests}}";
 
     // --- Recording Methods (Fixed Separators) ---
 
     public static void recordDownloadSuccess(String screenName, String base64Data) {
+        recordDownloadSuccess(screenName, base64Data, List.of());
+    }
+
+    // checks: what this step verified (download toast, file found in directory), listed on the row
+    public static void recordDownloadSuccess(String screenName, String base64Data, List<String> checks) {
         downloadSuccess++;
-        screenResults.add("success|<b>" + screenName + "</b> -> Download Success|" + base64Data);
+        addRow("success", "<b>" + screenName + "</b> -> Download Success", checks, List.of(), base64Data);
     }
 
     public static void recordDownloadFailure(String screenName, String errorMsg, String base64Data) {
+        recordDownloadFailure(screenName, errorMsg, base64Data, List.of(), List.of());
+    }
+
+    public static void recordDownloadFailure(String screenName, String errorMsg, String base64Data,
+                                             List<String> passedChecks, List<String> failedChecks) {
         downloadFailure++;
-        screenResults.add("failure|<b>" + screenName + "</b> -> Download Failed: " + errorMsg + "|" + base64Data);
+        addRow("failure", "<b>" + screenName + "</b> -> Download Failed: " + errorMsg, passedChecks, failedChecks, base64Data);
     }
 
     public static void recordUploadSuccess(String screenName, String base64Data) {
-        uploadSuccess++;
+        recordUploadSuccess(screenName, base64Data, List.of());
+    }
 
-        screenResults.add("success|<b>" + screenName + "</b> -> Upload Success|" + base64Data);
+    // checks: what this step verified (upload toast), listed on the row
+    public static void recordUploadSuccess(String screenName, String base64Data, List<String> checks) {
+        uploadSuccess++;
+        addRow("success", "<b>" + screenName + "</b> -> Upload Success", checks, List.of(), base64Data);
     }
 
     public static void recordUploadFailure(String screenName, String errorMsg, String base64Data) {
+        recordUploadFailure(screenName, errorMsg, base64Data, List.of());
+    }
+
+    public static void recordUploadFailure(String screenName, String errorMsg, String base64Data, List<String> failedChecks) {
         uploadFailure++;
-        screenResults.add("failure|<b>" + screenName + "</b> -> Upload Failed: " + errorMsg + "|" + base64Data);
+        addRow("failure", "<b>" + screenName + "</b> -> Upload Failed: " + errorMsg, List.of(), failedChecks, base64Data);
+    }
+
+    // A new report row; its tests are rendered when the report is written
+    private static void addRow(String status, String header, List<String> passed, List<String> failed, String base64Data) {
+        ValidationResult tests = new ValidationResult("");
+        tests.passes.addAll(passed);
+        tests.failures.addAll(failed);
+        rowTests.add(tests);
+        screenResults.add(status + "|" + header + TESTS_PLACEHOLDER + "|" + base64Data);
     }
 
     public static void clearSummaryFile() {
@@ -83,13 +114,16 @@ public class TestSummary {
         .thumbnail:hover { transform: scale(1.1); box-shadow: 0 4px 8px rgba(0,0,0,0.2); }
         .summary-bar { display: flex; justify-content: space-around; background: #edf2f7; padding: 15px; border-radius: 8px; margin-top: 20px; font-weight: bold; }
         code { background: #edf2f7; padding: 2px 5px; border-radius: 4px; color: #805ad5; }
-        
+        details.checks { margin-top: 6px; }
+        details.checks summary { cursor: pointer; font-weight: bold; user-select: none; }
+        details.checks summary:hover { text-decoration: underline; }
+
         /* Modal Styles */
         #imgModal { display: none; position: fixed; z-index: 1000; padding-top: 50px; left: 0; top: 0; width: 100%; height: 100%; background-color: rgba(0,0,0,0.9); }
         .modal-content { margin: auto; display: block; max-width: 90%; max-height: 85vh; border-radius: 5px; }
         #closeModal { position: absolute; top: 15px; right: 35px; color: #f1f1f1; font-size: 40px; font-weight: bold; cursor: pointer; }
     </style>
-    <script>
+    <script> 
         function openImg(src) {
             var modal = document.getElementById("imgModal");
             var modalImg = document.getElementById("expandedImg");
@@ -126,12 +160,12 @@ public class TestSummary {
             writer.write("<table>\n");
             writer.write("<tr><th style='width: 10%'>Status</th><th style='width: 65%'>Screen & Action</th><th style='width: 25%'>Screenshot</th></tr>\n");
 
-            for (String result : screenResults) {
-                String[] parts = result.split("\\|", 3);
+            for (int i = 0; i < screenResults.size(); i++) {
+                String[] parts = screenResults.get(i).split("\\|", 3);
                 if (parts.length < 2) continue;
 
                 String cssClass = parts[0].trim();
-                String message = parts[1].trim();
+                String message = parts[1].trim().replace(TESTS_PLACEHOLDER, formatCheckList(rowTests.get(i)));
                 String base64Data = (parts.length == 3) ? parts[2].trim() : "";
                 String label = cssClass.equalsIgnoreCase("success") ? "PASS" : "FAIL";
 
@@ -153,9 +187,11 @@ public class TestSummary {
 
             writer.write("</table>\n");
 
+            int testsPassed = rowTests.stream().mapToInt(t -> t.passes.size()).sum();
+            int testsFailed = rowTests.stream().mapToInt(t -> t.failures.size()).sum();
             writer.write("<div class='summary-bar'>"
-                    + "<div>Downloads: <span class='success'>✔ " + downloadSuccess + "</span> / <span class='failure'>✖ " + downloadFailure + "</span></div>"
-                    + "<div>Uploads: <span class='success'>✔ " + uploadSuccess + "</span> / <span class='failure'>✖ " + uploadFailure + "</span></div>"
+                    + "<div>Total Test Case(s): " + (testsPassed + testsFailed) + " (<span class='success'>✔ " + testsPassed
+                    + " passed</span> / <span class='failure'>✖ " + testsFailed + " failed</span>)</div>"
                     + "</div>\n");
 
             writer.write("</div>\n");
@@ -189,23 +225,16 @@ public class TestSummary {
     public static void appendValidation(ValidationResult result) {
         if (result == null) return;
 
-        // SAFAGUARD: If no download/upload event was logged prior, create a new standalone entry.
-        if (screenResults.isEmpty()) {
+        // Standalone entry when there is no earlier row, or the earlier row belongs to another screen:
+        // a flow (e.g. Locus Upload) that fails before recording its own upload/download must not land
+        // on the previous screen's row (it showed as a Selling Category Bulk Upload failure).
+        if (screenResults.isEmpty() || !lastRowIsScreen(result.screenName)) {
             String cssClass = result.passed ? "success" : "failure";
             String label = "<b>" + result.screenName + "</b>";
-            StringBuilder details = new StringBuilder();
             // A multi-checkpoint flow (e.g. CouponOrderEditFlow validating two promos at five
             // checkpoints) accumulates passes AND failures independently - show both, not just
             // whichever the overall pass/fail flag happens to pick.
-            if (!result.passes.isEmpty()) {
-                details.append("✅ ").append(formatAsBulletList(result.passes));
-            }
-            if (!result.failures.isEmpty()) {
-                if (details.length() > 0) details.append("<br>");
-                details.append("❌ ").append(formatAsBulletList(result.failures));
-            }
-
-            screenResults.add(cssClass + "|" + label + " -> " + details + "|" + result.screenshotBase64);
+            addRow(cssClass, label + " -> ", result.passes, result.failures, result.screenshotBase64);
             return;
         }
 
@@ -219,17 +248,10 @@ public class TestSummary {
             String existingBase64 = parts.length == 3 ? parts[2] : "";
             String base64 = !result.screenshotBase64.isEmpty() ? result.screenshotBase64 : existingBase64;
 
-            // Same as above: render both passes and failures whenever present, instead of
-            // whichever one the overall result.passed flag happens to select.
-            if (!result.passes.isEmpty()) {
-                message += "<br><span style='color:#2f855a;'><b>✅</b> "
-                        + formatAsBulletList(result.passes)
-                        + "</span>";
-            }
+            // Add to the row's own tests, so the row shows one total instead of a second list
+            rowTests.get(lastIdx).passes.addAll(result.passes);
+            rowTests.get(lastIdx).failures.addAll(result.failures);
             if (!result.failures.isEmpty()) {
-                message += "<br><span style='color:#e53e3e;'><b>❌</b> "
-                        + formatAsBulletList(result.failures)
-                        + "</span>";
                 if ("success".equals(status)) {
                     status = "failure";
                     uploadSuccess--;
@@ -238,6 +260,39 @@ public class TestSummary {
             }
             screenResults.set(lastIdx, status + "|" + message + "|" + base64);
         }
+    }
+
+    // Rows start with "<b>Screen name</b>": a validation belongs to the last row only when it is for that screen.
+    // Prefix match, so "<screen>_redownload" rows (DOWNLOAD_COMPARE) still count as the same screen.
+    private static boolean lastRowIsScreen(String screenName) {
+        String[] parts = screenResults.get(screenResults.size() - 1).split("\\|", 3);
+        if (parts.length < 2 || screenName == null || screenName.isBlank()) return false;
+        String message = parts[1];
+        int start = message.indexOf("<b>");
+        int end = message.indexOf("</b>");
+        if (start < 0 || end <= start) return false;
+        String rowScreen = message.substring(start + 3, end).trim().toLowerCase();
+        String name = screenName.trim().toLowerCase();
+        return name.startsWith(rowScreen) || rowScreen.startsWith(name);
+    }
+
+    // Passed and failed tests as click-to-open lists: passes start collapsed so a long flow stays one
+    // short row, failures start open so they are seen without clicking.
+    private static String formatCheckList(ValidationResult result) {
+        StringBuilder sb = new StringBuilder();
+        if (!result.failures.isEmpty()) {
+            sb.append("<details class='checks' open><summary style='color:#e53e3e;'>❌ ")
+                    .append(result.failures.size()).append(" Test Case(s) failed")
+                    .append("</summary><span style='color:#e53e3e;'>").append(formatAsBulletList(result.failures))
+                    .append("</span></details>");
+        }
+        if (!result.passes.isEmpty()) {
+            sb.append("<details class='checks'><summary style='color:#2f855a;'>✅ ")
+                    .append(result.passes.size()).append(" Test Case(s) passed")
+                    .append(" (click to view)</summary><span style='color:#2f855a;'>").append(formatAsBulletList(result.passes))
+                    .append("</span></details>");
+        }
+        return sb.toString();
     }
 
     // Appends per-row errors read from the app's generated error Excel onto the most recently
@@ -267,6 +322,7 @@ public class TestSummary {
         validationPass = 0;
         validationFail = 0;
         screenResults.clear();
+        rowTests.clear();
     }
     private static String escapeSeparator(String text) {
         if (text == null) return "";
