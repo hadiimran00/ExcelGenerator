@@ -40,7 +40,7 @@ public class ModeExecutionHandler {
             case "DOWNLOAD_UPLOAD":
                 FileManager.uploadFile(driver, screenName, templatePath);
                 FileManager.downloadExcel(driver, screenName, stringParams);
-                TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, templatePath, downloadDir, validateMode, scenarioData));
+                TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, templatePath, downloadDir, validateMode, scenarioData, screenName));
                 testDataCleanup(scenarioData, driver);
                 break;
 
@@ -48,18 +48,18 @@ public class ModeExecutionHandler {
                 updatedFile = ExcelGen.generateExcel(templatePath, rules, testID);
                 FileManager.uploadFile(driver, screenName, updatedFile);
                 FileManager.downloadExcel(driver, screenName, stringParams);
-                TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, updatedFile, downloadDir, validateMode, scenarioData));
+                TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, updatedFile, downloadDir, validateMode, scenarioData, screenName));
                 testDataCleanup(scenarioData, driver);
                 break;
 
             case "DOWNLOAD_ONLY":
                 FileManager.downloadExcel(driver, screenName, stringParams);
-                TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, templatePath, downloadDir, validateMode, scenarioData));
+                TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, templatePath, downloadDir, validateMode, scenarioData, screenName));
                 break;
 
             case "UPLOAD_ONLY":
                 FileManager.uploadFile(driver, screenName, templatePath);
-                TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, templatePath, downloadDir, validateMode, scenarioData));
+                TestSummary.appendValidation(PostUploadValidator.run(driver, validations.get(testID), testID, templatePath, downloadDir, validateMode, scenarioData, screenName));
                 testDataCleanup(scenarioData, driver);
                 break;
 
@@ -93,7 +93,7 @@ public class ModeExecutionHandler {
 
                 FileManager.uploadFile(driver, screenName, updatedDownloadedFile);
                 TestSummary.appendValidation(PostUploadValidator.run(
-                        driver, validations.get(testID), testID, updatedDownloadedFile, downloadDir, validateMode, scenarioData
+                        driver, validations.get(testID), testID, updatedDownloadedFile, downloadDir, validateMode, scenarioData, screenName
                 ));
 
                 testDataCleanup(scenarioData, driver);
@@ -179,6 +179,24 @@ public class ModeExecutionHandler {
             case "TARGET_SETUP": {
                 ValidationResult targetResult = TargetSetupFlow.run(driver, screenName, scenarioData, templatePath, rules, testID, screens, resourcesFolder, downloadDir);
                 TestSummary.appendValidation(targetResult);
+                break;
+            }
+
+            case "FORCE_PAYOUT": {
+                ValidationResult forcePayoutResult = ForcePayoutFlow.run(driver, scenarioData, downloadDir);
+                TestSummary.appendValidation(forcePayoutResult);
+                break;
+            }
+
+            case "CLP": {
+                ValidationResult clpResult = ClpFlow.run(driver, scenarioData, downloadDir);
+                TestSummary.appendValidation(clpResult);
+                break;
+            }
+
+            case "CLM": {
+                ValidationResult clmResult = ClmFlow.run(driver, scenarioData, downloadDir);
+                TestSummary.appendValidation(clmResult);
                 break;
             }
 
