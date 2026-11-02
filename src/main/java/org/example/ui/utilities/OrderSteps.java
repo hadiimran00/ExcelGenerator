@@ -1,5 +1,6 @@
 package org.example.ui.utilities;
 
+import org.apache.logging.log4j.Logger;
 import org.example.ui.pages.*;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
@@ -7,6 +8,7 @@ import org.openqa.selenium.WebDriver;
 import java.time.Duration;
 import java.time.LocalDate;
 import java.util.Map;
+import java.util.function.Function;
 
 import static org.example.ui.utilities.LoaderWait.waitForLoaderToDisappear;
 
@@ -15,6 +17,8 @@ import static org.example.ui.utilities.LoaderWait.waitForLoaderToDisappear;
  * book -> delivery date -> GIN + approve -> fresh return -> deliver -> sales return + approve + pick.
  */
 public class OrderSteps {
+
+    private static final Logger logger = LoggerUtil.getLogger(OrderSteps.class);
 
     private final WebDriver driver;
 
@@ -57,11 +61,31 @@ public class OrderSteps {
     }
 
     public void updateDeliveryDate(String orderPjp, String orderNo, ValidationResult result) {
-        deliveryDatePage.navigateToScreen("Delivery Date Change", "DYL_201080");
-        waitForLoaderToDisappear(driver);
-        deliveryDatePage.processDeliveryDateForOrder(orderPjp, orderNo);
-        ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
-        waitForLoaderToDisappear(driver);
+        withRetry("Delivery date change for " + orderNo, result, attempt -> {
+            deliveryDatePage.navigateToScreen("Delivery Date Change", "DYL_201080");
+            waitForLoaderToDisappear(driver);
+            deliveryDatePage.processDeliveryDateForOrder(orderPjp, orderNo);
+            ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), attempt);
+            waitForLoaderToDisappear(driver);
+            return null;
+        });
+    }
+
+    /**
+     * Runs an order step once more when it fails (slow screens, a lost click or typed text). The first attempt
+     * records into its own result, so a step that passes on the second try leaves no failure behind.
+     */
+    private <T> T withRetry(String step, ValidationResult result, Function<ValidationResult, T> attempt) {
+        ValidationResult firstTry = new ValidationResult(result.screenName);
+        try {
+            T value = attempt.apply(firstTry);
+            result.passes.addAll(firstTry.passes);
+            return value;
+        } catch (RuntimeException e) {
+            logger.warn("⚠️ {} failed, trying once more: {}", step, e.getMessage());
+            waitForLoaderToDisappear(driver);
+            return attempt.apply(result);
+        }
     }
 
     /**
@@ -70,23 +94,27 @@ public class OrderSteps {
      */
     public String createAndApproveGin(String ginPjp, String orderNo, String ginEditQty3, String ginLossReason,
                                       ValidationResult result) {
-        ginPage.navigateToScreen("Goods Issue Note", "GOOD_ISSUE_NODE");
-        waitForLoaderToDisappear(driver);
-        ginPage.selectDeliveryPjpAndDate(ginPjp, LocalDate.now().toString());
-        waitForLoaderToDisappear(driver);
+        withRetry("GIN for " + orderNo, result, attempt -> {
+            ginPage.navigateToScreen("Goods Issue Note", "GOOD_ISSUE_NODE");
+            waitForLoaderToDisappear(driver);
+            ginPage.selectDeliveryPjpAndDate(ginPjp, LocalDate.now().toString());
+            waitForLoaderToDisappear(driver);
 
-        ginPage.click(By.id("tab_2"));
-        waitForLoaderToDisappear(driver);
-        ginPage.click(By.id("gridFilterCheckbox"));
-        waitForLoaderToDisappear(driver);
-        ginPage.filterAndSelectOrder(orderNo, By.id("checkbox-1"));
+            ginPage.click(By.id("tab_2"));
+            waitForLoaderToDisappear(driver);
+            ginPage.click(By.id("gridFilterCheckbox"));
+            waitForLoaderToDisappear(driver);
+            ginPage.filterAndSelectOrder(orderNo, By.id("checkbox-1"));
 
-        if (ginLossReason != null) {
-            ginPage.submitGinWithEditing(ginEditQty3, ginLossReason, result);
-        } else {
-            ginPage.submitGIN(result);
-        }
+            if (ginLossReason != null) {
+                ginPage.submitGinWithEditing(ginEditQty3, ginLossReason, attempt);
+            } else {
+                ginPage.submitGIN(attempt);
+            }
+            return null;
+        });
 
+        // approveStep types the comment again in the popup when its save is refused
         String ginNo = ginPage.getFirstRowGinNoAndOpen();
         ginPage.approveStep("Approved GIN Step 1", result);
         ginPage.getFirstRowGinNoAndOpen();
@@ -105,8 +133,16 @@ public class OrderSteps {
     }
 
     public void deliver(String ginPjp, String ginNo, String orderNo, ValidationResult result) {
-        cashmemoStatusPage.navigateToScreen("Cashmemo Status", "CASHMEMO-STATUS");
-        cashmemoStatusPage.deliverOrder(ginPjp, ginNo, orderNo, result);
+        deliver(ginPjp, ginNo, orderNo, null, result);
+    }
+
+    /** scenarioData (orgaCode, distributor) fills the PJP date script shown when the GIN is not offered. */
+    public void deliver(String ginPjp, String ginNo, String orderNo, Map<String, String> scenarioData, ValidationResult result) {
+        withRetry("Delivery of " + orderNo, result, attempt -> {
+            cashmemoStatusPage.navigateToScreen("Cashmemo Status", "CASHMEMO-STATUS");
+            cashmemoStatusPage.deliverOrder(ginPjp, ginNo, orderNo, scenarioData, attempt);
+            return null;
+        });
     }
 
     /** Sales Return of a delivered order: create, approve both steps, then pick it. Returns the return document number. */
