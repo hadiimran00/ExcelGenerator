@@ -138,10 +138,32 @@ public class TargetSetupFlow {
                     + " (" + periodType + ", " + measurement + ", " + active + "): " + saveToast);
             targetSetupPage.goBackIfOnForm();
 
+            // STEP 3b: saving another target with the same code must be rejected (SDMS-9780)
+            targetSetupPage.openNewTarget();
+            targetSetupPage.fillTargetHeader(catalogId, year, periodType, monthName, measurement, active);
+            targetSetupPage.fillExtraHeaderFields(productHierarchy, historicalSalesPeriod, offsetPeriod, shufflingCapping, daysLimit);
+            String duplicateToast = targetSetupPage.saveTargetExpectingError();
+            if (duplicateToast.toLowerCase().contains("catalog id already exists")) {
+                result.pass("Duplicate target code [" + catalogId + "] rejected: " + duplicateToast);
+            } else {
+                result.fail("Duplicate target code [" + catalogId + "]: expected 'Catalog id already exists.' but got '"
+                        + duplicateToast + "'", driver);
+            }
+            targetSetupPage.goBackIfOnForm();
+
             // STEP 4: EDIT TARGET (open and save without changes)
             targetSetupPage.selectTarget(catalogId);
             checkTargetState(targetSetupPage, catalogId, stateAfterCreate, "after New Target", driver, result);
             targetSetupPage.openEditTarget(catalogId);
+            // The saved target keeps the month it was created for, not the next month (SDMS-2863)
+            String savedYear = targetSetupPage.getSavedYear();
+            String savedPeriod = targetSetupPage.getSavedPeriodName();
+            if (year.equals(savedYear) && savedPeriod.toUpperCase().contains(monthName)) {
+                result.pass("Target [" + catalogId + "] saved period: " + savedYear + " " + savedPeriod);
+            } else {
+                result.fail("Target [" + catalogId + "] saved period is " + savedYear + " " + savedPeriod
+                        + ", expected " + year + " " + monthName, driver);
+            }
             String editToast = targetSetupPage.saveTarget(result);
             result.pass("Target [" + catalogId + "] edited and saved: " + editToast);
             targetSetupPage.goBack();
@@ -149,7 +171,11 @@ public class TargetSetupFlow {
             // STEP 5: TARGET BULK UPLOAD (own config row: template + Rules for the current month), then re-export to confirm
             targetSetupPage.selectTarget(catalogId);
             targetSetupPage.openTargetUploadBulk();
-            checkExported(targetSetupPage.exportToExcel(downloadDir), "Target Bulk template", driver, result);
+            File bulkTemplate = checkExported(targetSetupPage.exportToExcel(downloadDir), "Target Bulk template", driver, result);
+            // A Monthly target's template must not carry a CAL_WEEK column (SDMS-10243)
+            if (bulkTemplate != null && "Monthly".equalsIgnoreCase(periodType)) {
+                checkNoColumn(bulkTemplate, "CAL_WEEK", "Target Bulk template (Monthly)", driver, result);
+            }
             String targetFile = ExcelGen.generateExcel((String) bulkScreen.get("templatePath"), bulkRules, (String) bulkScreen.get("testID"));
             uploadAndCheck(targetSetupPage, targetFile, "Target Bulk upload", downloadDir, driver, result);
             File exportedTarget = checkExported(targetSetupPage.exportToExcel(downloadDir), "Target Bulk after upload", driver, result);
@@ -170,6 +196,13 @@ public class TargetSetupFlow {
 
             // STEP 7: TARGET SHUFFLING - move shuffleDelta % to the order PJP on every product, upload, re-export
             targetSetupPage.openTargetShuffling();
+            // A user assigned one distributor must see only that distributor (SDMS-10892)
+            List<String> offered = targetSetupPage.getDistributorOptions();
+            if (offered.size() == 1 && offered.get(0).contains(distributor)) {
+                result.pass("Target Shuffling distributor list shows only the assigned distributor: " + offered);
+            } else {
+                result.fail("Target Shuffling distributor list should show only " + distributor + " but shows " + offered, driver);
+            }
             targetSetupPage.selectDistributor(distributor);
             File shuffleFile = checkExported(targetSetupPage.exportToExcel(downloadDir), "Target Shuffling", driver, result);
             if (shuffleFile != null) {
@@ -208,7 +241,7 @@ public class TargetSetupFlow {
             orderSteps.updateDeliveryDate(orderPjp, orderNo, result);
             String ginNo = orderSteps.createAndApproveGin(ginPjp, orderNo, null, null, result);
             String freshReturnNo = orderSteps.freshReturn(ginPjp, orderNo, null, freshReturnQty3, freshReturnReason, result);
-            orderSteps.deliver(ginPjp, ginNo, orderNo, result);
+            orderSteps.deliver(ginPjp, ginNo, orderNo, scenarioData, result);
             String salesReturnNo = orderSteps.salesReturn(ginPjp, ginNo, orderNo, salesReturnQty3, salesReturnReason, result);
             String srWithoutRefNo = null;
             if (srWithoutRefQty3 != null && !srWithoutRefQty3.isBlank()) {
@@ -271,6 +304,23 @@ public class TargetSetupFlow {
             message += " | Excel row errors: " + ExcelValidator.logExcelErrors(errorFile);
         }
         result.fail(message, driver);
+    }
+
+    private static void checkNoColumn(File file, String column, String label, WebDriver driver, ValidationResult result)
+            throws IOException {
+        List<String> headers = new ArrayList<>();
+        try (java.io.FileInputStream in = new java.io.FileInputStream(file);
+             org.apache.poi.ss.usermodel.Workbook workbook = org.apache.poi.ss.usermodel.WorkbookFactory.create(in)) {
+            org.apache.poi.ss.usermodel.DataFormatter formatter = new org.apache.poi.ss.usermodel.DataFormatter();
+            for (org.apache.poi.ss.usermodel.Cell cell : workbook.getSheetAt(0).getRow(0)) {
+                headers.add(formatter.formatCellValue(cell).trim());
+            }
+        }
+        if (headers.stream().anyMatch(h -> h.equalsIgnoreCase(column))) {
+            result.fail(label + " has a " + column + " column: " + headers, driver);
+        } else {
+            result.pass(label + " has no " + column + " column: " + headers);
+        }
     }
 
     private static File checkExported(File file, String label, WebDriver driver, ValidationResult result) {

@@ -4,13 +4,17 @@ import org.example.ui.utilities.Event;
 import org.example.ui.utilities.ToastHandles;
 import org.example.ui.utilities.ValidationResult;
 import org.openqa.selenium.By;
+import org.openqa.selenium.Keys;
 import org.openqa.selenium.TimeoutException;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.WebElement;
 import org.openqa.selenium.support.ui.WebDriverWait;
 import org.openqa.selenium.support.ui.ExpectedConditions;
 
 import java.io.File;
 import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
 
 public class TargetSetupPage extends basePage {
 
@@ -128,6 +132,25 @@ public class TargetSetupPage extends basePage {
         selectDropdown(distributorDropdown, distributor);
     }
 
+    // Distributors offered in the Target Shuffling distributor dropdown (opens the list, reads it, closes it)
+    public List<String> getDistributorOptions() {
+        waitForLoader();
+        click(distributorDropdown);
+        By options = By.cssSelector(".dx-overlay-content .dx-list-item-content");
+        try {
+            new WebDriverWait(driver, Duration.ofSeconds(10))
+                    .until(d -> !d.findElements(options).isEmpty());
+        } catch (TimeoutException e) {
+            return List.of();
+        }
+        List<String> names = new ArrayList<>();
+        for (WebElement option : driver.findElements(options)) {
+            if (option.isDisplayed() && !option.getText().isBlank()) names.add(option.getText().trim());
+        }
+        driver.findElement(distributorDropdown).sendKeys(Keys.ESCAPE);
+        return names;
+    }
+
     // Export shows no toast: returns the Excel downloaded after the click, or null if none arrives
     public File exportToExcel(String downloadDir) throws InterruptedException {
         long clickedAt = System.currentTimeMillis();
@@ -195,6 +218,15 @@ public class TargetSetupPage extends basePage {
         selectDropdown(activeDropdown, active);
     }
 
+    // Year and Period Name (e.g. "10~OCT") of the target open in Edit Target
+    public String getSavedYear() {
+        return value(yearDropdown);
+    }
+
+    public String getSavedPeriodName() {
+        return value(periodNameDropdown);
+    }
+
     // Fills the country-specific header fields; a blank value leaves that field untouched
     public void fillExtraHeaderFields(String productHierarchy, String historicalSalesPeriod, String offsetPeriod,
                                       String shufflingCapping, String daysLimit) {
@@ -212,6 +244,14 @@ public class TargetSetupPage extends basePage {
     public String saveTarget(ValidationResult result) {
         Event.robustClick(driver, saveBtn);
         String toast = ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
+        waitForLoader();
+        return toast;
+    }
+
+    // Save expected to be rejected (e.g. duplicate code): returns whatever message appears ("" if none)
+    public String saveTargetExpectingError() {
+        Event.robustClick(driver, saveBtn);
+        String toast = ToastHandles.waitForNotification(driver, Duration.ofSeconds(30));
         waitForLoader();
         return toast;
     }
