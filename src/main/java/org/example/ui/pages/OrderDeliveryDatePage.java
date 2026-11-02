@@ -27,14 +27,16 @@ public class OrderDeliveryDatePage extends basePage {
 
     /** Searches the order grid using the specified filter column field. */
     public void searchOrder(String orderNumberColumnId, String orderNumber) {
-        enableGridFilters();
-
-        By searchBoxLocator = By.id(orderNumberColumnId);
-        WebElement searchBox = wait.until(
-                ExpectedConditions.elementToBeClickable(searchBoxLocator));
-
-        searchBox.clear();
-        searchBox.sendKeys(orderNumber);
+        // The grid can reload after the PJP is picked, which hides the filter row again, so retry once
+        try {
+            enableGridFilters();
+            type(By.id(orderNumberColumnId), orderNumber);
+        } catch (Exception e) {
+            System.out.println("Retrying order search " + orderNumber + ": " + e.getMessage());
+            waitForLoader();
+            enableGridFilters();
+            type(By.id(orderNumberColumnId), orderNumber);
+        }
 
         waitForLoader();
     }

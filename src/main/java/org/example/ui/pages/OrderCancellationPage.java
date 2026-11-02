@@ -41,7 +41,13 @@ public class OrderCancellationPage extends basePage {
 
         selectDropdown(pjpDropdown, scenarioData.get("PJPNO"));
         selectDropdown(sectionDropdown, scenarioData.get("SECTION"));
-        selectDropdown(outletDropdown, scenarioData.get("OUTLET"));
+        // Order Booking lists "C0000023667-Name" but this screen can list "C0000023667 - Name", so retry spaced
+        String outlet = scenarioData.get("OUTLET");
+        try {
+            selectDropdown(outletDropdown, outlet);
+        } catch (Exception e) {
+            selectDropdown(outletDropdown, outlet.replaceFirst("\\s*-\\s*", " - "));
+        }
 
         Event.robustClick(driver, gridFilterCheckbox);
         waitForLoader();
