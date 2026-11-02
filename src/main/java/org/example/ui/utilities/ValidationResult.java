@@ -12,9 +12,10 @@ public class ValidationResult {
     public final List<String> passes   = new ArrayList<>();
     public final List<String> failures = new ArrayList<>();
 
-    // Set by fail(detail, driver) - the report can only show one image per row, so this holds
-    // the most recent failure's screenshot rather than one per individual failure.
+    // The report shows one image per row: the first failure's screenshot (later failures usually follow from it),
+    // or the latest success screenshot while nothing has failed.
     public String screenshotBase64 = "";
+    private boolean failureScreenshot = false;
 
     public ValidationResult(String screenName) {
         this.screenName = screenName;
@@ -27,18 +28,32 @@ public class ValidationResult {
     public void pass(String detail, WebDriver driver) {
         pass(detail);
         ScreenshotService.takeScreenshot(driver, screenName + "_Success");
-        screenshotBase64 = ScreenshotService.getBase64Screenshot(driver);
+        // A success after a failure must not replace the failure's screenshot in the report
+        if (!failureScreenshot) {
+            screenshotBase64 = ScreenshotService.getBase64Screenshot(driver);
+        }
     }
 
     public void fail(String detail) {
-        passed = false;
-        failures.add(detail);
+        // Most failures are recorded without a driver: take the screenshot from the current browser
+        fail(detail, ScreenshotService.getCurrentDriver());
     }
 
     public void fail(String detail, WebDriver driver) {
-        fail(detail);
+        passed = false;
+        failures.add(detail);
+        if (driver != null) {
+            captureErrorScreenshot(driver);
+        }
+    }
+
+    // Every failure is saved as a file; the report row keeps the first one, the screen where things went wrong
+    private void captureErrorScreenshot(WebDriver driver) {
         ScreenshotService.takeScreenshot(driver, screenName + "_Error");
-        screenshotBase64 = ScreenshotService.getBase64Screenshot(driver);
+        if (!failureScreenshot) {
+            screenshotBase64 = ScreenshotService.getBase64Screenshot(driver);
+            failureScreenshot = true;
+        }
     }
 
     public void logSummary(org.apache.logging.log4j.Logger logger) {

@@ -18,9 +18,19 @@ import java.nio.file.Files;
 public class ScreenshotService {
     private static final Logger logger = LoggerUtil.getLogger(ScreenshotService.class);
     private static String screenshotDir = "screenshots";
+    // The browser of the country being run, so a failure recorded without a driver can still be captured
+    private static WebDriver currentDriver;
 
     public static void setScreenshotDir(String dir) {
         screenshotDir = dir;
+    }
+
+    public static void setCurrentDriver(WebDriver driver) {
+        currentDriver = driver;
+    }
+
+    public static WebDriver getCurrentDriver() {
+        return currentDriver;
     }
 
     public static void takeScreenshot(WebDriver driver, String ScreenName) {
