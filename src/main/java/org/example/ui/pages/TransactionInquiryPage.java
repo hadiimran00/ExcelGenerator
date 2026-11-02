@@ -51,7 +51,14 @@ public class TransactionInquiryPage extends basePage {
 
     public void selectPjp(String pjpNo) {
         logger.info("📌 Selecting PJP: {}", pjpNo);
-        selectDropdown(pjpDropdown, pjpNo);
+        // The PJP list can load late, so retry once
+        try {
+            selectDropdown(pjpDropdown, pjpNo);
+        } catch (Exception e) {
+            logger.warn("Retrying PJP {}: {}", pjpNo, e.getMessage());
+            waitForLoader();
+            selectDropdown(pjpDropdown, pjpNo);
+        }
     }
 
     public void searchAndSelectDocument(String orderNo) {
@@ -162,9 +169,13 @@ public class TransactionInquiryPage extends basePage {
      */
     public boolean isPromotionApplied(String expectedPromoId, Duration timeout) {
         try {
-            WebElement cell = new WebDriverWait(driver, timeout)
-                    .until(ExpectedConditions.visibilityOfElementLocated(firstRowPromoId));
-            return expectedPromoId.equals(cell.getText().trim());
+            // After typing a new promo filter, row 1 can still show the previous promo until the grid
+            // refreshes - wait for our promo to appear instead of comparing the first row once
+            return new WebDriverWait(driver, timeout).until(d -> {
+                List<WebElement> cells = d.findElements(firstRowPromoId);
+                return !cells.isEmpty() && cells.get(0).isDisplayed()
+                        && expectedPromoId.equals(cells.get(0).getText().trim());
+            });
         } catch (TimeoutException e) {
             return false;
         }

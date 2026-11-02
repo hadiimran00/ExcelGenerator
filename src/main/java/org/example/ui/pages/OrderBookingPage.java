@@ -69,11 +69,14 @@ public class OrderBookingPage extends basePage {
 //
 //        waitForLoader();
 
-            // Select Product
-            selectDropdown(
-                    By.id("product"),
-                    scenarioData.get("productCode")
-            );
+            // Select Product (the product list can load late, so retry once)
+            try {
+                selectDropdown(By.id("product"), scenarioData.get("productCode"));
+            } catch (Exception e) {
+                System.out.println("Retrying product " + scenarioData.get("productCode") + ": " + e.getMessage());
+                waitForLoader();
+                selectDropdown(By.id("product"), scenarioData.get("productCode"));
+            }
 
             // Enter Quantity
             type(
