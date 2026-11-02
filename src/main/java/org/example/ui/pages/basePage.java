@@ -135,6 +135,16 @@ public abstract class basePage {
 //    }
 
     public void selectDropdown(By locator, String value) {
+        try {
+            selectDropdownOnce(locator, value);
+        } catch (RuntimeException e) {
+            // The list sometimes does not open from the typing: try once more
+            waitForLoader();
+            selectDropdownOnce(locator, value);
+        }
+    }
+
+    private void selectDropdownOnce(By locator, String value) {
         waitForLoader();
 
         // 1. Locate element
@@ -210,10 +220,8 @@ public abstract class basePage {
                         + String.format(lowerText, "normalize-space(.)") + ",'" + lowerValue + "')])[1]"
         );
 
-        // Fallback first option
-        By firstOptionLocator = By.cssSelector("#dropdown-content > div > div:nth-child(1)");
-
-        // 7. Select option from popup
+        // 7. Select option from popup. No "first option" / ENTER fallback: picking another value silently
+        // (e.g. a previous run's GIN) hides the real problem, so a missing option fails the step.
         try {
             wait.until(ExpectedConditions.elementToBeClickable(primaryDropdownContent));
             Event.robustClick(driver, primaryDropdownContent);
@@ -223,22 +231,13 @@ public abstract class basePage {
                 wait.until(ExpectedConditions.elementToBeClickable(fallbackDropdownContent));
                 Event.robustClick(driver, fallbackDropdownContent);
             } catch (Exception e2) {
-                System.out.println("Fallback locator failed. Attempting first option...");
-                try {
-                     wait.until(ExpectedConditions.visibilityOfElementLocated(firstOptionLocator));
-                    Event.robustClick(driver, firstOptionLocator);
-                } catch (Exception e3) {
-                    System.out.println("First option selection failed. Pressing ENTER key...");
-                    field.sendKeys(Keys.ENTER);
-                    waitForLoader();
-
-                    String selectedValue = field.getAttribute("value");
-                    if (selectedValue == null || selectedValue.isBlank()) {
-                        throw new RuntimeException(
-                                "selectDropdown: no option was selected for locator [" + locator +
-                                        "] with value [" + value + "] even after the last-resort ENTER fallback.");
-                    }
-                }
+                // Record what the list actually offered at this moment, for diagnosing the miss
+                Object shown = js.executeScript(
+                        "return Array.from(document.querySelectorAll('.dx-overlay-content .dx-list-item, #dropdown-content .dx-item-content'))"
+                                + ".filter(e => e.offsetParent !== null).map(e => e.textContent.trim()).filter(t => t).slice(0, 15).join(' | ');");
+                throw new RuntimeException("selectDropdown: no option containing [" + value + "] in dropdown ["
+                        + locator + "]; field shows [" + field.getAttribute("value") + "], aria-expanded="
+                        + field.getAttribute("aria-expanded") + ", options shown: [" + shown + "]", e2);
             }
         }
 
@@ -304,6 +303,8 @@ public abstract class basePage {
     }
     public void navigateToScreen(String menuSearch, String screenId) {
         try {
+            // A loader left over from the previous screen blocks the search box
+            waitForLoader();
             // Only expand the menu if the search box isn't already visible - menurollin is a toggle,
             // so clicking it while the menu is already open collapses it instead of opening it.
             boolean searchBoxAlreadyVisible = !driver.findElements(
