@@ -541,6 +541,8 @@ public class Main {
 
             // Initializing driver via Factory
             driver = DriverFactory.createDriver(props, downloadDir);
+            // Lets ValidationResult.fail(detail) capture the error screen without being handed the driver
+            ScreenshotService.setCurrentDriver(driver);
 
             loginUser(driver, user);
 
@@ -580,12 +582,33 @@ public class Main {
                 logger.error("💥 Screen [{}] failed unexpectedly - continuing with remaining screens. Message: {}",
                         screenName, e.getMessage(), e);
                 ValidationResult failureResult = new ValidationResult(screenName);
-                failureResult.fail("Screen execution failed unexpectedly: " + e.getMessage(), driver);
+                if (isBrowserGone(e)) {
+                    // The browser is dead, so no screenshot can be taken: report the cause in one line
+                    failureResult.fail("Browser session was lost (" + firstLine(e.getMessage()) + ")");
+                } else {
+                    failureResult.fail("Screen execution failed unexpectedly: " + e.getMessage(), driver);
+                }
                 TestSummary.appendValidation(failureResult);
             }
         }
 
         return executedAny;
+    }
+
+    // "invalid session id" / "chrome not reachable": the browser or its driver has died, not the screen
+    private static boolean isBrowserGone(Throwable e) {
+        for (Throwable t = e; t != null; t = t.getCause()) {
+            if (t instanceof NoSuchSessionException) return true;
+            String message = t.getMessage() == null ? "" : t.getMessage().toLowerCase();
+            if (message.contains("invalid session id") || message.contains("chrome not reachable")) return true;
+        }
+        return false;
+    }
+
+    private static String firstLine(String text) {
+        if (text == null) return "";
+        int end = text.indexOf('\n');
+        return (end < 0 ? text : text.substring(0, end)).trim();
     }
 
 
