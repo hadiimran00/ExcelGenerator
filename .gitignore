@@ -36,3 +36,5 @@ build/
 
 ### Mac OS ###
 .DS_Store
+# Manual-step signal file (ManualStep)
+continue.txt
