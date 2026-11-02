@@ -4,6 +4,7 @@ import org.example.ui.utilities.ToastHandles;
 import org.example.ui.utilities.ValidationResult;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
 
@@ -44,8 +45,10 @@ public class SalesReturnPage extends basePage {
         type(filterDocInput, orderNo);
         waitForLoader();
 
-        By dynamicRowLocator = By.xpath("//td[@id='row_1_document_no' or @id='row_1_order_number_' or text()='" + orderNo + "']");
-        click(dynamicRowLocator);
+        // Row 1 can still be another order until the filter applies, so wait for a row 1 cell showing our order
+        By ourOrderCell = By.xpath("//td[starts-with(@id,'row_1_')][normalize-space()='" + orderNo + "']");
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until(d -> !d.findElements(ourOrderCell).isEmpty());
+        click(ourOrderCell);
         waitForLoader();
 
         click(headerSaveBtn);
@@ -74,12 +77,15 @@ public class SalesReturnPage extends basePage {
         ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
         waitForLoader();
 
+        // Each check must read its own toast, not the previous action's one still showing
+        ToastHandles.waitForNoNotification(driver, Duration.ofSeconds(15));
         click(headerSaveBtn);
         ToastHandles.validateSuccessMessage(driver, Duration.ofSeconds(30), result);
         waitForLoader();
     }
 
     public void approveStep(String comment, ValidationResult result) {
+        ToastHandles.waitForNoNotification(driver, Duration.ofSeconds(15));
         click(forwardBtn);
         type(commentsInput, comment);
         click(forwardPopUpSaveBtn);

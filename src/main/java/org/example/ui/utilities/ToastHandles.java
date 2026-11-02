@@ -64,6 +64,26 @@ public class ToastHandles {
     /**
      * Validates that the active notification contains the default keyword "success".
      */
+    /**
+     * Waits until no toast/notification is showing, so the next check reads the next action's toast
+     * and not the previous action's one still on screen.
+     */
+    public static void waitForNoNotification(WebDriver driver, Duration timeout) {
+        try {
+            new WebDriverWait(driver, timeout).until(d -> d.findElements(By.xpath("//*[starts-with(@id, 'notify_text_')]"
+                            + " | //div[contains(@class,'dx-toast-content')]//div[contains(@class,'dx-toast-message')]"))
+                    .stream().noneMatch(n -> {
+                        try {
+                            return n.isDisplayed() && !n.getText().isBlank();
+                        } catch (StaleElementReferenceException e) {
+                            return false;
+                        }
+                    }));
+        } catch (TimeoutException e) {
+            logger.warn("⚠️ A previous toast was still showing after {} seconds.", timeout.toSeconds());
+        }
+    }
+
     public static String validateSuccessMessage(WebDriver driver, Duration timeout, ValidationResult result) {
         return validateSuccessMessage(driver, timeout, null, "success", result);
     }

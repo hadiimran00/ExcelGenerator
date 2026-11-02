@@ -6,6 +6,7 @@ import org.example.ui.utilities.ToastHandles;
 import org.example.ui.utilities.ValidationResult;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
+import org.openqa.selenium.support.ui.WebDriverWait;
 
 import java.time.Duration;
 
@@ -39,6 +40,9 @@ public class FreshSalesReturnPage extends basePage {
 
         type(docNoFilterInput, orderNo);
         waitForLoader();
+        // Row 1 can still be another order until the filter applies, so wait for our order before picking it
+        new WebDriverWait(driver, Duration.ofSeconds(30)).until(d -> d.findElements(firstRowDocNo).stream()
+                .anyMatch(e -> orderNo.equals(e.getAttribute("textContent").trim())));
 
         click(firstRowDocNo);
         waitForLoader();
